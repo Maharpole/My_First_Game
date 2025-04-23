@@ -7,7 +7,10 @@ public class Bullet : MonoBehaviour
     public float lifetime = 3f;
     
     [Tooltip("How much damage this bullet deals")]
-    public int damage = 3;
+    public float damage = 3f;
+    
+    [Tooltip("Whether this bullet is destroyed on impact")]
+    public bool destroyOnImpact = true;
 
     private void Awake()
     {
@@ -15,7 +18,7 @@ public class Bullet : MonoBehaviour
         gameObject.layer = LayerMask.NameToLayer("Bullet");
     }
 
-    void Start()
+    protected virtual void Start()
     {
         // Destroy bullet after lifetime
         Destroy(gameObject, lifetime);
@@ -42,7 +45,7 @@ public class Bullet : MonoBehaviour
         rb.interpolation = RigidbodyInterpolation.Interpolate;
     }
     
-    void OnTriggerEnter(Collider other)
+    public virtual void OnTriggerEnter(Collider other)
     {
         // Skip if the collider is the player
         if (other.CompareTag("Player")) return;
@@ -56,11 +59,14 @@ public class Bullet : MonoBehaviour
             if (enemyHealth != null)
             {
                 // Deal damage to the enemy
-                enemyHealth.TakeDamage(damage);
+                enemyHealth.TakeDamage(Mathf.RoundToInt(damage));
             }
             
-            // Destroy the bullet
-            Destroy(gameObject);
+            // Destroy the bullet if configured to do so
+            if (destroyOnImpact)
+            {
+                Destroy(gameObject);
+            }
         }
     }
 } 

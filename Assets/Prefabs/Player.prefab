@@ -13,7 +13,6 @@ GameObject:
   - component: {fileID: 904917598067859032}
   - component: {fileID: 6569673926144909700}
   - component: {fileID: 3006226417659424462}
-  - component: {fileID: 8122080412386278857}
   - component: {fileID: -8063086014846073063}
   m_Layer: 6
   m_Name: Player
@@ -133,24 +132,6 @@ MonoBehaviour:
   dashVolume: 1
   dashParticles: {fileID: 0}
   particleDuration: 0.5
---- !u!114 &8122080412386278857
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 479127174334849611}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7879cf56e2e7fc140980f63ed4a0cb6c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  fireRate: 1
-  bulletPrefab: {fileID: 5872955557811514956, guid: 36f4fa7a681e81f4b9e9d622fa48d94e, type: 3}
-  bulletSpeed: 30
-  detectionRange: 10
-  shootSounds: []
-  shootVolume: 1
 --- !u!114 &-8063086014846073063
 MonoBehaviour:
   m_ObjectHideFlags: 0

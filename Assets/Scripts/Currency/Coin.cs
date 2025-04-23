@@ -29,6 +29,10 @@ public class Coin : MonoBehaviour
     [Tooltip("Acceleration of coin movement")]
     public float magnetAcceleration = 2f;
 
+    [Header("Visual Effects")]
+    [Tooltip("Material to use when coin is magnetized")]
+    public Material magnetizedMaterial;
+
     [Header("Sound Effects")]
     [Tooltip("Sound played when coin is collected")]
     public AudioClip collectSound;
@@ -45,6 +49,8 @@ public class Coin : MonoBehaviour
     private SphereCollider coinCollider;
     private bool isCollected = false;
     private Collider playerCollider;
+    private Material originalMaterial;
+    private MeshRenderer meshRenderer;
 
     private void Start()
     {
@@ -59,6 +65,13 @@ public class Coin : MonoBehaviour
         }
         coinCollider.isTrigger = false; // Changed to non-trigger for overlap detection
         coinCollider.radius = 0.5f;
+        
+        // Get mesh renderer and store original material
+        meshRenderer = GetComponent<MeshRenderer>();
+        if (meshRenderer != null)
+        {
+            originalMaterial = meshRenderer.material;
+        }
         
         // Find the player
         GameObject player = GameObject.FindGameObjectWithTag("Player");
@@ -87,7 +100,16 @@ public class Coin : MonoBehaviour
         // Check if coin should be magnetized
         if (distanceToPlayer <= magnetRange)
         {
-            isMagnetized = true;
+            if (!isMagnetized)
+            {
+                isMagnetized = true;
+                // Change material when magnetized
+                if (meshRenderer != null && magnetizedMaterial != null)
+                {
+                    meshRenderer.material = magnetizedMaterial;
+                }
+            }
+            
             // Accelerate toward player
             currentSpeed = Mathf.Min(currentSpeed + magnetAcceleration * Time.deltaTime, magnetSpeed);
             
@@ -104,8 +126,13 @@ public class Coin : MonoBehaviour
                 }
             }
         }
-        else
+        else if (isMagnetized)
         {
+            // Reset material when no longer magnetized
+            if (meshRenderer != null && originalMaterial != null)
+            {
+                meshRenderer.material = originalMaterial;
+            }
             isMagnetized = false;
             currentSpeed = 0f;
             
@@ -116,68 +143,68 @@ public class Coin : MonoBehaviour
         }
     }
 
-private void CollectCoin()
-{
-    if (isCollected) return;
-    isCollected = true;
-
-    Debug.Log("Coin collected by player!");
-    
-    // Play collection sound
-    if (collectSound != null)
+    private void CollectCoin()
     {
-        AudioSource.PlayClipAtPoint(collectSound, transform.position, collectVolume);
-    }
-    
-    // Create floating text
-    CreateFloatingText();
-    
-    // Add coins to the player
-    CoinManager.Instance.AddCoins(value);
+        if (isCollected) return;
+        isCollected = true;
 
-    // Destroy the coin
-    Destroy(gameObject);
-}
-
-private void CreateFloatingText()
-{
-    // Check if the prefab reference is set
-    if (floatingTextPrefab != null)
-    {
-        // Get the main camera for screen position conversion
-        Camera mainCamera = Camera.main;
-        if (mainCamera != null)
+        Debug.Log("Coin collected by player!");
+        
+        // Play collection sound
+        if (collectSound != null)
         {
-            // Convert world position to screen position
-            Vector3 screenPos = mainCamera.WorldToScreenPoint(transform.position);
-            
-            // Create the floating text at the screen position
-            GameObject floatingTextObj = Instantiate(floatingTextPrefab, screenPos, Quaternion.identity);
-            
-            // Make sure it's a child of the Canvas
-            Canvas canvas = GameObject.FindObjectOfType<Canvas>();
-            if (canvas != null)
+            AudioSource.PlayClipAtPoint(collectSound, transform.position, collectVolume);
+        }
+        
+        // Create floating text
+        CreateFloatingText();
+        
+        // Add coins to the player
+        CoinManager.Instance.AddCoins(value);
+
+        // Destroy the coin
+        Destroy(gameObject);
+    }
+
+    private void CreateFloatingText()
+    {
+        // Check if the prefab reference is set
+        if (floatingTextPrefab != null)
+        {
+            // Get the main camera for screen position conversion
+            Camera mainCamera = Camera.main;
+            if (mainCamera != null)
             {
-                floatingTextObj.transform.SetParent(canvas.transform, false);
+                // Convert world position to screen position
+                Vector3 screenPos = mainCamera.WorldToScreenPoint(transform.position);
                 
-                // Set the amount using the coin's value
-                CoinFloatingText floatingText = floatingTextObj.GetComponent<CoinFloatingText>();
-                if (floatingText != null)
+                // Create the floating text at the screen position
+                GameObject floatingTextObj = Instantiate(floatingTextPrefab, screenPos, Quaternion.identity);
+                
+                // Make sure it's a child of the Canvas
+                Canvas canvas = GameObject.FindObjectOfType<Canvas>();
+                if (canvas != null)
                 {
-                    floatingText.SetAmount(value);
+                    floatingTextObj.transform.SetParent(canvas.transform, false);
+                    
+                    // Set the amount using the coin's value
+                    CoinFloatingText floatingText = floatingTextObj.GetComponent<CoinFloatingText>();
+                    if (floatingText != null)
+                    {
+                        floatingText.SetAmount(value);
+                    }
+                }
+                else
+                {
+                    Debug.LogError("No Canvas found in the scene!");
                 }
             }
-            else
-            {
-                Debug.LogError("No Canvas found in the scene!");
-            }
+        }
+        else
+        {
+            Debug.LogError("Floating Text Prefab not assigned! Please assign it in the inspector.");
         }
     }
-    else
-    {
-        Debug.LogError("Floating Text Prefab not assigned! Please assign it in the inspector.");
-    }
-}
 
     // Optional: Visualize magnet range in editor
     private void OnDrawGizmosSelected()
