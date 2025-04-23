@@ -12,17 +12,42 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d916074fa5df43e479fa22360641a1dd, type: 3}
   m_Name: Musket
   m_EditorClassIdentifier: 
-  weaponName: 
-  weaponPrefab: {fileID: 0}
-  bulletPrefab: {fileID: 0}
+  weaponName: Musket
+  weaponPrefab: {fileID: 6300456138507507717, guid: 3e27078b0e5c6a44fb980026743779f9, type: 3}
+  bulletPrefab: {fileID: 5872955557811514956, guid: 36f4fa7a681e81f4b9e9d622fa48d94e, type: 3}
   weaponIcon: {fileID: 0}
-  baseDamage: 10
+  baseDamage: 1
   baseFireRate: 1
   baseBulletSpeed: 20
   baseBulletCount: 1
-  baseSpreadAngle: 0
-  availableUpgrades: []
-  shootSounds: []
+  baseSpreadAngle: 3
+  availableUpgrades:
+  - upgradeName: Damage Upgrade
+    description: Increases Damage Per Bullet
+    cost: 25
+    damageMultiplier: 2
+    fireRateMultiplier: 0
+    bulletSpeedMultiplier: 0
+    bulletCount: 0
+    spreadAngle: 0
+  - upgradeName: Fire Rate Upgrade
+    description: Increases Frequency this Weapon Fires
+    cost: 25
+    damageMultiplier: 0
+    fireRateMultiplier: 2
+    bulletSpeedMultiplier: 0
+    bulletCount: 0
+    spreadAngle: 0
+  - upgradeName: Shotgun Mod
+    description: Adds More Bullets to this weapon
+    cost: 25
+    damageMultiplier: 0
+    fireRateMultiplier: 0
+    bulletSpeedMultiplier: 5
+    bulletCount: 4
+    spreadAngle: 0
+  shootSounds:
+  - {fileID: 8300000, guid: 8ed04086347e73146b629d8614caccff, type: 3}
   shootVolume: 1
   muzzleFlash: {fileID: 0}
   impactEffect: {fileID: 0}

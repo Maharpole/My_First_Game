@@ -43,6 +43,7 @@ public class WeaponManager : MonoBehaviour
     private List<GameObject> activeWeaponInstances = new List<GameObject>();
     private GameObject player;
     private Vector3 playerMovementDirection = Vector3.forward;
+    private bool isInitialized = false;
     
     void Start()
     {
@@ -52,16 +53,19 @@ public class WeaponManager : MonoBehaviour
             purchasedUpgrades[weapon] = new List<WeaponData.WeaponUpgrade>();
         }
         
-        // Find the player
-        player = GameObject.FindGameObjectWithTag("Player");
-        if (player == null)
-        {
-            Debug.LogError("Player not found! Make sure your player has the 'Player' tag.");
-        }
+        // Try to find the player
+        FindPlayer();
     }
     
     void Update()
     {
+        // If not initialized, try to find the player
+        if (!isInitialized)
+        {
+            FindPlayer();
+            return;
+        }
+        
         // Update player movement direction
         UpdatePlayerMovementDirection();
         
@@ -69,9 +73,26 @@ public class WeaponManager : MonoBehaviour
         UpdateWeaponRotations();
     }
     
+    private void FindPlayer()
+    {
+        if (player == null)
+        {
+            player = GameObject.FindGameObjectWithTag("Player");
+            if (player != null)
+            {
+                isInitialized = true;
+                Debug.Log("Player found and WeaponManager initialized");
+            }
+        }
+    }
+    
     private void UpdatePlayerMovementDirection()
     {
-        if (player == null) return;
+        if (player == null)
+        {
+            FindPlayer();
+            return;
+        }
         
         // Get player's movement direction from input or velocity
         // This assumes the player has a Rigidbody or CharacterController
