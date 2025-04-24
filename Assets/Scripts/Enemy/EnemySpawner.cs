@@ -17,6 +17,9 @@ public class EnemySpawner : MonoBehaviour
     public float spawnRadius = 10f;
 
     [Header("Debug")]
+    [Tooltip("Enable or disable debug logs")]
+    public bool DebugLogs = false;
+
     [Tooltip("Current number of active enemies")]
     [SerializeField]
     private int currentEnemyCount = 0;
@@ -46,7 +49,10 @@ public class EnemySpawner : MonoBehaviour
     {
         if (enemyPrefab == null)
         {
-            Debug.LogError("Enemy prefab not assigned!");
+            if (DebugLogs)
+            {
+                Debug.LogError("Enemy prefab not assigned!");
+            }
             return;
         }
 
@@ -59,7 +65,10 @@ public class EnemySpawner : MonoBehaviour
         activeEnemies.Add(newEnemy);
         currentEnemyCount++;
 
-        Debug.Log($"Spawned enemy. Current count: {currentEnemyCount}/{maxEnemies}");
+        if (DebugLogs)
+        {
+            Debug.Log($"Spawned enemy. Current count: {currentEnemyCount}/{maxEnemies}");
+        }
     }
 
     private void UpdateEnemyCount()

@@ -1,61 +1,85 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class PauseMenuUI : MonoBehaviour
 {
-    [Header("UI References")]
-    [Tooltip("Reference to the resume button")]
+    [Header("Buttons")]
     public Button resumeButton;
-    
-    [Tooltip("Reference to the main menu button")]
     public Button mainMenuButton;
-    
-    [Tooltip("Reference to the quit button")]
     public Button quitButton;
-    
+
+    private CanvasGroup canvasGroup;
+
+    private void Awake()
+    {
+        // Get or add CanvasGroup component
+        canvasGroup = GetComponent<CanvasGroup>();
+        if (canvasGroup == null)
+        {
+            canvasGroup = gameObject.AddComponent<CanvasGroup>();
+        }
+
+        // Initialize CanvasGroup properties
+        canvasGroup.alpha = 1f;
+        canvasGroup.interactable = true;
+        canvasGroup.blocksRaycasts = true;
+    }
+
     private void Start()
     {
         // Set up button listeners
         if (resumeButton != null)
         {
-            resumeButton.onClick.AddListener(OnResumeClicked);
+            resumeButton.onClick.AddListener(ResumeGame);
         }
-        
+
         if (mainMenuButton != null)
         {
-            mainMenuButton.onClick.AddListener(OnMainMenuClicked);
+            mainMenuButton.onClick.AddListener(GoToMainMenu);
         }
-        
+
         if (quitButton != null)
         {
-            quitButton.onClick.AddListener(OnQuitClicked);
+            quitButton.onClick.AddListener(QuitGame);
         }
-        
+
         // Hide the menu initially
         gameObject.SetActive(false);
     }
-    
-    private void OnResumeClicked()
+
+    private void OnEnable()
     {
-        if (PauseManager.Instance != null)
+        // Ensure CanvasGroup properties are set when the menu is enabled
+        if (canvasGroup != null)
         {
-            PauseManager.Instance.ResumeGame();
+            canvasGroup.alpha = 1f;
+            canvasGroup.interactable = true;
+            canvasGroup.blocksRaycasts = true;
         }
     }
-    
-    private void OnMainMenuClicked()
+
+    public void ResumeGame()
     {
         if (PauseManager.Instance != null)
         {
-            PauseManager.Instance.ReturnToMainMenu();
+            PauseManager.Instance.TogglePause();
         }
     }
-    
-    private void OnQuitClicked()
+
+    public void GoToMainMenu()
     {
-        if (PauseManager.Instance != null)
-        {
-            PauseManager.Instance.QuitGame();
-        }
+        // Resume time scale before loading new scene
+        Time.timeScale = 1f;
+        SceneManager.LoadScene("MainMenu");
+    }
+
+    public void QuitGame()
+    {
+        #if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+        #else
+            Application.Quit();
+        #endif
     }
 } 

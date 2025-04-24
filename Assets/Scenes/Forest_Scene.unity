@@ -275,7 +275,7 @@ MonoBehaviour:
   pauseMenuPanel: {fileID: 995422534}
   pauseMenuTag: PauseMenu
   mainMenuSceneName: MainMenu
-  enableDebugLogs: 1
+  enableDebugLogs: 0
 --- !u!4 &304300259
 Transform:
   m_ObjectHideFlags: 0
@@ -2122,6 +2122,10 @@ PrefabInstance:
     - target: {fileID: 5015408987779058811, guid: 4fad96b75420e254f95b5b0b72832dd7, type: 3}
       propertyPath: m_Name
       value: Speedling_Spawner
+      objectReference: {fileID: 0}
+    - target: {fileID: 7618632955794286486, guid: 4fad96b75420e254f95b5b0b72832dd7, type: 3}
+      propertyPath: DebugLogs
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7984632715524196110, guid: 4fad96b75420e254f95b5b0b72832dd7, type: 3}
       propertyPath: m_LocalPosition.x
