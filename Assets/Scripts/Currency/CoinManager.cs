@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using UnityEngine.SceneManagement;
 
 public class CoinManager : MonoBehaviour
 {
@@ -18,15 +19,53 @@ public class CoinManager : MonoBehaviour
 
     private void Awake()
     {
-        // Singleton pattern
+        // Singleton pattern with DontDestroyOnLoad
         if (Instance == null)
         {
             Instance = this;
+            DontDestroyOnLoad(gameObject);
+            
+            // Subscribe to scene loaded event
+            SceneManager.sceneLoaded += OnSceneLoaded;
         }
         else
         {
+            // If we already have an instance, destroy this one
             Destroy(gameObject);
         }
+    }
+
+    private void OnDestroy()
+    {
+        // Unsubscribe from scene loaded event when destroyed
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        // Find and update the coin text UI in the new scene
+        UpdateCoinTextReference();
+    }
+
+    private void UpdateCoinTextReference()
+    {
+        // Try to find the coin text in the new scene
+        if (coinText == null)
+        {
+            // Look for any TextMeshProUGUI component with "coin" in its name
+            TextMeshProUGUI[] texts = FindObjectsOfType<TextMeshProUGUI>();
+            foreach (TextMeshProUGUI text in texts)
+            {
+                if (text.gameObject.name.ToLower().Contains("coin"))
+                {
+                    coinText = text;
+                    break;
+                }
+            }
+        }
+
+        // Update the display with current coins
+        UpdateCoinDisplay();
     }
 
     private void Start()

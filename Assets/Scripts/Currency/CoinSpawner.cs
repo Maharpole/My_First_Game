@@ -27,15 +27,27 @@ public class CoinSpawner : MonoBehaviour
     [Tooltip("Rotation amount in degrees")]
     public float rotationAmount = 90f;
 
+    [Header("Debug")]
+    [Tooltip("Enable debug logs")]
+    public bool enableDebugLogs = false;
+
     private void Awake()
     {
         // Singleton pattern
         if (Instance == null)
         {
             Instance = this;
+            if (enableDebugLogs)
+            {
+                Debug.Log("CoinSpawner initialized");
+            }
         }
         else
         {
+            if (enableDebugLogs)
+            {
+                Debug.Log("Duplicate CoinSpawner found, destroying duplicate");
+            }
             Destroy(gameObject);
         }
     }
@@ -44,8 +56,16 @@ public class CoinSpawner : MonoBehaviour
     {
         if (coinPrefab == null)
         {
-            Debug.LogError("Coin prefab not assigned!");
+            if (enableDebugLogs)
+            {
+                Debug.LogError("Coin prefab not assigned!");
+            }
             return;
+        }
+
+        if (enableDebugLogs)
+        {
+            Debug.Log($"Spawning {coinsToDrop} coins at position: {position}");
         }
 
         for (int i = 0; i < coinsToDrop; i++)
@@ -62,7 +82,12 @@ public class CoinSpawner : MonoBehaviour
             float zRotation = rotateZ ? rotationAmount : 0f;
             
             Quaternion coinRotation = Quaternion.Euler(xRotation, yRotation, zRotation);
-            Instantiate(coinPrefab, position + randomOffset, coinRotation);
+            GameObject coin = Instantiate(coinPrefab, position + randomOffset, coinRotation);
+            
+            if (enableDebugLogs)
+            {
+                Debug.Log($"Spawned coin {i+1} at position: {position + randomOffset} with rotation: {coinRotation.eulerAngles}");
+            }
         }
     }
 } 

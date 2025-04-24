@@ -42,11 +42,17 @@ public class PauseManager : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
-            DebugLog("PauseManager singleton initialized");
+            if (enableDebugLogs)
+            {
+                DebugLog("PauseManager singleton initialized");
+            }
             
             // Subscribe to scene loaded event
             SceneManager.sceneLoaded += OnSceneLoaded;
-            DebugLog("Subscribed to scene loaded event");
+            if (enableDebugLogs)
+            {
+                DebugLog("Subscribed to scene loaded event");
+            }
         }
         else
         {
@@ -82,11 +88,17 @@ public class PauseManager : MonoBehaviour
         if (pauseMenuPanel != null)
         {
             pauseMenuPanel.SetActive(false);
-            DebugLog("Hide pause menu panel for new scene");
+            if (enableDebugLogs)
+            {
+                DebugLog("Hide pause menu panel for new scene");
+            }
         }
         else
         {
-            DebugLogWarning("No pause menu panel to hide for new scene");
+            if (enableDebugLogs)
+            {
+                DebugLogWarning("No pause menu panel to hide for new scene");
+            }
         }
     }
     
@@ -108,7 +120,10 @@ public class PauseManager : MonoBehaviour
         {
             pauseMenuPanel = panel;
             panelFoundInCurrentScene = true;
-            DebugLog($"Found pause menu panel by tag '{pauseMenuTag}': {panel.name}");
+            if (enableDebugLogs)
+            {
+                DebugLog($"Found pause menu panel by tag '{pauseMenuTag}': {panel.name}");
+            }
         }
         else
         {
@@ -120,11 +135,17 @@ public class PauseManager : MonoBehaviour
             {
                 pauseMenuPanel = panel;
                 panelFoundInCurrentScene = true;
-                DebugLog($"Found pause menu panel by name 'PauseMenuPanel': {panel.name}");
+                if (enableDebugLogs)
+                {
+                    DebugLog($"Found pause menu panel by name 'PauseMenuPanel': {panel.name}");
+                }
             }
             else
             {
-                DebugLog("No GameObject found with name 'PauseMenuPanel'");
+                if (enableDebugLogs)
+                {
+                    DebugLog("No GameObject found with name 'PauseMenuPanel'");
+                }
                 
                 // Try to find any panel with PauseMenuUI component
                 PauseMenuUI[] pauseMenus = FindObjectsOfType<PauseMenuUI>();
@@ -132,11 +153,17 @@ public class PauseManager : MonoBehaviour
                 {
                     pauseMenuPanel = pauseMenus[0].gameObject;
                     panelFoundInCurrentScene = true;
-                    DebugLog($"Found pause menu panel by PauseMenuUI component: {pauseMenus[0].gameObject.name}");
+                    if (enableDebugLogs)
+                    {
+                        DebugLog($"Found pause menu panel by PauseMenuUI component: {pauseMenus[0].gameObject.name}");
+                    }
                 }
                 else
                 {
-                    DebugLog("No GameObject found with PauseMenuUI component");
+                    if (enableDebugLogs)
+                    {
+                        DebugLog("No GameObject found with PauseMenuUI component");
+                    }
                     
                     // Try to find any panel with PauseMenuRegistrar component
                     PauseMenuRegistrar[] registrars = FindObjectsOfType<PauseMenuRegistrar>();
@@ -144,7 +171,10 @@ public class PauseManager : MonoBehaviour
                     {
                         pauseMenuPanel = registrars[0].gameObject;
                         panelFoundInCurrentScene = true;
-                        DebugLog($"Found pause menu panel by PauseMenuRegistrar component: {registrars[0].gameObject.name}");
+                        if (enableDebugLogs)
+                        {
+                            DebugLog($"Found pause menu panel by PauseMenuRegistrar component: {registrars[0].gameObject.name}");
+                        }
                     }
                     else
                     {
