@@ -30,16 +30,11 @@ public class WeaponManager : MonoBehaviour
     
     [Tooltip("Fix backwards weapons by rotating them 180 degrees")]
     public bool fixBackwardsWeapons = true;
-    
-    [Header("Economy")]
-    public int currentCoins = 0;
-    
+
     [Header("Events")]
-    public UnityEvent<int> onCoinsChanged;
     public UnityEvent<WeaponData> onWeaponAdded;
     public UnityEvent<WeaponData.WeaponUpgrade> onUpgradePurchased;
     
-    private Dictionary<WeaponData, List<WeaponData.WeaponUpgrade>> purchasedUpgrades = new Dictionary<WeaponData, List<WeaponData.WeaponUpgrade>>();
     private List<GameObject> activeWeaponInstances = new List<GameObject>();
     private GameObject player;
     private Vector3 playerMovementDirection = Vector3.forward;
@@ -47,12 +42,6 @@ public class WeaponManager : MonoBehaviour
     
     void Start()
     {
-        // Initialize upgrades dictionary
-        foreach (var weapon in availableWeapons)
-        {
-            purchasedUpgrades[weapon] = new List<WeaponData.WeaponUpgrade>();
-        }
-        
         // Try to find the player
         FindPlayer();
     }
@@ -95,7 +84,6 @@ public class WeaponManager : MonoBehaviour
         }
         
         // Get player's movement direction from input or velocity
-        // This assumes the player has a Rigidbody or CharacterController
         Rigidbody playerRb = player.GetComponent<Rigidbody>();
         if (playerRb != null && playerRb.velocity.magnitude > 0.1f)
         {
@@ -175,7 +163,6 @@ public class WeaponManager : MonoBehaviour
         }
         
         // Calculate multiplier based on angle difference
-        // The further from threshold, the higher the multiplier (up to maxRotationMultiplier)
         float normalizedAngle = Mathf.Clamp01((angleDifference - angleThreshold) / (180f - angleThreshold));
         float multiplier = 1f + (normalizedAngle * (maxRotationMultiplier - 1f));
         
@@ -234,7 +221,7 @@ public class WeaponManager : MonoBehaviour
         
         // Calculate position based on number of active weapons
         int weaponCount = activeWeaponInstances.Count;
-        float angle = (360f / weaponPositions) * weaponCount; // Divide circle into weaponPositions
+        float angle = (360f / weaponPositions) * weaponCount;
         float radians = angle * Mathf.Deg2Rad;
         
         // Calculate position using trigonometry
@@ -243,8 +230,6 @@ public class WeaponManager : MonoBehaviour
         
         // Set position and rotation
         weaponInstance.transform.localPosition = new Vector3(x, 0f, z);
-        
-        // Initial rotation will be set in UpdateWeaponRotations
         weaponInstance.transform.rotation = Quaternion.identity;
         
         // Apply initial 180-degree rotation if needed to fix backwards weapons
@@ -266,6 +251,9 @@ public class WeaponManager : MonoBehaviour
             // Add to active weapons
             activeWeaponInstances.Add(weaponInstance);
             
+            // Add to PlayerDataManager
+            PlayerDataManager.Instance.AddWeapon(weaponData);
+            
             // Notify listeners
             onWeaponAdded.Invoke(weaponData);
             
@@ -273,38 +261,29 @@ public class WeaponManager : MonoBehaviour
         }
     }
     
-    public void AddCoins(int amount)
-    {
-        currentCoins += amount;
-        onCoinsChanged.Invoke(currentCoins);
-    }
-    
     public bool CanAffordUpgrade(WeaponData.WeaponUpgrade upgrade)
     {
-        return currentCoins >= upgrade.cost;
+        return PlayerDataManager.Instance.CanAffordUpgrade(upgrade);
     }
     
     public bool PurchaseUpgrade(WeaponData weapon, WeaponData.WeaponUpgrade upgrade)
     {
-        if (!CanAffordUpgrade(upgrade)) return false;
-        
-        currentCoins -= upgrade.cost;
-        purchasedUpgrades[weapon].Add(upgrade);
-        
-        // Apply the upgrade to all instances of this weapon
-        foreach (var instance in activeWeaponInstances)
+        if (PlayerDataManager.Instance.PurchaseUpgrade(weapon, upgrade))
         {
-            AutoShooter shooter = instance.GetComponent<AutoShooter>();
-            if (shooter != null && shooter.weaponData == weapon)
+            // Apply the upgrade to all instances of this weapon
+            foreach (var instance in activeWeaponInstances)
             {
-                ApplyUpgrades(weapon, shooter);
+                AutoShooter shooter = instance.GetComponent<AutoShooter>();
+                if (shooter != null && shooter.weaponData == weapon)
+                {
+                    ApplyUpgrades(weapon, shooter);
+                }
             }
+            
+            onUpgradePurchased.Invoke(upgrade);
+            return true;
         }
-        
-        onCoinsChanged.Invoke(currentCoins);
-        onUpgradePurchased.Invoke(upgrade);
-        
-        return true;
+        return false;
     }
     
     private void ApplyUpgrades(WeaponData weapon, AutoShooter shooter)
@@ -319,7 +298,7 @@ public class WeaponManager : MonoBehaviour
         shooter.spreadAngle = weapon.baseSpreadAngle;
         
         // Apply all purchased upgrades
-        foreach (var upgrade in purchasedUpgrades[weapon])
+        foreach (var upgrade in PlayerDataManager.Instance.GetPurchasedUpgrades(weapon))
         {
             shooter.damage *= upgrade.damageMultiplier;
             shooter.fireRate *= upgrade.fireRateMultiplier;
@@ -331,22 +310,11 @@ public class WeaponManager : MonoBehaviour
     
     public List<WeaponData> GetActiveWeapons()
     {
-        List<WeaponData> activeWeapons = new List<WeaponData>();
-        
-        foreach (var instance in activeWeaponInstances)
-        {
-            AutoShooter shooter = instance.GetComponent<AutoShooter>();
-            if (shooter != null && shooter.weaponData != null)
-            {
-                activeWeapons.Add(shooter.weaponData);
-            }
-        }
-        
-        return activeWeapons;
+        return PlayerDataManager.Instance.GetActiveWeapons();
     }
     
     public List<WeaponData.WeaponUpgrade> GetPurchasedUpgrades(WeaponData weapon)
     {
-        return purchasedUpgrades[weapon];
+        return PlayerDataManager.Instance.GetPurchasedUpgrades(weapon);
     }
 } 

@@ -1,24 +1,25 @@
 using UnityEngine;
 using UnityEngine.Events;
 using System.Collections.Generic;
+using UnityEngine.SceneManagement;
 using System.Collections;
 
-public class PlayerHealth : MonoBehaviour
+public class PlayerDataManager : MonoBehaviour
 {
-    [Header("Health Settings")]
-    [Tooltip("Maximum health of the player")]
+    public static PlayerDataManager Instance { get; private set; }
+
+    [Header("Player Stats")]
+    public int currentCoins = 0;
     public int maxHealth = 100;
-    
-    [Tooltip("Current health of the player")]
-    public int currentHealth;
-    
+    public int currentHealth = 100;
+
     [Header("Damage Settings")]
     [Tooltip("How long before you can take damage from the same enemy again (in seconds)")]
     public float damageCooldown = 1f;
     
     [Tooltip("How much damage enemies do on contact")]
     public int contactDamage = 10;
-    
+
     [Header("Visual Effects")]
     [Tooltip("Color to flash when taking damage")]
     public Color damageColor = Color.red;
@@ -28,48 +29,55 @@ public class PlayerHealth : MonoBehaviour
     
     [Tooltip("Number of times to flash")]
     public int flashCount = 3;
-    
+
     [Header("Sound Effects")]
     [Tooltip("Sound to play when taking damage")]
     public AudioClip damageSound;
     
     [Tooltip("Sound to play when dying")]
     public AudioClip deathSound;
-    
+
     [Header("Events")]
+    public UnityEvent<int> onCoinsChanged;
+    public UnityEvent<int> onHealthChanged;
+    public UnityEvent onPlayerDeath;
     public UnityEvent onDamage;
-    public UnityEvent onDeath;
-    
-    // Dictionary to track damage cooldowns for each enemy
+
+    private Dictionary<WeaponData, List<WeaponData.WeaponUpgrade>> purchasedUpgrades = new Dictionary<WeaponData, List<WeaponData.WeaponUpgrade>>();
+    private List<WeaponData> activeWeapons = new List<WeaponData>();
     private Dictionary<GameObject, float> damageCooldowns = new Dictionary<GameObject, float>();
-    private Rigidbody rb;
     private Renderer[] playerRenderers;
     private Color[] originalColors;
     private Material[] originalMaterials;
     private AudioSource audioSource;
     private bool isFlashing = false;
     private GameManager gameManager;
-    
-    void Start()
+
+    private void Awake()
     {
-        // Initialize health
-        currentHealth = maxHealth;
-        
+        // Singleton pattern with DontDestroyOnLoad
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+            SceneManager.sceneLoaded += OnSceneLoaded;
+            InitializeHealthSystem();
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
+
+    private void InitializeHealthSystem()
+    {
         // Find the GameManager
         gameManager = FindObjectOfType<GameManager>();
         if (gameManager == null)
         {
             Debug.LogError("GameManager not found in the scene!");
         }
-        
-        // Set up Rigidbody
-        rb = GetComponent<Rigidbody>();
-        if (rb != null)
-        {
-            rb.freezeRotation = true;
-            rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
-        }
-        
+
         // Get all renderer components (including children)
         playerRenderers = GetComponentsInChildren<Renderer>();
         originalColors = new Color[playerRenderers.Length];
@@ -91,7 +99,30 @@ public class PlayerHealth : MonoBehaviour
             audioSource = gameObject.AddComponent<AudioSource>();
         }
     }
-    
+
+    private void OnDestroy()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+        
+        // Clean up the materials if we created new ones
+        if (originalMaterials != null)
+        {
+            foreach (var material in originalMaterials)
+            {
+                if (material != null)
+                {
+                    Destroy(material);
+                }
+            }
+        }
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        // Initialize any scene-specific data here
+        InitializeHealthSystem();
+    }
+
     void Update()
     {
         // Update cooldowns
@@ -110,7 +141,7 @@ public class PlayerHealth : MonoBehaviour
             damageCooldowns.Remove(enemy);
         }
     }
-    
+
     void OnCollisionStay(Collision collision)
     {
         // Check if colliding with an enemy
@@ -120,8 +151,27 @@ public class PlayerHealth : MonoBehaviour
             TakeDamage(collision.gameObject);
         }
     }
-    
-    void TakeDamage(GameObject enemy)
+
+    // Coin Management
+    public void AddCoins(int amount)
+    {
+        currentCoins += amount;
+        onCoinsChanged?.Invoke(currentCoins);
+    }
+
+    public bool SpendCoins(int amount)
+    {
+        if (currentCoins >= amount)
+        {
+            currentCoins -= amount;
+            onCoinsChanged?.Invoke(currentCoins);
+            return true;
+        }
+        return false;
+    }
+
+    // Health Management
+    public void TakeDamage(GameObject enemy)
     {
         // Check if we're on cooldown for this enemy
         if (damageCooldowns.ContainsKey(enemy))
@@ -133,7 +183,8 @@ public class PlayerHealth : MonoBehaviour
         }
         
         // Apply damage
-        currentHealth -= contactDamage;
+        currentHealth = Mathf.Max(0, currentHealth - contactDamage);
+        onHealthChanged?.Invoke(currentHealth);
         
         // Set cooldown for this enemy
         damageCooldowns[enemy] = Time.time + damageCooldown;
@@ -145,7 +196,7 @@ public class PlayerHealth : MonoBehaviour
         }
         
         // Trigger damage event
-        onDamage.Invoke();
+        onDamage?.Invoke();
         
         // Start flash effect if not already flashing
         if (!isFlashing)
@@ -159,7 +210,7 @@ public class PlayerHealth : MonoBehaviour
             Die();
         }
     }
-    
+
     IEnumerator FlashEffect()
     {
         isFlashing = true;
@@ -202,8 +253,8 @@ public class PlayerHealth : MonoBehaviour
             isFlashing = false;
         }
     }
-    
-    void Die()
+
+    private void Die()
     {
         // Play death sound
         if (deathSound != null && audioSource != null)
@@ -212,7 +263,7 @@ public class PlayerHealth : MonoBehaviour
         }
         
         // Trigger death event
-        onDeath.Invoke();
+        onPlayerDeath?.Invoke();
         
         // Notify the GameManager
         if (gameManager != null)
@@ -223,29 +274,53 @@ public class PlayerHealth : MonoBehaviour
         {
             Debug.LogError("GameManager not found when trying to end the game!");
         }
-        
-        // Disable the player
-        gameObject.SetActive(false);
     }
-    
-    // Optional: Add a method to heal the player
+
     public void Heal(int amount)
     {
-        currentHealth = Mathf.Min(currentHealth + amount, maxHealth);
+        currentHealth = Mathf.Min(maxHealth, currentHealth + amount);
+        onHealthChanged?.Invoke(currentHealth);
     }
-    
-    void OnDestroy()
+
+    // Weapon Management
+    public void AddWeapon(WeaponData weapon)
     {
-        // Clean up the materials if we created new ones
-        if (originalMaterials != null)
+        if (!activeWeapons.Contains(weapon))
         {
-            foreach (var material in originalMaterials)
-            {
-                if (material != null)
-                {
-                    Destroy(material);
-                }
-            }
+            activeWeapons.Add(weapon);
+            purchasedUpgrades[weapon] = new List<WeaponData.WeaponUpgrade>();
         }
+    }
+
+    public List<WeaponData> GetActiveWeapons()
+    {
+        return new List<WeaponData>(activeWeapons);
+    }
+
+    public List<WeaponData.WeaponUpgrade> GetPurchasedUpgrades(WeaponData weapon)
+    {
+        if (purchasedUpgrades.TryGetValue(weapon, out var upgrades))
+        {
+            return new List<WeaponData.WeaponUpgrade>(upgrades);
+        }
+        return new List<WeaponData.WeaponUpgrade>();
+    }
+
+    public bool PurchaseUpgrade(WeaponData weapon, WeaponData.WeaponUpgrade upgrade)
+    {
+        if (!SpendCoins(upgrade.cost)) return false;
+
+        if (!purchasedUpgrades.ContainsKey(weapon))
+        {
+            purchasedUpgrades[weapon] = new List<WeaponData.WeaponUpgrade>();
+        }
+
+        purchasedUpgrades[weapon].Add(upgrade);
+        return true;
+    }
+
+    public bool CanAffordUpgrade(WeaponData.WeaponUpgrade upgrade)
+    {
+        return currentCoins >= upgrade.cost;
     }
 } 

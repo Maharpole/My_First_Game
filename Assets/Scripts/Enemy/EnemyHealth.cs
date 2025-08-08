@@ -18,6 +18,9 @@ public class EnemyHealth : MonoBehaviour
     [Tooltip("Color to flash when taking damage")]
     public Color damageColor = Color.red;
     
+    [Tooltip("Color to flash when healing")]
+    public Color healColor = Color.green;
+    
     [Tooltip("Particle system to play on death")]
     public ParticleSystem deathParticles;
     
@@ -28,6 +31,7 @@ public class EnemyHealth : MonoBehaviour
     [Header("Events")]
     public UnityEvent onDeath;
     public UnityEvent onDamage;
+    public UnityEvent onHeal;
 
     void Start()
     {
@@ -59,7 +63,7 @@ public class EnemyHealth : MonoBehaviour
         onDamage.Invoke();
         
         // Flash red
-        StartCoroutine(FlashRed());
+        StartCoroutine(FlashColor(damageColor));
         
         // Check if enemy is dead
         if (currentHealth <= 0)
@@ -67,13 +71,25 @@ public class EnemyHealth : MonoBehaviour
             Die();
         }
     }
+
+    public void Heal(int amount)
+    {
+        // Increase health, but don't exceed max health
+        currentHealth = Mathf.Min(currentHealth + amount, maxHealth);
+        
+        // Trigger heal event
+        onHeal.Invoke();
+        
+        // Flash green
+        StartCoroutine(FlashColor(healColor));
+    }
     
-    IEnumerator FlashRed()
+    IEnumerator FlashColor(Color flashColor)
     {
         if (enemyRenderer != null)
         {
-            // Change to red
-            enemyRenderer.material.color = damageColor;
+            // Change to flash color
+            enemyRenderer.material.color = flashColor;
             
             // Wait for flash duration
             yield return new WaitForSeconds(flashDuration);

@@ -7,9 +7,6 @@ public class PlayerHealthBar : MonoBehaviour
     [Tooltip("The health bar image component")]
     public Image healthBarImage;
     
-    [Tooltip("The player health component")]
-    public PlayerHealth playerHealth;
-    
     [Header("Visual Effects")]
     [Tooltip("Color when health is high")]
     public Color healthyColor = Color.green;
@@ -29,29 +26,20 @@ public class PlayerHealthBar : MonoBehaviour
             return;
         }
         
-        if (playerHealth == null)
-        {
-            playerHealth = GetComponentInParent<PlayerHealth>();
-            if (playerHealth == null)
-            {
-                Debug.LogError("No PlayerHealth component found!");
-                return;
-            }
-        }
-        
         // Subscribe to health changes
-        playerHealth.onDamage.AddListener(UpdateHealthBar);
+        PlayerDataManager.Instance.onHealthChanged.AddListener(UpdateHealthBar);
+        PlayerDataManager.Instance.onDamage.AddListener(() => UpdateHealthBar(PlayerDataManager.Instance.currentHealth));
         
         // Set initial health
-        UpdateHealthBar();
+        UpdateHealthBar(PlayerDataManager.Instance.currentHealth);
     }
     
-    void UpdateHealthBar()
+    void UpdateHealthBar(int currentHealth)
     {
-        if (healthBarImage != null && playerHealth != null)
+        if (healthBarImage != null)
         {
             // Update the fill amount based on current health
-            float healthPercent = (float)playerHealth.currentHealth / playerHealth.maxHealth;
+            float healthPercent = (float)currentHealth / PlayerDataManager.Instance.maxHealth;
             healthBarImage.fillAmount = healthPercent;
             
             // Update color based on health
@@ -62,9 +50,10 @@ public class PlayerHealthBar : MonoBehaviour
     void OnDestroy()
     {
         // Unsubscribe from events
-        if (playerHealth != null)
+        if (PlayerDataManager.Instance != null)
         {
-            playerHealth.onDamage.RemoveListener(UpdateHealthBar);
+            PlayerDataManager.Instance.onHealthChanged.RemoveListener(UpdateHealthBar);
+            PlayerDataManager.Instance.onDamage.RemoveListener(() => UpdateHealthBar(PlayerDataManager.Instance.currentHealth));
         }
     }
 } 
