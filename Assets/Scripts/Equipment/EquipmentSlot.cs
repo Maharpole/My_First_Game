@@ -36,6 +36,12 @@ public class EquipmentSlot
     
     public bool TryEquip(EquipmentData item)
     {
+        return TryEquipWithSwap(item, out _);
+    }
+
+    public bool TryEquipWithSwap(EquipmentData item, out EquipmentData unequipped)
+    {
+        unequipped = null;
         if (!CanEquip(item)) 
         {
             Debug.LogWarning($"Cannot equip {item.equipmentName} in {slotName} slot. Wrong equipment type.");
@@ -45,7 +51,7 @@ public class EquipmentSlot
         // Unequip current item if exists
         if (HasItem)
         {
-            Unequip();
+            unequipped = Unequip();
         }
         
         // Equip new item

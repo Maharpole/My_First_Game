@@ -10,16 +10,17 @@ public enum EquipmentType
     RingLeft,
     RingRight,
     Boots,
-    Belt
+    Belt,
+    MainHand,
+    OffHand
 }
 
 [System.Serializable]
 public enum EquipmentRarity
 {
-    Normal,     // White items
+    Common,     // White items
     Magic,      // Blue items (1-2 modifiers)
-    Rare,       // Yellow items (3-6 modifiers)
-    Unique      // Orange items (fixed modifiers)
+    Rare        // Yellow items (3-6 modifiers)
 }
 
 [System.Serializable]
@@ -47,6 +48,21 @@ public enum StatType
     MovementSpeed,
     PickupRadius,
     ExperienceGain
+}
+
+[System.Flags]
+public enum OffhandCategory
+{
+    None = 0,
+    Shield = 1 << 0,
+    Quiver = 1 << 1,
+    Focus = 1 << 2
+}
+
+public enum HandUsage
+{
+    OneHand,
+    TwoHand
 }
 
 [System.Serializable]

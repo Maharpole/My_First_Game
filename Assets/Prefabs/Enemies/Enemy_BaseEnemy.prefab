@@ -12,9 +12,12 @@ GameObject:
   - component: {fileID: 2464712320782198707}
   - component: {fileID: 6995047700782350124}
   - component: {fileID: 1254259005304804746}
-  - component: {fileID: 8780003723383481558}
   - component: {fileID: 7167259163824179869}
+  - component: {fileID: 8780003723383481558}
   - component: {fileID: -1080064559492507165}
+  - component: {fileID: -142393245941017192}
+  - component: {fileID: 325820798844203787}
+  - component: {fileID: -6928982707864977593}
   m_Layer: 8
   m_Name: Enemy_BaseEnemy
   m_TagString: Enemy
@@ -108,19 +111,6 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 0.5
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &8780003723383481558
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8757707649924228711}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4d5184204bba5fa46ac27c2b420de6f3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  moveSpeed: 3
 --- !u!54 &7167259163824179869
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -148,6 +138,19 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &8780003723383481558
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8757707649924228711}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4d5184204bba5fa46ac27c2b420de6f3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  moveSpeed: 3
 --- !u!114 &-1080064559492507165
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -164,6 +167,7 @@ MonoBehaviour:
   currentHealth: 3
   flashDuration: 0.1
   damageColor: {r: 1, g: 0, b: 0, a: 1}
+  healColor: {r: 0, g: 1, b: 0, a: 1}
   deathParticles: {fileID: 0}
   onDeath:
     m_PersistentCalls:
@@ -171,3 +175,64 @@ MonoBehaviour:
   onDamage:
     m_PersistentCalls:
       m_Calls: []
+  onHeal:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &-142393245941017192
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8757707649924228711}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b4134d0bc4b7f634786685e4b804d441, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  moveSpeed: 3.5
+  attackSpeed: 1
+  damage: 10
+  maxHealth: 50
+  currentHealth: 0
+  extraProjectiles: 0
+--- !u!114 &325820798844203787
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8757707649924228711}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 134670776ca4e774aa99ae76c7e1a827, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  minCoins: 1
+  maxCoins: 3
+  dropChance: 1
+  dropSpread: 1
+  coinPrefab: {fileID: 3639080991289470989, guid: 4dcf8a02a2a43024c9e6e3bfdccbbe79, type: 3}
+--- !u!114 &-6928982707864977593
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8757707649924228711}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5ed0d2c1af7aa0943bddfbf2bd715b5b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  possibleBases: []
+  affixDatabase: {fileID: 11400000, guid: 587a9f723a7bc654a963569d9e61d0be, type: 2}
+  dropChance: 0.35
+  minItemLevel: 1
+  maxItemLevel: 20
+  pickupPrefab: {fileID: 0}
+  dropSpread: 1.5
+  minPrefixes: 0
+  maxPrefixes: 3
+  minSuffixes: 0
+  maxSuffixes: 3

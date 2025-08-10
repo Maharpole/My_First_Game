@@ -27,19 +27,24 @@ public class PlayerHealthBar : MonoBehaviour
         }
         
         // Subscribe to health changes
-        PlayerDataManager.Instance.onHealthChanged.AddListener(UpdateHealthBar);
-        PlayerDataManager.Instance.onDamage.AddListener(() => UpdateHealthBar(PlayerDataManager.Instance.currentHealth));
-        
-        // Set initial health
-        UpdateHealthBar(PlayerDataManager.Instance.currentHealth);
+        if (Player.Instance != null)
+        {
+            Player.Instance.onHealthChanged.AddListener(UpdateHealthBar);
+            // Set initial health
+            UpdateHealthBar(Player.Instance.CurrentHealth);
+        }
+        else
+        {
+            Debug.LogWarning("No Player instance found for health bar!");
+        }
     }
     
     void UpdateHealthBar(int currentHealth)
     {
-        if (healthBarImage != null)
+        if (healthBarImage != null && Player.Instance != null)
         {
             // Update the fill amount based on current health
-            float healthPercent = (float)currentHealth / PlayerDataManager.Instance.maxHealth;
+            float healthPercent = (float)currentHealth / Player.Instance.MaxHealth;
             healthBarImage.fillAmount = healthPercent;
             
             // Update color based on health
@@ -50,10 +55,9 @@ public class PlayerHealthBar : MonoBehaviour
     void OnDestroy()
     {
         // Unsubscribe from events
-        if (PlayerDataManager.Instance != null)
+        if (Player.Instance != null)
         {
-            PlayerDataManager.Instance.onHealthChanged.RemoveListener(UpdateHealthBar);
-            PlayerDataManager.Instance.onDamage.RemoveListener(() => UpdateHealthBar(PlayerDataManager.Instance.currentHealth));
+            Player.Instance.onHealthChanged.RemoveListener(UpdateHealthBar);
         }
     }
 } 

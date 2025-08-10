@@ -29,12 +29,18 @@ public class WeaponUpgradeUI : MonoBehaviour
         }
         
         // Subscribe to events
-        PlayerDataManager.Instance.onCoinsChanged.AddListener(UpdateCoinsDisplay);
+        if (Player.Instance != null)
+        {
+            Player.Instance.onCoinsChanged.AddListener(UpdateCoinsDisplay);
+        }
         weaponManager.onWeaponAdded.AddListener(OnWeaponAdded);
         
         // Initialize UI
         InitializeWeaponButtons();
-        UpdateCoinsDisplay(PlayerDataManager.Instance.currentCoins);
+        if (Player.Instance != null)
+        {
+            UpdateCoinsDisplay(Player.Instance.Coins);
+        }
         UpdateActiveWeaponsDisplay();
         
         // Hide upgrade panel initially
@@ -124,7 +130,7 @@ public class WeaponUpgradeUI : MonoBehaviour
                 button.onClick.AddListener(() => PurchaseUpgrade(weapon, upgrade));
                 
                 // Disable button if can't afford
-                button.interactable = PlayerDataManager.Instance.CanAffordUpgrade(upgrade);
+                button.interactable = Player.Instance != null && Player.Instance.CanAffordUpgrade(upgrade);
             }
         }
         
@@ -141,7 +147,10 @@ public class WeaponUpgradeUI : MonoBehaviour
         {
             // Refresh the upgrades display
             ShowUpgrades(weapon);
-            UpdateCoinsDisplay(PlayerDataManager.Instance.currentCoins);
+            if (Player.Instance != null)
+            {
+                UpdateCoinsDisplay(Player.Instance.Coins);
+            }
         }
     }
     

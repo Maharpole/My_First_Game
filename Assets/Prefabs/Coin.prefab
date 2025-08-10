@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 8495342063641115561}
   - component: {fileID: -2914881198505119398}
   - component: {fileID: 7886755228647596703}
+  - component: {fileID: -5179937901576856550}
   m_Layer: 7
   m_Name: Coin
   m_TagString: Untagged
@@ -105,6 +106,7 @@ MonoBehaviour:
   magnetRange: 3
   magnetSpeed: 20
   magnetAcceleration: 10
+  magnetizedMaterial: {fileID: 2100000, guid: 125cb55b44b24c4393181402bc6200e6, type: 2}
   collectSound: {fileID: 8300000, guid: e1f877792a1a1cf4b8d1bedda2908d83, type: 3}
   collectVolume: 1
 --- !u!135 &7886755228647596703
@@ -128,3 +130,26 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 5
   m_Center: {x: 0.000000059604645, y: 0, z: -0.00000008940699}
+--- !u!114 &-5179937901576856550
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3639080991289470989}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 99629ef63ece3ad48adcfcf0f2370918, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  value: 1
+  floatingTextPrefab: {fileID: 0}
+  rotationSpeed: 90
+  floatHeight: 0.5
+  floatSpeed: 1
+  magnetRange: 5
+  magnetSpeed: 10
+  magnetAcceleration: 2
+  magnetizedMaterial: {fileID: 0}
+  collectSound: {fileID: 8300000, guid: e1f877792a1a1cf4b8d1bedda2908d83, type: 3}
+  collectVolume: 0.64

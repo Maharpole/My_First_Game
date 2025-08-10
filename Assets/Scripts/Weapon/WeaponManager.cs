@@ -251,8 +251,8 @@ public class WeaponManager : MonoBehaviour
             // Add to active weapons
             activeWeaponInstances.Add(weaponInstance);
             
-            // Add to PlayerDataManager
-            PlayerDataManager.Instance.AddWeapon(weaponData);
+            // TODO: Integrate with new equipment system if needed
+            // PlayerDataManager.Instance.AddWeapon(weaponData);
             
             // Notify listeners
             onWeaponAdded.Invoke(weaponData);
@@ -263,12 +263,12 @@ public class WeaponManager : MonoBehaviour
     
     public bool CanAffordUpgrade(WeaponData.WeaponUpgrade upgrade)
     {
-        return PlayerDataManager.Instance.CanAffordUpgrade(upgrade);
+        return Player.Instance != null && Player.Instance.CanAffordUpgrade(upgrade);
     }
     
     public bool PurchaseUpgrade(WeaponData weapon, WeaponData.WeaponUpgrade upgrade)
     {
-        if (PlayerDataManager.Instance.PurchaseUpgrade(weapon, upgrade))
+        if (Player.Instance != null && Player.Instance.SpendCoins(upgrade.cost))
         {
             // Apply the upgrade to all instances of this weapon
             foreach (var instance in activeWeaponInstances)
@@ -298,6 +298,8 @@ public class WeaponManager : MonoBehaviour
         shooter.spreadAngle = weapon.baseSpreadAngle;
         
         // Apply all purchased upgrades
+        // TODO: Implement upgrade tracking in new Player system
+        /*
         foreach (var upgrade in PlayerDataManager.Instance.GetPurchasedUpgrades(weapon))
         {
             shooter.damage *= upgrade.damageMultiplier;
@@ -306,15 +308,27 @@ public class WeaponManager : MonoBehaviour
             shooter.bulletCount = upgrade.bulletCount;
             shooter.spreadAngle = upgrade.spreadAngle;
         }
+        */
     }
     
     public List<WeaponData> GetActiveWeapons()
     {
-        return PlayerDataManager.Instance.GetActiveWeapons();
+        // Return weapons based on active instances for now
+        var weapons = new List<WeaponData>();
+        foreach (var instance in activeWeaponInstances)
+        {
+            var shooter = instance.GetComponent<AutoShooter>();
+            if (shooter != null && shooter.weaponData != null)
+            {
+                weapons.Add(shooter.weaponData);
+            }
+        }
+        return weapons;
     }
     
     public List<WeaponData.WeaponUpgrade> GetPurchasedUpgrades(WeaponData weapon)
     {
-        return PlayerDataManager.Instance.GetPurchasedUpgrades(weapon);
+        // TODO: Implement upgrade tracking in new Player system
+        return new List<WeaponData.WeaponUpgrade>();
     }
 } 
