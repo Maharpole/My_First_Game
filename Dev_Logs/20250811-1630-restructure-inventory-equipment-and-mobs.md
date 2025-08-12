@@ -9,7 +9,7 @@
   - `Assets/Scripts/Player/Player.cs`: single owner of movement/health/damage/currency; equipment propagated via `CharacterEquipment`.
   - Click-to-move (`ClickToMoveController`) ignores UI clicks and guards against missing NavMesh.
 - Equipment & Items
-  - `EquipmentData` (ScriptableObject) drives equipment bases and metadata (slot, weapon flags, 1H/2H, grid size for icons, rarity color).
+  - `EquipmentData` (ScriptableObject) drives equipment bases and metadata (slot, weapon flags, 1H/2H, rarity color, optional `weaponProfile`).
   - `CharacterEquipment` enforces slot rules (includes `BodyArmour`, two `Ring` slots, Main/Off Hand with two-hand logic).
    - `UIEquipmentSlot` displays equipped item icons, updates on start and on equipment changed; supports:
      - drag from inventory to equip (returns swapped item to inventory),
@@ -26,7 +26,11 @@
   - Consolidated: `CoinDropper` now spawns coins directly (no centralized spawner). `CoinManager` handles UI/total. `Coin` handles pickup and optional magnet behavior.
 - Weapons (auto-shooter foundation)
   - `WeaponData` + `AutoShooter` (targets nearest enemy in range; configurable damage/fire rate/bullets/spread).
-  - `WeaponManager` remains (for orbit/placement or future upgrade handling). Not yet wired to new equipment flow.
+  - `EquipmentData` now has `weaponProfile : WeaponData` for weapon items.
+  - `WeaponAttachController` on `Player` listens to `CharacterEquipment.onEquipmentChanged` and:
+    - Spawns an `EquippedWeapon` under an attach point when a MainHand weapon is equipped.
+    - Ensures an `AutoShooter` and configures it from `weaponProfile` (or Resources fallback `WeaponProfiles/DefaultWeapon`).
+  - `WeaponManager` remains (legacy orbit/placement); current flow uses `WeaponAttachController`.
 - Camera/UI
   - `CameraController`: simple follow with offset/zoom.
   - `UIToggleHotkey`: action-based if new Input System is enabled; fallback to legacy key with conditional compilation.

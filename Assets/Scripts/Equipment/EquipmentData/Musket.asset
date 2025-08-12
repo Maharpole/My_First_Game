@@ -10,22 +10,21 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a4e925063b904d84ba4fddc0fa3e294f, type: 3}
-  m_Name: Boots
+  m_Name: Musket
   m_EditorClassIdentifier: 
-  equipmentName: 
+  equipmentName: Musket
   description: 
-  icon: {fileID: 21300000, guid: 4317a01c617dd7143bf174eed0f0b2e1, type: 3}
-  modelPrefab: {fileID: 5514364346986052152, guid: 9246815128cde8e4093edce63b8a8b1b, type: 3}
-  equipmentType: 6
+  icon: {fileID: 21300000, guid: 470be0bff922f1a43bea96e70172a83d, type: 3}
+  modelPrefab: {fileID: 919132149155446097, guid: cac1b883ae1ee0a43a10e3a1f0fd47a6, type: 3}
+  equipmentType: 8
   rarity: 0
   itemLevel: 1
   requiredLevel: 1
-  isWeapon: 0
-  handUsage: 0
+  isWeapon: 1
+  handUsage: 1
   allowedOffhands: 0
   occupiesBothHands: 0
-  gridWidth: 2
-  gridHeight: 2
+  weaponProfile: {fileID: 11400000, guid: 02e273bf7290c1b4e924379c023b8407, type: 2}
   baseStats: []
   randomAffixes: []
   rarityColor: {r: 1, g: 1, b: 1, a: 1}

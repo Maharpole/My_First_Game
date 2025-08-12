@@ -21,10 +21,10 @@ public class EquipmentData : ScriptableObject
     public HandUsage handUsage = HandUsage.OneHand; // two-hand blocks OffHand
     public OffhandCategory allowedOffhands = OffhandCategory.None; // for one-hand ranged (e.g., bow + quiver)
     public bool occupiesBothHands = false; // greatbow, staff
+    [Tooltip("If this equipment is a weapon, link the WeaponData profile to configure AutoShooter.")]
+    public WeaponData weaponProfile;
 
-    [Header("Inventory Grid")]
-    public int gridWidth = 1;
-    public int gridHeight = 1;
+    // Inventory grid sizing removed (we use fixed slots UI now)
 
     [Header("Base Statistics")]
     public List<StatModifier> baseStats = new List<StatModifier>();
