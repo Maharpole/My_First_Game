@@ -5,10 +5,10 @@ public enum EquipmentType
 {
     None,
     Helmet,
+    BodyArmour,
     Amulet,
     Gloves,
-    RingLeft,
-    RingRight,
+    Ring,
     Boots,
     Belt,
     MainHand,

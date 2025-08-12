@@ -22,6 +22,10 @@ public class EquipmentData : ScriptableObject
     public OffhandCategory allowedOffhands = OffhandCategory.None; // for one-hand ranged (e.g., bow + quiver)
     public bool occupiesBothHands = false; // greatbow, staff
 
+    [Header("Inventory Grid")]
+    public int gridWidth = 1;
+    public int gridHeight = 1;
+
     [Header("Base Statistics")]
     public List<StatModifier> baseStats = new List<StatModifier>();
 
@@ -44,48 +48,25 @@ public class EquipmentData : ScriptableObject
 
     public bool CanEquipInSlot(EquipmentType slot)
     {
-        // Regular non-hand slots must match exactly
+        // Regular slots must match exactly, including BodyArmour and Ring
         if (slot != EquipmentType.MainHand && slot != EquipmentType.OffHand)
         {
             return equipmentType == slot;
         }
-
         // Hand logic
-        if (!isWeapon && equipmentType != EquipmentType.OffHand)
-        {
-            // Not a weapon and not explicitly an offhand type
-            return false;
-        }
-
-        // Two-hand weapons can go to MainHand only and will occupy both
-        if (isWeapon && (handUsage == HandUsage.TwoHand || occupiesBothHands))
-        {
-            return slot == EquipmentType.MainHand;
-        }
-
-        // One-hand weapons can go in MainHand; offhands go in OffHand
-        if (slot == EquipmentType.MainHand)
-        {
-            return isWeapon && handUsage == HandUsage.OneHand;
-        }
-        if (slot == EquipmentType.OffHand)
-        {
-            return !isWeapon || equipmentType == EquipmentType.OffHand;
-        }
-
+        if (!isWeapon && equipmentType != EquipmentType.OffHand) return false;
+        if (isWeapon && (handUsage == HandUsage.TwoHand || occupiesBothHands)) return slot == EquipmentType.MainHand;
+        if (slot == EquipmentType.MainHand) return isWeapon && handUsage == HandUsage.OneHand;
+        if (slot == EquipmentType.OffHand) return !isWeapon || equipmentType == EquipmentType.OffHand;
         return false;
     }
 
-    public void SetRandomAffixes(List<StatModifier> affixes)
-    {
-        randomAffixes = affixes;
-    }
+    public void SetRandomAffixes(List<StatModifier> affixes) { randomAffixes = affixes; }
 
     public string GetTooltipText()
     {
         string tooltip = $"<color=#{ColorUtility.ToHtmlStringRGB(rarityColor)}>{equipmentName}</color>\n";
-        tooltip += $"{equipmentType} (Level {requiredLevel})\n";
-        tooltip += "\n";
+        tooltip += $"{equipmentType} (Level {requiredLevel})\n\n";
         foreach (var stat in AllStats) tooltip += stat.ToString() + "\n";
         if (!string.IsNullOrEmpty(description)) tooltip += "\n" + description;
         return tooltip;

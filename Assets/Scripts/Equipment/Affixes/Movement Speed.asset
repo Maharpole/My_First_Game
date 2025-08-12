@@ -13,11 +13,16 @@ MonoBehaviour:
   m_Name: Movement Speed
   m_EditorClassIdentifier: 
   affixId: 
-  displayName: 
-  modGroup: 
-  isPrefix: 0
+  displayName: Movement Speed
+  modGroup: Movement Speed
+  isPrefix: 1
   allowedSlots: 
   statType: 12
   isPercentage: 1
-  tiers: []
+  tiers:
+  - tierName: T1
+    minItemLevel: 10
+    minValue: 30
+    maxValue: 0
+    weight: 1
   weight: 100

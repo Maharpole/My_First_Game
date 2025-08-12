@@ -26,14 +26,7 @@ public class Player : MonoBehaviour
     [Header("== CURRENCY ==")]
     [SerializeField] private int coins = 0;
     
-    [Header("== EQUIPMENT ==")]
-    public EquipmentSlot helmet = new EquipmentSlot(EquipmentType.Helmet, "Helmet");
-    public EquipmentSlot amulet = new EquipmentSlot(EquipmentType.Amulet, "Amulet");
-    public EquipmentSlot gloves = new EquipmentSlot(EquipmentType.Gloves, "Gloves");
-    public EquipmentSlot ringLeft = new EquipmentSlot(EquipmentType.RingLeft, "Ring (L)");
-    public EquipmentSlot ringRight = new EquipmentSlot(EquipmentType.RingRight, "Ring (R)");
-    public EquipmentSlot boots = new EquipmentSlot(EquipmentType.Boots, "Boots");
-    public EquipmentSlot belt = new EquipmentSlot(EquipmentType.Belt, "Belt");
+    // Equipment is managed by CharacterEquipment component on the same GameObject.
     
     [Header("== VISUAL EFFECTS ==")]
     public Color damageColor = Color.red;
@@ -63,7 +56,7 @@ public class Player : MonoBehaviour
     private Color originalColor;
     private AudioSource audioSource;
     private bool isFlashing = false;
-    private Dictionary<EquipmentType, EquipmentSlot> equipmentSlots;
+    private CharacterEquipment characterEquipment;
     
     // Properties
     public int CurrentHealth => currentHealth;
@@ -96,23 +89,11 @@ public class Player : MonoBehaviour
         // Initialize health
         currentHealth = maxHealth;
         
-        // Initialize equipment slots
-        equipmentSlots = new Dictionary<EquipmentType, EquipmentSlot>
+        // Hook up character equipment events
+        characterEquipment = GetComponent<CharacterEquipment>();
+        if (characterEquipment != null)
         {
-            { EquipmentType.Helmet, helmet },
-            { EquipmentType.Amulet, amulet },
-            { EquipmentType.Gloves, gloves },
-            { EquipmentType.RingLeft, ringLeft },
-            { EquipmentType.RingRight, ringRight },
-            { EquipmentType.Boots, boots },
-            { EquipmentType.Belt, belt }
-        };
-        
-        // Subscribe to equipment events
-        foreach (var slot in equipmentSlots.Values)
-        {
-            slot.onItemEquipped.AddListener(OnEquipmentChanged);
-            slot.onItemUnequipped.AddListener(OnEquipmentChanged);
+            characterEquipment.onEquipmentChanged.AddListener(HandleEquipmentChanged);
         }
         
         // Initialize components
@@ -354,60 +335,32 @@ public class Player : MonoBehaviour
     public bool TryEquip(EquipmentData item)
     {
         if (item == null) return false;
-        
-        // Special handling for rings
-        if (item.equipmentType == EquipmentType.RingLeft || item.equipmentType == EquipmentType.RingRight)
-        {
-            if (ringLeft.IsEmpty) return ringLeft.TryEquip(item);
-            if (ringRight.IsEmpty) return ringRight.TryEquip(item);
-            return ringLeft.TryEquip(item); // Replace left ring
-        }
-        
-        // Normal equipment
-        if (equipmentSlots.TryGetValue(item.equipmentType, out EquipmentSlot slot))
-        {
-            return slot.TryEquip(item);
-        }
-        
-        return false;
+        if (characterEquipment == null) characterEquipment = GetComponent<CharacterEquipment>();
+        return characterEquipment != null && characterEquipment.TryEquip(item);
     }
     
     public EquipmentData UnequipSlot(EquipmentType slotType)
     {
-        if (equipmentSlots.TryGetValue(slotType, out EquipmentSlot slot))
-        {
-            return slot.Unequip();
-        }
-        return null;
+        if (characterEquipment == null) characterEquipment = GetComponent<CharacterEquipment>();
+        if (characterEquipment == null) return null;
+        return characterEquipment.UnequipSlot(slotType);
     }
     
     public List<EquipmentData> GetAllEquippedItems()
     {
-        var items = new List<EquipmentData>();
-        foreach (var slot in equipmentSlots.Values)
-        {
-            if (slot.HasItem)
-            {
-                items.Add(slot.EquippedItem);
-            }
-        }
-        return items;
+        if (characterEquipment == null) characterEquipment = GetComponent<CharacterEquipment>();
+        return characterEquipment != null ? characterEquipment.GetAllEquippedItems() : new List<EquipmentData>();
     }
     
     public List<StatModifier> GetAllStatModifiers()
     {
-        var allModifiers = new List<StatModifier>();
-        foreach (var item in GetAllEquippedItems())
-        {
-            allModifiers.AddRange(item.AllStats);
-        }
-        return allModifiers;
+        if (characterEquipment == null) characterEquipment = GetComponent<CharacterEquipment>();
+        return characterEquipment != null ? characterEquipment.GetAllStatModifiers() : new List<StatModifier>();
     }
     
-    void OnEquipmentChanged(EquipmentData item)
+    void HandleEquipmentChanged()
     {
         onEquipmentChanged?.Invoke();
-        Debug.Log($"Equipment changed: {item.equipmentName}");
     }
     #endregion
     
@@ -419,13 +372,7 @@ public class Player : MonoBehaviour
         Debug.Log($"Health: {currentHealth}/{maxHealth}");
         Debug.Log($"Coins: {coins}");
         Debug.Log($"Dash Charges: {currentDashCharges}/{maxDashCharges}");
-        Debug.Log($"Equipment: {GetAllEquippedItems().Count}/7 slots filled");
-        
-        foreach (var slot in equipmentSlots.Values)
-        {
-            string status = slot.HasItem ? slot.EquippedItem.equipmentName : "Empty";
-            Debug.Log($"  {slot.slotName}: {status}");
-        }
+        Debug.Log($"Equipped Items: {GetAllEquippedItems().Count}");
     }
     #endregion
 }

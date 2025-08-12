@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   worldBounds:
     m_Center: {x: 0, y: 0, z: 0}
-    m_Extent: {x: 50, y: 0, z: 50}
+    m_Extent: {x: 100, y: 0, z: 100}
   groundMask:
     serializedVersion: 2
     m_Bits: 0

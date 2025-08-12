@@ -12,7 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ea0a050f82176d944af4119052412203, type: 3}
   m_Name: SpawnTable
   m_EditorClassIdentifier: 
-  mobs: []
+  mobs:
+  - mobType: {fileID: 11400000, guid: ab00b44a9e9b0d64e99dd28d5b33434f, type: 2}
+    weight: 1
   modifiers: []
   minModifiers: 0
   maxModifiers: 2

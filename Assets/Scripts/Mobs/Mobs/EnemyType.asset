@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 85d1b37ce54dff44984d48c2c763fd2c, type: 3}
   m_Name: EnemyType
   m_EditorClassIdentifier: 
-  enemyName: 
-  prefab: {fileID: 0}
+  enemyName: Goblin
+  prefab: {fileID: 8757707649924228711, guid: e702cd0b219d6ee4fadca17cd03f2ab4, type: 3}
   moveSpeedOverride: -1
   maxHealthOverride: -1

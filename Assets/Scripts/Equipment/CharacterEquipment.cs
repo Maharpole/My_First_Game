@@ -7,10 +7,11 @@ public class CharacterEquipment : MonoBehaviour
 {
     [Header("Equipment Slots")]
     public EquipmentSlot helmet = new EquipmentSlot(EquipmentType.Helmet, "Helmet");
+    public EquipmentSlot bodyArmour = new EquipmentSlot(EquipmentType.BodyArmour, "Body Armour");
     public EquipmentSlot amulet = new EquipmentSlot(EquipmentType.Amulet, "Amulet");
     public EquipmentSlot gloves = new EquipmentSlot(EquipmentType.Gloves, "Gloves");
-    public EquipmentSlot ringLeft = new EquipmentSlot(EquipmentType.RingLeft, "Ring (L)");
-    public EquipmentSlot ringRight = new EquipmentSlot(EquipmentType.RingRight, "Ring (R)");
+    public EquipmentSlot ring1 = new EquipmentSlot(EquipmentType.Ring, "Ring 1");
+    public EquipmentSlot ring2 = new EquipmentSlot(EquipmentType.Ring, "Ring 2");
     public EquipmentSlot boots = new EquipmentSlot(EquipmentType.Boots, "Boots");
     public EquipmentSlot belt = new EquipmentSlot(EquipmentType.Belt, "Belt");
     public EquipmentSlot mainHand = new EquipmentSlot(EquipmentType.MainHand, "Main Hand");
@@ -31,10 +32,10 @@ public class CharacterEquipment : MonoBehaviour
         slotMap = new Dictionary<EquipmentType, EquipmentSlot>
         {
             { EquipmentType.Helmet, helmet },
+            { EquipmentType.BodyArmour, bodyArmour },
             { EquipmentType.Amulet, amulet },
             { EquipmentType.Gloves, gloves },
-            { EquipmentType.RingLeft, ringLeft },
-            { EquipmentType.RingRight, ringRight },
+            { EquipmentType.Ring, ring1 }, // default accessor maps to ring1
             { EquipmentType.Boots, boots },
             { EquipmentType.Belt, belt },
             { EquipmentType.MainHand, mainHand },
@@ -52,22 +53,20 @@ public class CharacterEquipment : MonoBehaviour
     {
         if (item == null) return false;
 
-        // Rings auto-fit left then right
-        if (item.equipmentType == EquipmentType.RingLeft || item.equipmentType == EquipmentType.RingRight)
+        if (item.equipmentType == EquipmentType.Ring)
         {
-            if (ringLeft.IsEmpty && ringLeft.TryEquip(item)) return true;
-            if (ringRight.IsEmpty && ringRight.TryEquip(item)) return true;
-            return ringLeft.TryEquip(item);
+            if (ring1.IsEmpty && ring1.TryEquip(item)) return true;
+            if (ring2.IsEmpty && ring2.TryEquip(item)) return true;
+            return ring1.TryEquip(item);
         }
 
-        // Hand logic
         if (item.isWeapon || item.equipmentType == EquipmentType.OffHand)
         {
             return TryEquipHand(item);
         }
 
-        // Other explicit slots
-        if (slotMap.TryGetValue(item.equipmentType, out EquipmentSlot slot))
+        var slot = GetSlot(item.equipmentType);
+        if (slot != null)
         {
             return slot.TryEquip(item);
         }
@@ -76,29 +75,79 @@ public class CharacterEquipment : MonoBehaviour
         return false;
     }
 
+    // Used by inventory click-to-equip so caller can put swapped item back into inventory
+    public bool TryEquipFromInventory(EquipmentData item, out EquipmentData swapped)
+    {
+        swapped = null;
+        if (item == null) return false;
+
+        if (item.equipmentType == EquipmentType.Ring)
+        {
+            if (ring1.IsEmpty) return ring1.TryEquip(item);
+            if (ring2.IsEmpty) return ring2.TryEquip(item);
+            return ring1.TryEquipWithSwap(item, out swapped);
+        }
+
+        if (item.isWeapon || item.equipmentType == EquipmentType.OffHand)
+        {
+            // For now, perform standard hand logic; swapped main-hand item (if any) is returned
+            if (item.isWeapon && (item.handUsage == HandUsage.TwoHand || item.occupiesBothHands))
+            {
+                if (mainHand.HasItem) swapped = mainHand.Unequip();
+                if (offHand.HasItem) offHand.Unequip();
+                return mainHand.TryEquip(item);
+            }
+
+            if (item.isWeapon)
+            {
+                if (mainHand.HasItem && mainHand.EquippedItem != null && (mainHand.EquippedItem.occupiesBothHands || mainHand.EquippedItem.handUsage == HandUsage.TwoHand))
+                {
+                    swapped = mainHand.Unequip();
+                }
+                else if (mainHand.HasItem)
+                {
+                    swapped = mainHand.Unequip();
+                }
+                return mainHand.TryEquip(item);
+            }
+            else
+            {
+                if (mainHand.HasItem && mainHand.EquippedItem != null && (mainHand.EquippedItem.occupiesBothHands || mainHand.EquippedItem.handUsage == HandUsage.TwoHand))
+                {
+                    // cannot equip offhand; no change
+                    return false;
+                }
+                if (offHand.HasItem) swapped = offHand.Unequip();
+                return offHand.TryEquip(item);
+            }
+        }
+
+        var slot = GetSlot(item.equipmentType);
+        if (slot != null)
+        {
+            return slot.TryEquipWithSwap(item, out swapped);
+        }
+        return false;
+    }
+
     bool TryEquipHand(EquipmentData item)
     {
-        // Two-hand weapon: place in main hand, clear offhand
         if (item.isWeapon && (item.handUsage == HandUsage.TwoHand || item.occupiesBothHands))
         {
-            // Unequip offhand if present
             if (offHand.HasItem) offHand.Unequip();
             return mainHand.TryEquip(item);
         }
 
-        // One-hand weapon vs offhand
         if (item.isWeapon)
         {
-            // Prefer main hand; if occupied by two-hand, clear it
             if (mainHand.HasItem && mainHand.EquippedItem != null && (mainHand.EquippedItem.occupiesBothHands || mainHand.EquippedItem.handUsage == HandUsage.TwoHand))
             {
                 mainHand.Unequip();
             }
             return mainHand.TryEquip(item);
         }
-        else // item is an offhand (shield/quiver/focus)
+        else
         {
-            // Cannot equip offhand if main hand has a two-hand weapon
             if (mainHand.HasItem && mainHand.EquippedItem != null && (mainHand.EquippedItem.occupiesBothHands || mainHand.EquippedItem.handUsage == HandUsage.TwoHand))
             {
                 Debug.LogWarning("Cannot equip offhand with a two-hand weapon equipped.");
@@ -110,22 +159,45 @@ public class CharacterEquipment : MonoBehaviour
 
     public EquipmentData UnequipSlot(EquipmentType slotType)
     {
-        if (slotMap.TryGetValue(slotType, out EquipmentSlot slot))
+        if (slotType == EquipmentType.Ring)
         {
-            return slot.Unequip();
+            // Prefer unequipping ring1; if empty, unequip ring2
+            if (!ring1.IsEmpty) return ring1.Unequip();
+            if (!ring2.IsEmpty) return ring2.Unequip();
+            return null;
         }
-        return null;
+        var slot = GetSlot(slotType);
+        return slot != null ? slot.Unequip() : null;
     }
 
     public EquipmentSlot GetSlot(EquipmentType slotType)
     {
-        slotMap.TryGetValue(slotType, out EquipmentSlot slot);
-        return slot;
+        // Resilient mapping even if slotMap is not initialized yet
+        switch (slotType)
+        {
+            case EquipmentType.Helmet: return helmet;
+            case EquipmentType.BodyArmour: return bodyArmour;
+            case EquipmentType.Amulet: return amulet;
+            case EquipmentType.Gloves: return gloves;
+            case EquipmentType.Ring: return ring1; // default
+            case EquipmentType.Boots: return boots;
+            case EquipmentType.Belt: return belt;
+            case EquipmentType.MainHand: return mainHand;
+            case EquipmentType.OffHand: return offHand;
+            default:
+                if (slotMap != null && slotMap.TryGetValue(slotType, out var slot)) return slot;
+                return null;
+        }
     }
 
     public List<EquipmentData> GetAllEquippedItems()
     {
-        return slotMap.Values.Where(s => s.HasItem).Select(s => s.EquippedItem).ToList();
+        var list = new List<EquipmentData>();
+        foreach (var s in new[] { helmet, bodyArmour, amulet, gloves, ring1, ring2, boots, belt, mainHand, offHand })
+        {
+            if (s.HasItem) list.Add(s.EquippedItem);
+        }
+        return list;
     }
 
     public List<StatModifier> GetAllStatModifiers()
@@ -135,36 +207,20 @@ public class CharacterEquipment : MonoBehaviour
         return all;
     }
 
-    public bool HasItemEquipped(EquipmentData item)
-    {
-        return GetAllEquippedItems().Contains(item);
-    }
+    public bool HasItemEquipped(EquipmentData item) => GetAllEquippedItems().Contains(item);
+    public int GetEquippedItemCount() => GetAllEquippedItems().Count;
 
-    public int GetEquippedItemCount()
-    {
-        return GetAllEquippedItems().Count;
-    }
-
-    private void OnItemEquipped(EquipmentData item)
-    {
-        onEquipmentChanged?.Invoke();
-    }
-
-    private void OnItemUnequipped(EquipmentData item)
-    {
-        onEquipmentChanged?.Invoke();
-    }
+    private void OnItemEquipped(EquipmentData item) => onEquipmentChanged?.Invoke();
+    private void OnItemUnequipped(EquipmentData item) => onEquipmentChanged?.Invoke();
 
     [ContextMenu("Print Equipment Status")]
     public void PrintEquipmentStatus()
     {
         Debug.Log("=== EQUIPMENT STATUS ===");
-        foreach (var kvp in slotMap)
+        foreach (var s in new[] { helmet, bodyArmour, amulet, gloves, ring1, ring2, boots, belt, mainHand, offHand })
         {
-            var slot = kvp.Value;
-            string status = slot.HasItem ? slot.EquippedItem.equipmentName : "Empty";
-            Debug.Log($"{slot.slotName}: {status}");
+            string status = s.HasItem ? s.EquippedItem.equipmentName : "Empty";
+            Debug.Log($"{s.slotName}: {status}");
         }
-        Debug.Log($"Total items equipped: {GetEquippedItemCount()}");
     }
 }
