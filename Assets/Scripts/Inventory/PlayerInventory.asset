@@ -13,24 +13,22 @@ MonoBehaviour:
   m_Name: PlayerInventory
   m_EditorClassIdentifier: 
   slots:
+  - {fileID: 11400000, guid: 1c8f168bd16fcdb42b0a1b6686982a0a, type: 2}
+  - {fileID: 11400000, guid: 1c8f168bd16fcdb42b0a1b6686982a0a, type: 2}
+  - {fileID: 11400000, guid: 1c8f168bd16fcdb42b0a1b6686982a0a, type: 2}
+  - {fileID: 11400000, guid: 1c8f168bd16fcdb42b0a1b6686982a0a, type: 2}
+  - {fileID: 11400000, guid: 99c2b8e53668fcd43924021cfd241956, type: 2}
+  - {fileID: 11400000, guid: 99c2b8e53668fcd43924021cfd241956, type: 2}
+  - {fileID: 11400000, guid: 99c2b8e53668fcd43924021cfd241956, type: 2}
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
+  - {fileID: 11400000, guid: 99c2b8e53668fcd43924021cfd241956, type: 2}
   - {fileID: 0}
-  - {fileID: 11400000, guid: 7b9c1f148fb2caf41a5063aaad3359b1, type: 2}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 11400000, guid: 7b9c1f148fb2caf41a5063aaad3359b1, type: 2}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+  - {fileID: 11400000, guid: 99c2b8e53668fcd43924021cfd241956, type: 2}
+  - {fileID: 11400000, guid: 1436ae3e6e11e5441a704c789ffa3088, type: 2}
   onChanged:
     m_PersistentCalls:
       m_Calls: []

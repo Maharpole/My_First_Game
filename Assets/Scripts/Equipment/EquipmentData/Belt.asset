@@ -24,8 +24,10 @@ MonoBehaviour:
   handUsage: 0
   allowedOffhands: 0
   occupiesBothHands: 0
-  gridWidth: 2
-  gridHeight: 1
-  baseStats: []
+  weaponProfile: {fileID: 0}
+  baseStats:
+  - statType: 0
+    value: 0
+    isPercentage: 0
   randomAffixes: []
   rarityColor: {r: 1, g: 1, b: 1, a: 1}

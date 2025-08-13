@@ -16,6 +16,11 @@ public class Player : MonoBehaviour
     public float dashDuration = 0.2f;
     public int maxDashCharges = 3;
     public float dashRechargeTime = 5f;
+    [Header("== GROUNDING ==")]
+    public bool projectToGround = true;
+    public LayerMask groundMask;
+    public float groundRayHeight = 2f;
+    public float groundOffset = 0.05f;
     
     [Header("== HEALTH & COMBAT ==")]
     public int maxHealth = 100;
@@ -49,6 +54,7 @@ public class Player : MonoBehaviour
     // Private fields
     private bool isDashing = false;
     private float dashTime = 0f;
+    private Vector3 dashDirection = Vector3.zero;
     private int currentDashCharges;
     private float rechargeTimer = 0f;
     private Dictionary<GameObject, float> damageCooldowns = new Dictionary<GameObject, float>();
@@ -122,6 +128,10 @@ public class Player : MonoBehaviour
     void Update()
     {
         HandleMovement();
+        if (projectToGround)
+        {
+            ProjectDownToGround();
+        }
         UpdateDashCharges();
         UpdateDamageCooldowns();
     }
@@ -131,10 +141,16 @@ public class Player : MonoBehaviour
     {
         if (isDashing)
         {
+            // Move in dash direction every frame during dash
+            if (dashDirection.sqrMagnitude > 0.0001f)
+            {
+                transform.Translate(dashDirection * dashSpeed * Time.deltaTime, Space.World);
+            }
             dashTime += Time.deltaTime;
             if (dashTime >= dashDuration)
             {
                 isDashing = false;
+                dashDirection = Vector3.zero;
                 if (dashParticles != null)
                 {
                     var emission = dashParticles.emission;
@@ -167,9 +183,7 @@ public class Player : MonoBehaviour
         isDashing = true;
         dashTime = 0f;
         currentDashCharges--;
-        
-        // Move player
-        transform.Translate(direction * dashSpeed * Time.deltaTime);
+        dashDirection = direction.normalized;
         
         // Play sound
         if (dashSounds.Length > 0)
@@ -183,6 +197,16 @@ public class Player : MonoBehaviour
         {
             var emission = dashParticles.emission;
             emission.enabled = true;
+        }
+    }
+
+    void ProjectDownToGround()
+    {
+        Vector3 origin = transform.position + Vector3.up * groundRayHeight;
+        if (Physics.Raycast(origin, Vector3.down, out var hit, groundRayHeight * 2f, groundMask))
+        {
+            Vector3 target = hit.point + Vector3.up * groundOffset;
+            transform.position = new Vector3(transform.position.x, target.y, transform.position.z);
         }
     }
     

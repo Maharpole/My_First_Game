@@ -8,10 +8,12 @@ public class CoinFloatingText : MonoBehaviour
     public float floatSpeed = 1f;
     public float fadeOutTime = 1f;
     public Color textColor = Color.yellow;
+    [Tooltip("Pixel offset upward from the spawn point")] public float verticalOffset = 50f;
     
     private float currentTime = 0f;
-    private Vector3 startPosition;
-    private Vector3 targetPosition;
+    private RectTransform rectTransform;
+    private Vector2 startAnchored;
+    private Vector2 targetAnchored;
 
     private void Start()
     {
@@ -19,9 +21,12 @@ public class CoinFloatingText : MonoBehaviour
         {
             textComponent = GetComponent<TextMeshProUGUI>();
         }
-        
-        startPosition = transform.position;
-        targetPosition = startPosition + Vector3.up * 50f; // Move up 50 pixels
+        rectTransform = GetComponent<RectTransform>();
+        if (rectTransform != null)
+        {
+            startAnchored = rectTransform.anchoredPosition;
+            targetAnchored = startAnchored + new Vector2(0f, verticalOffset);
+        }
         textComponent.color = textColor;
     }
 
@@ -29,8 +34,11 @@ public class CoinFloatingText : MonoBehaviour
     {
         currentTime += Time.deltaTime;
         
-        // Move upward
-        transform.position = Vector3.Lerp(startPosition, targetPosition, currentTime / fadeOutTime);
+        // Move upward in UI space
+        if (rectTransform != null)
+        {
+            rectTransform.anchoredPosition = Vector2.Lerp(startAnchored, targetAnchored, currentTime / fadeOutTime);
+        }
         
         // Fade out
         float alpha = Mathf.Lerp(1f, 0f, currentTime / fadeOutTime);

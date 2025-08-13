@@ -18,7 +18,7 @@ MonoBehaviour:
   isPrefix: 1
   allowedSlots: 
   statType: 12
-  isPercentage: 1
+  isPercentage: 0
   tiers:
   - tierName: T1
     minItemLevel: 10

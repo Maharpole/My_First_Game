@@ -83,7 +83,7 @@ public class Coin : MonoBehaviour
             {
                 Debug.LogError("Player has no collider!");
             }
-            Debug.Log("Player found successfully");
+            //Debug.Log("Player found successfully");
         }
         else
         {
@@ -175,18 +175,22 @@ public class Coin : MonoBehaviour
             Camera mainCamera = Camera.main;
             if (mainCamera != null)
             {
-                // Convert world position to screen position
-                Vector3 screenPos = mainCamera.WorldToScreenPoint(transform.position);
-                
-                // Create the floating text at the screen position
-                GameObject floatingTextObj = Instantiate(floatingTextPrefab, screenPos, Quaternion.identity);
-                
-                // Make sure it's a child of the Canvas
+                // Find canvas and convert to local UI position
                 Canvas canvas = GameObject.FindObjectOfType<Canvas>();
                 if (canvas != null)
                 {
+                    // Convert world to screen, then to canvas local point
+                    Vector3 screenPos = mainCamera.WorldToScreenPoint(transform.position);
+                    RectTransform canvasRect = canvas.GetComponent<RectTransform>();
+                    Vector2 localPoint;
+                    RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, screenPos, canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera, out localPoint);
+
+                    // Instantiate under canvas and set anchored position
+                    GameObject floatingTextObj = Instantiate(floatingTextPrefab);
                     floatingTextObj.transform.SetParent(canvas.transform, false);
-                    
+                    var ftRT = floatingTextObj.GetComponent<RectTransform>();
+                    if (ftRT != null) ftRT.anchoredPosition = localPoint;
+
                     // Set the amount using the coin's value
                     CoinFloatingText floatingText = floatingTextObj.GetComponent<CoinFloatingText>();
                     if (floatingText != null)

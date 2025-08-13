@@ -24,6 +24,14 @@ public class EquipmentData : ScriptableObject
     [Tooltip("If this equipment is a weapon, link the WeaponData profile to configure AutoShooter.")]
     public WeaponData weaponProfile;
 
+	[Header("Visual Prefabs")]
+	[Tooltip("Optional: prefab to represent this item when dropped in the world. If not set, uses modelPrefab.")]
+	public GameObject dropModelPrefab;
+	[Tooltip("Optional: use a raw Mesh for the world drop visual (no prefab required). If set, a MeshFilter/MeshRenderer will be created at runtime.")]
+	public Mesh dropMesh;
+	[Tooltip("Material used with dropMesh. If not assigned, will try to reuse the base item's material or default material.")]
+	public Material dropMeshMaterial;
+
     // Inventory grid sizing removed (we use fixed slots UI now)
 
     [Header("Base Statistics")]

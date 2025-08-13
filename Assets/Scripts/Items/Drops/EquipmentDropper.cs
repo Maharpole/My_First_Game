@@ -19,6 +19,24 @@ public class EquipmentDropper : MonoBehaviour
     public int minSuffixes = 0;
     public int maxSuffixes = 3;
 
+    void Start()
+    {
+        var health = GetComponent<EnemyHealth>();
+        if (health != null)
+        {
+            health.onDeath.AddListener(Drop);
+        }
+    }
+
+    void OnDestroy()
+    {
+        var health = GetComponent<EnemyHealth>();
+        if (health != null)
+        {
+            health.onDeath.RemoveListener(Drop);
+        }
+    }
+
     public void Drop()
     {
         if (possibleBases == null || possibleBases.Length == 0) return;
@@ -45,5 +63,6 @@ public class EquipmentDropper : MonoBehaviour
         {
             runtime.generated = generated;
         }
+        Debug.Log($"[EquipmentDropper] Dropped {generated.baseEquipment?.equipmentName} (ilvl {ilvl}) with {generated.prefixes.Count} prefixes / {generated.suffixes.Count} suffixes");
     }
 }

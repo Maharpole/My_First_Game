@@ -61,6 +61,22 @@ public class EnemyHealth : MonoBehaviour
         
         // Trigger damage event
         onDamage.Invoke();
+        // Notify pack aggro if present
+        var group = GetComponentInParent<AggroGroup>();
+        if (group != null)
+        {
+            group.OnMemberDamaged();
+        }
+        else
+        {
+            // Fallback: if no group, aggro this enemy toward the player
+            var controller = GetComponent<EnemyController>();
+            var player = FindObjectOfType<Player>();
+            if (controller != null && player != null)
+            {
+                controller.ForceAggro(player.transform);
+            }
+        }
         
         // Flash red
         StartCoroutine(FlashColor(damageColor));
@@ -103,6 +119,12 @@ public class EnemyHealth : MonoBehaviour
     {
         // Trigger death event
         onDeath.Invoke();
+        // Also notify aggro group to avoid lingering idle
+        var group = GetComponentInParent<AggroGroup>();
+        if (group != null)
+        {
+            group.OnMemberDamaged();
+        }
         
         // Play death particles if available
         if (deathParticles != null)

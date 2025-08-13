@@ -151,6 +151,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   moveSpeed: 3
+  startAggro: 0
 --- !u!114 &-1080064559492507165
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -225,12 +226,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5ed0d2c1af7aa0943bddfbf2bd715b5b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  possibleBases: []
+  possibleBases:
+  - {fileID: 11400000, guid: 523448a37f7ac15489183d88f5281493, type: 2}
   affixDatabase: {fileID: 11400000, guid: 587a9f723a7bc654a963569d9e61d0be, type: 2}
-  dropChance: 0.35
+  dropChance: 1
   minItemLevel: 1
   maxItemLevel: 20
-  pickupPrefab: {fileID: 0}
+  pickupPrefab: {fileID: 7460202890058008193, guid: 763cec4231a8d2241a76d9d07ec1a449, type: 3}
   dropSpread: 1.5
   minPrefixes: 0
   maxPrefixes: 3

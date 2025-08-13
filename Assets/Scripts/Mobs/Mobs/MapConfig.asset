@@ -17,8 +17,8 @@ MonoBehaviour:
     m_Extent: {x: 100, y: 0, z: 100}
   groundMask:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 512
   minPacks: 10
   maxPacks: 20
   minPackSpacing: 8
-  seed: 12345
+  seed: 512

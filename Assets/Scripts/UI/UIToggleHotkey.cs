@@ -13,6 +13,7 @@ public class UIToggleHotkey : MonoBehaviour
     [Header("Input (New Input System)")]
     [Tooltip("Action that triggers the toggle (performed callback). Bind this in your .inputactions (e.g., key C).")]
     public InputActionReference toggleAction;
+    private Input_Control _actions; // fallback if toggleAction is not wired in the scene
 #else
     [Header("Input (Legacy)")]
     [Tooltip("Legacy fallback hotkey when New Input System is not enabled")] public KeyCode legacyKey = KeyCode.C;
@@ -32,6 +33,13 @@ public class UIToggleHotkey : MonoBehaviour
             toggleAction.action.performed += OnToggle;
             toggleAction.action.Enable();
         }
+        else
+        {
+            // Fallback: auto-bind to generated Input_Control UI.ToggleInventory so hotkey works without manual wiring
+            _actions = new Input_Control();
+            _actions.Enable();
+            _actions.UI.ToggleInventory.performed += OnToggle;
+        }
 #endif
         if (openOnStart) SetActive(true);
     }
@@ -43,6 +51,12 @@ public class UIToggleHotkey : MonoBehaviour
         {
             toggleAction.action.performed -= OnToggle;
             toggleAction.action.Disable();
+        }
+        else if (_actions != null)
+        {
+            _actions.UI.ToggleInventory.performed -= OnToggle;
+            _actions.Dispose();
+            _actions = null;
         }
 #endif
     }
