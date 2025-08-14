@@ -13,19 +13,19 @@ MonoBehaviour:
   m_Name: PlayerInventory
   m_EditorClassIdentifier: 
   slots:
-  - {fileID: 11400000, guid: 1c8f168bd16fcdb42b0a1b6686982a0a, type: 2}
-  - {fileID: 11400000, guid: 1c8f168bd16fcdb42b0a1b6686982a0a, type: 2}
-  - {fileID: 11400000, guid: 1c8f168bd16fcdb42b0a1b6686982a0a, type: 2}
-  - {fileID: 11400000, guid: 1c8f168bd16fcdb42b0a1b6686982a0a, type: 2}
-  - {fileID: 11400000, guid: 99c2b8e53668fcd43924021cfd241956, type: 2}
-  - {fileID: 11400000, guid: 99c2b8e53668fcd43924021cfd241956, type: 2}
-  - {fileID: 11400000, guid: 99c2b8e53668fcd43924021cfd241956, type: 2}
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
-  - {fileID: 11400000, guid: 99c2b8e53668fcd43924021cfd241956, type: 2}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 11400000, guid: 4688a353101f8fd4d842cebf2804a51b, type: 2}
   - {fileID: 0}
   - {fileID: 11400000, guid: 99c2b8e53668fcd43924021cfd241956, type: 2}
   - {fileID: 11400000, guid: 1436ae3e6e11e5441a704c789ffa3088, type: 2}

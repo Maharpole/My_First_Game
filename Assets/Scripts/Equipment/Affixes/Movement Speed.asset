@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: Movement Speed
   modGroup: Movement Speed
   isPrefix: 1
-  allowedSlots: 
+  allowedSlots: 06000000
   statType: 12
   isPercentage: 0
   tiers:

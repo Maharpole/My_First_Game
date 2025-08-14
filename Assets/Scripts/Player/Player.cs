@@ -63,6 +63,7 @@ public class Player : MonoBehaviour
     private AudioSource audioSource;
     private bool isFlashing = false;
     private CharacterEquipment characterEquipment;
+        private float baseMoveSpeed;
     
     // Properties
     public int CurrentHealth => currentHealth;
@@ -91,6 +92,7 @@ public class Player : MonoBehaviour
     {
         // Initialize movement
         currentDashCharges = maxDashCharges;
+        baseMoveSpeed = moveSpeed; // remember unmodified baseline for stat calculations
         
         // Initialize health
         currentHealth = maxHealth;
@@ -122,6 +124,8 @@ public class Player : MonoBehaviour
             emission.enabled = false;
         }
         
+        // Apply initial stats from any pre-equipped gear
+        RecomputeAndApplyStats();
         Debug.Log("Player initialized successfully!");
     }
     
@@ -384,7 +388,42 @@ public class Player : MonoBehaviour
     
     void HandleEquipmentChanged()
     {
+        RecomputeAndApplyStats();
         onEquipmentChanged?.Invoke();
+    }
+    #endregion
+
+    #region STATS
+    void RecomputeAndApplyStats()
+    {
+        // Start from base values
+        float flatMove = 0f;
+        float pctMove = 0f; // as 0..100
+
+        if (characterEquipment == null) characterEquipment = GetComponent<CharacterEquipment>();
+        if (characterEquipment != null)
+        {
+            var mods = GetAllStatModifiers();
+            for (int i = 0; i < mods.Count; i++)
+            {
+                var m = mods[i];
+                if (m.statType == StatType.MovementSpeed)
+                {
+                    if (m.isPercentage) pctMove += m.value; else flatMove += m.value;
+                }
+            }
+        }
+
+        // Compute movement speed
+        float computedMove = (baseMoveSpeed + flatMove) * (1f + (pctMove / 100f));
+        moveSpeed = Mathf.Max(0.1f, computedMove);
+
+        // If a NavMeshAgent is used for click-to-move, mirror the speed
+        var agent = GetComponent<UnityEngine.AI.NavMeshAgent>();
+        if (agent != null)
+        {
+            agent.speed = moveSpeed;
+        }
     }
     #endregion
     

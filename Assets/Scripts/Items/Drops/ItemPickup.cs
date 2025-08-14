@@ -187,8 +187,9 @@ public class ItemPickup : MonoBehaviour, IPointerClickHandler
     {
         if (nameText != null && Camera.main != null)
         {
-            // Face the camera
-            nameText.transform.rotation = Quaternion.LookRotation(Camera.main.transform.position - nameText.transform.position);
+            // Face the camera (match camera orientation to avoid mirrored/backwards text)
+            var cam = Camera.main.transform;
+            nameText.transform.rotation = Quaternion.LookRotation(cam.forward, cam.up);
         }
     }
 

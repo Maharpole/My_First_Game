@@ -3,7 +3,12 @@ using UnityEngine;
 public class EquipmentDropper : MonoBehaviour
 {
     [Header("Drop Settings")]
+    [Tooltip("Legacy direct list (used if no loot pools provided)")]
     public EquipmentData[] possibleBases;
+    [Header("Loot Pools")]
+    [Tooltip("Global pool any enemy can use")] public LootPool generalPool;
+    [Tooltip("Per-enemy pool to add or replace the general pool")] public LootPool enemySpecificPool;
+    [Tooltip("If true, use only the enemySpecificPool; if false, combine general + specific")] public bool replaceGeneralWithSpecific = false;
     public AffixDatabase affixDatabase;
     [Range(0f, 1f)] public float dropChance = 0.35f;
     public int minItemLevel = 1;
@@ -39,11 +44,50 @@ public class EquipmentDropper : MonoBehaviour
 
     public void Drop()
     {
-        if (possibleBases == null || possibleBases.Length == 0) return;
+        // Resolve base pool
+        EquipmentData baseItem = null;
+        if (generalPool != null || enemySpecificPool != null)
+        {
+            if (replaceGeneralWithSpecific)
+            {
+                baseItem = enemySpecificPool != null ? enemySpecificPool.Pick() : null;
+            }
+            else
+            {
+                // Combine by picking between pools proportional to their total weights
+                var candidates = new System.Collections.Generic.List<(LootPool pool, int total)>();
+                int totalWeight = 0;
+                if (generalPool != null)
+                {
+                    int w = 0; foreach (var e in generalPool.entries) if (e != null && e.baseItem != null) w += Mathf.Max(0, e.weight);
+                    if (w > 0) { candidates.Add((generalPool, w)); totalWeight += w; }
+                }
+                if (enemySpecificPool != null)
+                {
+                    int w = 0; foreach (var e in enemySpecificPool.entries) if (e != null && e.baseItem != null) w += Mathf.Max(0, e.weight);
+                    if (w > 0) { candidates.Add((enemySpecificPool, w)); totalWeight += w; }
+                }
+                if (totalWeight > 0 && candidates.Count > 0)
+                {
+                    int r = Random.Range(0, totalWeight);
+                    int cum = 0;
+                    foreach (var c in candidates)
+                    {
+                        cum += c.total;
+                        if (r < cum) { baseItem = c.pool.Pick(); break; }
+                    }
+                }
+            }
+        }
+
+        if (baseItem == null)
+        {
+            if (possibleBases == null || possibleBases.Length == 0) return;
+            baseItem = possibleBases[Random.Range(0, possibleBases.Length)];
+        }
         if (Random.value > dropChance) return;
         if (pickupPrefab == null || affixDatabase == null) return;
 
-        var baseItem = possibleBases[Random.Range(0, possibleBases.Length)];
         int ilvl = Random.Range(minItemLevel, maxItemLevel + 1);
 
         var settings = new ItemGenerator.RollSettings

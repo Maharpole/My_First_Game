@@ -73,6 +73,14 @@ public class SimpleInventoryUI : MonoBehaviour
             dst.inventory = inventoryData;
             dst.slotIndex = idx;
             dst.onChanged = () => Refresh();
+            // Click-to-select for details panel (does not equip)
+            var selector = go.AddComponent<UIInventorySlotSelector>();
+            selector.inventory = inventoryData;
+            selector.slotIndex = idx;
+            // Hover tooltip
+            var hover = go.AddComponent<UIInventorySlotHover>();
+            hover.inventory = inventoryData;
+            hover.slotIndex = idx;
             // Ensure each slot has a CanvasGroup for non-destructive visual fading if needed
             if (go.GetComponent<CanvasGroup>() == null) go.AddComponent<CanvasGroup>();
             if (InventoryUILogging.Enabled) Debug.Log($"[InvUI] Built slot {idx}. icon={(iconImg!=null)} btn={(btn!=null)}");
@@ -291,7 +299,7 @@ public class UIDragSourceSlot : MonoBehaviour, IBeginDragHandler, IDragHandler, 
             {
                 var item = inventory.Get(slotIndex);
                 if (InventoryUILogging.Enabled) Debug.Log($"[Drag] Drop over equipment slot {equipSlot.slotType} (secondRing={equipSlot.useSecondRing}) item={(item!=null?item.equipmentName:"null")} ");
-                if (item != null && equipSlot.TryEquipToSlot(item)) { inventory.Set(slotIndex, null); placed = true; break; }
+                if (item != null && equipSlot.TryEquipToSlot(item)) { placed = true; break; }
             }
         }
 

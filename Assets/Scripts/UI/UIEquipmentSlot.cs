@@ -5,7 +5,7 @@ using UnityEngine.UI;
 using UnityEngine.InputSystem;
 #endif
 
-public class UIEquipmentSlot : MonoBehaviour, IDropHandler, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerDownHandler, IPointerUpHandler
+    public class UIEquipmentSlot : MonoBehaviour, IDropHandler, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerDownHandler, IPointerUpHandler, IPointerEnterHandler, IPointerExitHandler, IPointerMoveHandler
 {
     public EquipmentType slotType;
     public bool useSecondRing = false; // when slotType == Ring, choose ring2 if true
@@ -31,6 +31,7 @@ public class UIEquipmentSlot : MonoBehaviour, IDropHandler, IBeginDragHandler, I
     void Awake()
     {
         if (equipment == null) equipment = FindObjectOfType<CharacterEquipment>();
+        if (inventoryData == null) inventoryData = ResolveInventory();
         EnsureIconRT();
     }
 
@@ -84,6 +85,9 @@ public class UIEquipmentSlot : MonoBehaviour, IDropHandler, IBeginDragHandler, I
     public bool TryEquipToSlot(EquipmentData data)
     {
         if (equipment == null || data == null) return false;
+        // Prefer the inventory that actually contains this data reference
+        var owningInventory = ResolveInventoryContaining(data) ?? inventoryData ?? ResolveInventory();
+        if (owningInventory != null) inventoryData = owningInventory;
         var slot = ResolveSlot();
         if (slot == null || !slot.CanEquip(data)) return false;
 
@@ -119,7 +123,53 @@ public class UIEquipmentSlot : MonoBehaviour, IDropHandler, IBeginDragHandler, I
         }
         if (ok)
         {
-            if (sourceIndex >= 0) inventoryData.Set(sourceIndex, old);
+            bool committed = false;
+            // Return swapped item to the original inventory source slot if known
+            if (sourceIndex >= 0 && inventoryData != null)
+            {
+                if (old != null)
+                {
+                    // Swap case: put old into the source index
+                    inventoryData.Set(sourceIndex, old);
+                    committed = true;
+                }
+                else
+                {
+                    // Target was empty: clear the source index since the item moved to equipment
+                    inventoryData.Set(sourceIndex, null);
+                    committed = true;
+                }
+            }
+            else if (old != null)
+            {
+                // Place into first empty slot as a fallback
+                var inv = inventoryData ?? ResolveInventory();
+                if (inv != null)
+                {
+                    int empty = inv.FindFirstEmpty();
+                    if (empty >= 0)
+                    {
+                        inv.Set(empty, old);
+                        committed = true;
+                    }
+                }
+            }
+
+            // If we couldn't place the swapped item anywhere, rollback to prevent loss
+            if (!committed && old != null)
+            {
+                var newItem = slot.Unequip();
+                if (old != null) slot.TryEquip(old);
+                // If we unequipped the new item, try to restore it back to inventory source (best-effort)
+                var inv = inventoryData ?? ResolveInventory();
+                if (inv != null && newItem != null)
+                {
+                    int empty = inv.FindFirstEmpty();
+                    if (empty >= 0) inv.Set(empty, newItem);
+                }
+                UpdateIcon();
+                return false;
+            }
             UpdateIcon();
             return true;
         }
@@ -129,6 +179,25 @@ public class UIEquipmentSlot : MonoBehaviour, IDropHandler, IBeginDragHandler, I
             UpdateIcon();
             return false;
         }
+    }
+
+    SimpleInventory ResolveInventory()
+    {
+        // Try active UI
+        var ui = Object.FindObjectOfType<SimpleInventoryUI>();
+        if (ui != null && ui.inventoryData != null) return ui.inventoryData;
+#if UNITY_2020_1_OR_NEWER
+        // Include inactive objects
+        var uiAny = Object.FindObjectOfType<SimpleInventoryUI>(true);
+        if (uiAny != null && uiAny.inventoryData != null) return uiAny.inventoryData;
+#endif
+        // Last resort: scan all loaded
+        var allUIs = Resources.FindObjectsOfTypeAll<SimpleInventoryUI>();
+        for (int i = 0; i < allUIs.Length; i++)
+        {
+            if (allUIs[i] != null && allUIs[i].inventoryData != null) return allUIs[i].inventoryData;
+        }
+        return null;
     }
 
     public bool SwapWith(UIEquipmentSlot other)
@@ -211,6 +280,22 @@ public class UIEquipmentSlot : MonoBehaviour, IDropHandler, IBeginDragHandler, I
             CancelDrag();
         }
         didBeginDrag = false;
+    }
+
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        var data = GetCurrentData();
+        if (data != null) UITooltip.ShowEquipment(data, eventData.position);
+    }
+
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        UITooltip.Hide();
+    }
+
+    public void OnPointerMove(PointerEventData eventData)
+    {
+        UITooltip.Move(eventData.position);
     }
 
     void Update()
@@ -438,5 +523,52 @@ public class UIEquipmentSlot : MonoBehaviour, IDropHandler, IBeginDragHandler, I
         didBeginDrag = false;
         CleanupGhostAndRestore();
         Debug.Log($"[EquipDrag] Cancel {slotType}");
+    }
+    // Try to find the inventory asset that actually holds the provided item reference
+    SimpleInventory ResolveInventoryContaining(EquipmentData item)
+    {
+        if (item == null) return null;
+        // Active UIs first
+        var uis = Object.FindObjectsOfType<SimpleInventoryUI>();
+        for (int i = 0; i < uis.Length; i++)
+        {
+            var inv = uis[i].inventoryData;
+            if (inv != null && inv.slots != null)
+            {
+                for (int s = 0; s < inv.slots.Length; s++)
+                {
+                    if (inv.slots[s] == item) return inv;
+                }
+            }
+        }
+#if UNITY_2020_1_OR_NEWER
+        // Include inactive UIs
+        var uisAny = Object.FindObjectsOfType<SimpleInventoryUI>(true);
+        for (int i = 0; i < uisAny.Length; i++)
+        {
+            var inv = uisAny[i].inventoryData;
+            if (inv != null && inv.slots != null)
+            {
+                for (int s = 0; s < inv.slots.Length; s++)
+                {
+                    if (inv.slots[s] == item) return inv;
+                }
+            }
+        }
+#endif
+        // Scan all loaded
+        var allUIs = Resources.FindObjectsOfTypeAll<SimpleInventoryUI>();
+        for (int i = 0; i < allUIs.Length; i++)
+        {
+            var inv = allUIs[i].inventoryData;
+            if (inv != null && inv.slots != null)
+            {
+                for (int s = 0; s < inv.slots.Length; s++)
+                {
+                    if (inv.slots[s] == item) return inv;
+                }
+            }
+        }
+        return null;
     }
 }

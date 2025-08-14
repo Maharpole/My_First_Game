@@ -25,6 +25,9 @@ MonoBehaviour:
   allowedOffhands: 0
   occupiesBothHands: 0
   weaponProfile: {fileID: 11400000, guid: 02e273bf7290c1b4e924379c023b8407, type: 2}
+  dropModelPrefab: {fileID: 0}
+  dropMesh: {fileID: 0}
+  dropMeshMaterial: {fileID: 0}
   baseStats: []
   randomAffixes: []
   rarityColor: {r: 1, g: 1, b: 1, a: 1}
