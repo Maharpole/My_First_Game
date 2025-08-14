@@ -64,6 +64,9 @@ public class Player : MonoBehaviour
     private bool isFlashing = false;
     private CharacterEquipment characterEquipment;
         private float baseMoveSpeed;
+        private int baseMaxHealth;
+        [Header("== STAT SCALARS ==")]
+        [Tooltip("How much max health is granted per 1 point of Vitality")] public int healthPerVitality = 1;
     
     // Properties
     public int CurrentHealth => currentHealth;
@@ -95,6 +98,7 @@ public class Player : MonoBehaviour
         baseMoveSpeed = moveSpeed; // remember unmodified baseline for stat calculations
         
         // Initialize health
+        baseMaxHealth = maxHealth; // remember unmodified baseline for max health
         currentHealth = maxHealth;
         
         // Hook up character equipment events
@@ -155,10 +159,12 @@ public class Player : MonoBehaviour
             {
                 isDashing = false;
                 dashDirection = Vector3.zero;
+                // Stop dash particles after dash ends
                 if (dashParticles != null)
                 {
                     var emission = dashParticles.emission;
                     emission.enabled = false;
+                    dashParticles.Stop(true, ParticleSystemStopBehavior.StopEmitting);
                 }
             }
             return;
@@ -196,11 +202,13 @@ public class Player : MonoBehaviour
             audioSource.PlayOneShot(randomSound, dashVolume);
         }
         
-        // Play particles
+        // Play dash particles
         if (dashParticles != null)
         {
             var emission = dashParticles.emission;
             emission.enabled = true;
+            dashParticles.Clear(true);
+            dashParticles.Play(true);
         }
     }
 
@@ -263,7 +271,7 @@ public class Player : MonoBehaviour
         }
         
         // Camera shake on damage
-        var cameraController = FindObjectOfType<CameraController>();
+        var cameraController = Object.FindFirstObjectByType<CameraController>();
         if (cameraController != null)
         {
             // Simple nudge/shake effect can be added later if desired
@@ -394,11 +402,17 @@ public class Player : MonoBehaviour
     #endregion
 
     #region STATS
-    void RecomputeAndApplyStats()
+    public void RecomputeAndApplyStats()
     {
         // Start from base values
         float flatMove = 0f;
         float pctMove = 0f; // as 0..100
+        float flatDamage = 0f;
+        float pctDamage = 0f;
+        float pctAttackSpeed = 0f;
+        float flatVitality = 0f;
+        float flatHealth = 0f;
+        float pctHealth = 0f;
 
         if (characterEquipment == null) characterEquipment = GetComponent<CharacterEquipment>();
         if (characterEquipment != null)
@@ -410,6 +424,24 @@ public class Player : MonoBehaviour
                 if (m.statType == StatType.MovementSpeed)
                 {
                     if (m.isPercentage) pctMove += m.value; else flatMove += m.value;
+                }
+                else if (m.statType == StatType.Damage)
+                {
+                    if (m.isPercentage) pctDamage += m.value; else flatDamage += m.value;
+                }
+                else if (m.statType == StatType.AttackSpeed)
+                {
+                    // treat as percentage
+                    pctAttackSpeed += m.value;
+                }
+                else if (m.statType == StatType.Vitality)
+                {
+                    // treat vitality as flat points
+                    flatVitality += m.value;
+                }
+                else if (m.statType == StatType.Health)
+                {
+                    if (m.isPercentage) pctHealth += m.value; else flatHealth += m.value;
                 }
             }
         }
@@ -423,6 +455,27 @@ public class Player : MonoBehaviour
         if (agent != null)
         {
             agent.speed = moveSpeed;
+        }
+
+        // Apply combat stats to AutoShooter(s)
+        var shooters = GetComponentsInChildren<AutoShooter>();
+        for (int i = 0; i < shooters.Length; i++)
+        {
+            var s = shooters[i];
+            if (s != null)
+            {
+                s.ApplyStatModifiers(flatDamage, pctDamage, pctAttackSpeed);
+            }
+        }
+
+        // Compute max health from Vitality and Health modifiers
+        int computedMaxHealth = Mathf.Max(1, Mathf.RoundToInt(((baseMaxHealth + flatHealth) + (flatVitality * healthPerVitality)) * (1f + (pctHealth / 100f))));
+        if (computedMaxHealth != maxHealth)
+        {
+            float ratio = maxHealth > 0 ? (float)currentHealth / maxHealth : 1f;
+            maxHealth = computedMaxHealth;
+            currentHealth = Mathf.Clamp(Mathf.RoundToInt(ratio * maxHealth), 1, maxHealth);
+            onHealthChanged?.Invoke(currentHealth);
         }
     }
     #endregion

@@ -54,7 +54,7 @@ public class UITooltip : MonoBehaviour
         textGO.transform.SetParent(rootGO.transform, false);
         _text = textGO.AddComponent<TextMeshProUGUI>();
         _text.richText = true;
-        _text.enableWordWrapping = true;
+        _text.textWrappingMode = TextWrappingModes.Normal;
         _text.fontSize = 20f;
         _text.color = Color.white;
 

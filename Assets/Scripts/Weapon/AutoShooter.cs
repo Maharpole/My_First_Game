@@ -26,6 +26,10 @@ public class AutoShooter : MonoBehaviour
     private float nextFireTime;
     private AudioSource audioSource;
     
+    // Baselines used to apply equipment/stat modifiers deterministically
+    [HideInInspector] public float damageBase;
+    [HideInInspector] public float fireRateBase;
+    
     void Start()
     {
         nextFireTime = Time.time + fireRate;
@@ -65,6 +69,18 @@ public class AutoShooter : MonoBehaviour
         {
             impactEffect = weaponData.impactEffect;
         }
+
+        // Initialize baselines if not set
+        if (weaponData != null)
+        {
+            if (damageBase <= 0f) damageBase = weaponData.baseDamage;
+            if (fireRateBase <= 0f) fireRateBase = weaponData.baseFireRate;
+        }
+        else
+        {
+            if (damageBase <= 0f) damageBase = damage;
+            if (fireRateBase <= 0f) fireRateBase = fireRate;
+        }
     }
     
     void Update()
@@ -87,6 +103,21 @@ public class AutoShooter : MonoBehaviour
                 nextFireTime = Time.time + fireRate;
             }
         }
+    }
+
+    // Called by WeaponAttachController or Player stat pipeline
+    public void SetBaselines(float baseDamage, float baseFireRate)
+    {
+        damageBase = baseDamage;
+        fireRateBase = baseFireRate;
+    }
+
+    // Apply equipment/stat modifiers (flat and percent). Attack speed reduces fire interval.
+    public void ApplyStatModifiers(float flatDamage, float percentDamage, float percentAttackSpeed)
+    {
+        damage = Mathf.Max(0f, (damageBase + flatDamage) * (1f + percentDamage / 100f));
+        float speedMultiplier = Mathf.Max(0.1f, 1f + percentAttackSpeed / 100f);
+        fireRate = Mathf.Max(0.05f, fireRateBase / speedMultiplier);
     }
     
     GameObject FindNearestEnemy()
@@ -152,7 +183,7 @@ public class AutoShooter : MonoBehaviour
             }
             
             // Set bullet's velocity
-            bulletRb.velocity = direction * bulletSpeed;
+            bulletRb.linearVelocity = direction * bulletSpeed;
             
             // Set bullet damage
             Bullet bulletComponent = bullet.GetComponent<Bullet>();

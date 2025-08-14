@@ -148,7 +148,7 @@ public class PauseManager : MonoBehaviour
                 }
                 
                 // Try to find any panel with PauseMenuUI component
-                PauseMenuUI[] pauseMenus = FindObjectsOfType<PauseMenuUI>();
+                PauseMenuUI[] pauseMenus = Object.FindObjectsByType<PauseMenuUI>(FindObjectsSortMode.None);
                 if (pauseMenus.Length > 0)
                 {
                     pauseMenuPanel = pauseMenus[0].gameObject;
@@ -166,7 +166,7 @@ public class PauseManager : MonoBehaviour
                     }
                     
                     // Try to find any panel with PauseMenuRegistrar component
-                    PauseMenuRegistrar[] registrars = FindObjectsOfType<PauseMenuRegistrar>();
+                    PauseMenuRegistrar[] registrars = Object.FindObjectsByType<PauseMenuRegistrar>(FindObjectsSortMode.None);
                     if (registrars.Length > 0)
                     {
                         pauseMenuPanel = registrars[0].gameObject;

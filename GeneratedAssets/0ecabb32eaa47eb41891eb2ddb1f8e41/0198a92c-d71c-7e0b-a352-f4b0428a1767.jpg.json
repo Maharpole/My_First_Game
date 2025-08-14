@@ -1,0 +1,20 @@
+{
+    "asset": "0ecabb32eaa47eb41891eb2ddb1f8e41",
+    "fileName": "0198a92c-d71c-7e0b-a352-f4b0428a1767.jpg",
+    "prompt": "scrappy leather gloves",
+    "negativePrompt": "",
+    "model": "03d5ab0c-51c5-44a0-ba07-822e93561aca",
+    "modelName": "Game Icons",
+    "customSeed": -1,
+    "w3CTraceId": "a9da3b3ef44279f1072656fffc4fd5e3",
+    "refinementMode": "Generation",
+    "pixelateTargetSize": 0,
+    "pixelateKeepImageSize": false,
+    "pixelatePixelBlockSize": 0,
+    "pixelateMode": 0,
+    "pixelateOutlineThickness": 0,
+    "doodles": {
+        "m_Items": []
+    },
+    "upscaleFactor": 0
+}

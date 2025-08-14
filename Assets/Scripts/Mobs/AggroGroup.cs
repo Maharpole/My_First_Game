@@ -22,7 +22,7 @@ public class AggroGroup : MonoBehaviour
 
     void Start()
     {
-        var p = FindObjectOfType<Player>();
+        var p = Object.FindFirstObjectByType<Player>();
         player = p != null ? p.transform : null;
     }
 

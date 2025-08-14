@@ -256,12 +256,12 @@ public class ItemPickup : MonoBehaviour, IPointerClickHandler
     SimpleInventory ResolveInventory()
     {
         // Fast path: active UI present
-        var ui = FindObjectOfType<SimpleInventoryUI>();
+        var ui = Object.FindFirstObjectByType<SimpleInventoryUI>();
         if (ui != null && ui.inventoryData != null) return ui.inventoryData;
 
 #if UNITY_2020_1_OR_NEWER
         // Include inactive objects (panels hidden by UIToggleHotkey)
-        var uiAny = FindObjectOfType<SimpleInventoryUI>(true);
+        var uiAny = Object.FindFirstObjectByType<SimpleInventoryUI>();
         if (uiAny != null && uiAny.inventoryData != null) return uiAny.inventoryData;
 #endif
 

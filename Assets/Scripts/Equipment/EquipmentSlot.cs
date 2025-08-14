@@ -27,6 +27,13 @@ public class EquipmentSlot
         onItemEquipped = new UnityEvent<EquipmentData>();
         onItemUnequipped = new UnityEvent<EquipmentData>();
     }
+
+    // Editor/runtime guard to fix slots serialized with wrong type/name
+    public void EnsureIdentity(EquipmentType type, string name)
+    {
+        slotType = type;
+        slotName = name;
+    }
     
     public bool CanEquip(EquipmentData item)
     {

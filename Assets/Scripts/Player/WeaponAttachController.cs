@@ -82,10 +82,23 @@ public class WeaponAttachController : MonoBehaviour
                     shooter.shootVolume = weaponProfile.shootVolume;
                     shooter.muzzleFlash = weaponProfile.muzzleFlash;
                     shooter.impactEffect = weaponProfile.impactEffect;
+                    shooter.SetBaselines(weaponProfile.baseDamage, weaponProfile.baseFireRate);
+                    // Apply player stats immediately after attaching to avoid one-frame low damage
+                    var player = GetComponent<Player>();
+                    if (player != null)
+                    {
+                        player.RecomputeAndApplyStats();
+                    }
                 }
                 else
                 {
                     Debug.LogWarning("[WeaponAttach] No WeaponData profile found; AutoShooter will use defaults");
+                    shooter.SetBaselines(shooter.damage, shooter.fireRate);
+                    var player = GetComponent<Player>();
+                    if (player != null)
+                    {
+                        player.RecomputeAndApplyStats();
+                    }
                 }
             }
             else

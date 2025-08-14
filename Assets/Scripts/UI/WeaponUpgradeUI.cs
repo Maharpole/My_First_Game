@@ -21,7 +21,7 @@ public class WeaponUpgradeUI : MonoBehaviour
     
     void Start()
     {
-        weaponManager = FindObjectOfType<WeaponManager>();
+        weaponManager = Object.FindFirstObjectByType<WeaponManager>();
         if (weaponManager == null)
         {
             Debug.LogError("WeaponManager not found in the scene!");

@@ -1,0 +1,20 @@
+{
+    "asset": "72322a443a1a5ab419a4bf1341cc0dbd",
+    "fileName": "0198a995-1c27-76ce-ba23-11de3be4960f.jpg",
+    "prompt": "helmet",
+    "negativePrompt": "",
+    "model": "03d5ab0c-51c5-44a0-ba07-822e93561aca",
+    "modelName": "Game Icons",
+    "customSeed": -1,
+    "w3CTraceId": "a03a775eaaa2f3db2d8be031177f819a",
+    "refinementMode": "Generation",
+    "pixelateTargetSize": 0,
+    "pixelateKeepImageSize": false,
+    "pixelatePixelBlockSize": 0,
+    "pixelateMode": 0,
+    "pixelateOutlineThickness": 0,
+    "doodles": {
+        "m_Items": []
+    },
+    "upscaleFactor": 0
+}

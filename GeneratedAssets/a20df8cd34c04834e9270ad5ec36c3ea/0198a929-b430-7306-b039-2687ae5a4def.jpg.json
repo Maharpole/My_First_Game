@@ -1,0 +1,20 @@
+{
+    "asset": "a20df8cd34c04834e9270ad5ec36c3ea",
+    "fileName": "0198a929-b430-7306-b039-2687ae5a4def.jpg",
+    "prompt": "Scrappy leather helmet in low poly style",
+    "negativePrompt": "",
+    "model": "03d5ab0c-51c5-44a0-ba07-822e93561aca",
+    "modelName": "Game Icons",
+    "customSeed": -1,
+    "w3CTraceId": "17e70268dd102898d08ecdfe26dc63e6",
+    "refinementMode": "Generation",
+    "pixelateTargetSize": 0,
+    "pixelateKeepImageSize": false,
+    "pixelatePixelBlockSize": 0,
+    "pixelateMode": 0,
+    "pixelateOutlineThickness": 0,
+    "doodles": {
+        "m_Items": []
+    },
+    "upscaleFactor": 0
+}

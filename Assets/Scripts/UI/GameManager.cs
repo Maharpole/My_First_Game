@@ -48,7 +48,7 @@ public class GameManager : MonoBehaviour
         }
         
         // Find the weapon manager
-        WeaponManager weaponManager = FindObjectOfType<WeaponManager>();
+        WeaponManager weaponManager = Object.FindFirstObjectByType<WeaponManager>();
         
         // Add the musket as the starting weapon (index 0)
         weaponManager.AddWeapon(0);

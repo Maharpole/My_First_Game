@@ -3,7 +3,7 @@
     {
         void Start()
         {
-            var director = FindObjectOfType<MobDirector>();
+            var director = Object.FindFirstObjectByType<MobDirector>();
             if (director != null) director.Generate();
         }
     }

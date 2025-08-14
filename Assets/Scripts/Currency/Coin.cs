@@ -176,7 +176,7 @@ public class Coin : MonoBehaviour
             if (mainCamera != null)
             {
                 // Find canvas and convert to local UI position
-                Canvas canvas = GameObject.FindObjectOfType<Canvas>();
+                Canvas canvas = Object.FindFirstObjectByType<Canvas>();
                 if (canvas != null)
                 {
                     // Convert world to screen, then to canvas local point

@@ -18,7 +18,7 @@ public class UIInventorySlotSelector : MonoBehaviour, IPointerClickHandler
         onSelectionChanged?.Invoke(SelectedItem);
         UpdateHighlight(true);
         // Clear highlight on other selectors
-        var others = FindObjectsOfType<UIInventorySlotSelector>();
+        var others = Object.FindObjectsByType<UIInventorySlotSelector>(FindObjectsSortMode.None);
         for (int i = 0; i < others.Length; i++)
         {
             if (others[i] != this) others[i].UpdateHighlight(false);

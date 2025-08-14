@@ -30,7 +30,7 @@ using UnityEngine.InputSystem;
 
     void Awake()
     {
-        if (equipment == null) equipment = FindObjectOfType<CharacterEquipment>();
+        if (equipment == null) equipment = Object.FindFirstObjectByType<CharacterEquipment>();
         if (inventoryData == null) inventoryData = ResolveInventory();
         EnsureIconRT();
     }
@@ -89,7 +89,16 @@ using UnityEngine.InputSystem;
         var owningInventory = ResolveInventoryContaining(data) ?? inventoryData ?? ResolveInventory();
         if (owningInventory != null) inventoryData = owningInventory;
         var slot = ResolveSlot();
-        if (slot == null || !slot.CanEquip(data)) return false;
+        if (slot == null)
+        {
+            Debug.LogWarning($"[EquipUI] No slot resolved for {slotType}.");
+            return false;
+        }
+        if (!slot.CanEquip(data))
+        {
+            Debug.LogWarning($"[EquipUI] Cannot equip '{data.equipmentName}' of type {data.equipmentType} into slot {slotType}.");
+            return false;
+        }
 
         int sourceIndex = -1;
         if (inventoryData != null && inventoryData.slots != null)
@@ -184,11 +193,11 @@ using UnityEngine.InputSystem;
     SimpleInventory ResolveInventory()
     {
         // Try active UI
-        var ui = Object.FindObjectOfType<SimpleInventoryUI>();
+        var ui = Object.FindFirstObjectByType<SimpleInventoryUI>();
         if (ui != null && ui.inventoryData != null) return ui.inventoryData;
 #if UNITY_2020_1_OR_NEWER
         // Include inactive objects
-        var uiAny = Object.FindObjectOfType<SimpleInventoryUI>(true);
+        var uiAny = Object.FindFirstObjectByType<SimpleInventoryUI>();
         if (uiAny != null && uiAny.inventoryData != null) return uiAny.inventoryData;
 #endif
         // Last resort: scan all loaded
@@ -420,7 +429,7 @@ using UnityEngine.InputSystem;
 
     void EnsureCanvasScalerMatches(Canvas dragCanvas)
     {
-        var refScaler = Object.FindObjectOfType<CanvasScaler>();
+        var refScaler = Object.FindFirstObjectByType<CanvasScaler>();
         if (refScaler == null) return;
         var myScaler = dragCanvas.GetComponent<CanvasScaler>();
         if (myScaler == null) myScaler = dragCanvas.gameObject.AddComponent<CanvasScaler>();
@@ -529,7 +538,7 @@ using UnityEngine.InputSystem;
     {
         if (item == null) return null;
         // Active UIs first
-        var uis = Object.FindObjectsOfType<SimpleInventoryUI>();
+        var uis = Object.FindObjectsByType<SimpleInventoryUI>(FindObjectsSortMode.None);
         for (int i = 0; i < uis.Length; i++)
         {
             var inv = uis[i].inventoryData;
@@ -543,7 +552,7 @@ using UnityEngine.InputSystem;
         }
 #if UNITY_2020_1_OR_NEWER
         // Include inactive UIs
-        var uisAny = Object.FindObjectsOfType<SimpleInventoryUI>(true);
+        var uisAny = Object.FindObjectsByType<SimpleInventoryUI>(FindObjectsSortMode.None);
         for (int i = 0; i < uisAny.Length; i++)
         {
             var inv = uisAny[i].inventoryData;

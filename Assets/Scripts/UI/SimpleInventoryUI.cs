@@ -25,7 +25,7 @@ public class SimpleInventoryUI : MonoBehaviour
 
     void Awake()
     {
-        if (equipment == null) equipment = FindObjectOfType<CharacterEquipment>();
+		if (equipment == null) equipment = Object.FindFirstObjectByType<CharacterEquipment>();
         RebuildGrid();
         if (inventoryData != null) inventoryData.onChanged.AddListener(Refresh);
         Refresh();
@@ -354,8 +354,8 @@ public class UIDragSourceSlot : MonoBehaviour, IBeginDragHandler, IDragHandler, 
 
     void EnsureCanvasScalerMatches(Canvas dragCanvas)
     {
-        // Try to mirror the main UI CanvasScaler so sizing matches
-        var refScaler = FindObjectOfType<CanvasScaler>();
+			// Try to mirror the main UI CanvasScaler so sizing matches
+			var refScaler = Object.FindFirstObjectByType<CanvasScaler>();
         if (refScaler == null) return;
         var myScaler = dragCanvas.GetComponent<CanvasScaler>();
         if (myScaler == null) myScaler = dragCanvas.gameObject.AddComponent<CanvasScaler>();

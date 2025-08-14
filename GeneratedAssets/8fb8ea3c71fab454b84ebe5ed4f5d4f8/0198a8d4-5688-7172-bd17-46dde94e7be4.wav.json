@@ -1,0 +1,13 @@
+{
+    "asset": "8fb8ea3c71fab454b84ebe5ed4f5d4f8",
+    "fileName": "0198a8d4-5688-7172-bd17-46dde94e7be4.wav",
+    "prompt": "the sound of a coin dropping on the ground, oneshot\n",
+    "negativePrompt": "reverb, distorted, bass",
+    "model": "0ee39b33-2893-4e0f-8c46-0e0bdd4eda85",
+    "modelName": "Text to Sound",
+    "customSeed": -1,
+    "w3CTraceId": "178f0cd4dacbe91e6fe97ed7175931d9",
+    "duration": 1.0,
+    "autoTrim": true,
+    "hasReference": false
+}

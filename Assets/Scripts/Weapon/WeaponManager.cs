@@ -85,9 +85,9 @@ public class WeaponManager : MonoBehaviour
         
         // Get player's movement direction from input or velocity
         Rigidbody playerRb = player.GetComponent<Rigidbody>();
-        if (playerRb != null && playerRb.velocity.magnitude > 0.1f)
+        if (playerRb != null && playerRb.linearVelocity.magnitude > 0.1f)
         {
-            playerMovementDirection = playerRb.velocity.normalized;
+            playerMovementDirection = playerRb.linearVelocity.normalized;
         }
         else
         {

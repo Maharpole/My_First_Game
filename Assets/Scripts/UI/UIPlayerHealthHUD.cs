@@ -17,13 +17,13 @@ public class UIPlayerHealthHUD : MonoBehaviour
 
     void Awake()
     {
-        if (player == null) player = Player.Instance ?? FindObjectOfType<Player>();
+        if (player == null) player = Player.Instance ?? Object.FindFirstObjectByType<Player>();
         CacheInitialWidth();
     }
 
     void OnEnable()
     {
-        if (player == null) player = Player.Instance ?? FindObjectOfType<Player>();
+        if (player == null) player = Player.Instance ?? Object.FindFirstObjectByType<Player>();
         if (player != null)
         {
             player.onHealthChanged.AddListener(OnHealthChanged);

@@ -29,6 +29,18 @@ public class CharacterEquipment : MonoBehaviour
 
     void InitializeSlots()
     {
+        // Ensure slot identities are correct even if serialized data is stale
+        if (helmet == null) helmet = new EquipmentSlot(EquipmentType.Helmet, "Helmet"); else { helmet.slotType = EquipmentType.Helmet; helmet.slotName = "Helmet"; }
+        if (bodyArmour == null) bodyArmour = new EquipmentSlot(EquipmentType.BodyArmour, "Body Armour"); else { bodyArmour.slotType = EquipmentType.BodyArmour; bodyArmour.slotName = "Body Armour"; }
+        if (amulet == null) amulet = new EquipmentSlot(EquipmentType.Amulet, "Amulet"); else { amulet.slotType = EquipmentType.Amulet; amulet.slotName = "Amulet"; }
+        if (gloves == null) gloves = new EquipmentSlot(EquipmentType.Gloves, "Gloves"); else { gloves.slotType = EquipmentType.Gloves; gloves.slotName = "Gloves"; }
+        if (ring1 == null) ring1 = new EquipmentSlot(EquipmentType.Ring, "Ring 1"); else { ring1.slotType = EquipmentType.Ring; ring1.slotName = "Ring 1"; }
+        if (ring2 == null) ring2 = new EquipmentSlot(EquipmentType.Ring, "Ring 2"); else { ring2.slotType = EquipmentType.Ring; ring2.slotName = "Ring 2"; }
+        if (boots == null) boots = new EquipmentSlot(EquipmentType.Boots, "Boots"); else { boots.slotType = EquipmentType.Boots; boots.slotName = "Boots"; }
+        if (belt == null) belt = new EquipmentSlot(EquipmentType.Belt, "Belt"); else { belt.slotType = EquipmentType.Belt; belt.slotName = "Belt"; }
+        if (mainHand == null) mainHand = new EquipmentSlot(EquipmentType.MainHand, "Main Hand"); else { mainHand.slotType = EquipmentType.MainHand; mainHand.slotName = "Main Hand"; }
+        if (offHand == null) offHand = new EquipmentSlot(EquipmentType.OffHand, "Off Hand"); else { offHand.slotType = EquipmentType.OffHand; offHand.slotName = "Off Hand"; }
+
         slotMap = new Dictionary<EquipmentType, EquipmentSlot>
         {
             { EquipmentType.Helmet, helmet },

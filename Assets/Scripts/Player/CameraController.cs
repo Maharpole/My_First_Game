@@ -47,7 +47,7 @@ public class CameraController : MonoBehaviour
         // Resolve target if not assigned
         if (target == null)
         {
-            var playerSingleton = FindObjectOfType<Player>();
+            var playerSingleton = Object.FindFirstObjectByType<Player>();
             if (playerSingleton != null)
             {
                 target = playerSingleton.transform;

@@ -1,0 +1,20 @@
+{
+    "asset": "c672dc4ea6c37eb4bac3dea9be6d4623",
+    "fileName": "0198a8da-28b9-7e6c-819a-c2a5ff84150b.jpg",
+    "prompt": "a small, broken, dirty, low polygon musket",
+    "negativePrompt": "",
+    "model": "03d5ab0c-51c5-44a0-ba07-822e93561aca",
+    "modelName": "Game Icons",
+    "customSeed": -1,
+    "w3CTraceId": "2d9a7e51ee3ed04e21aa235c12d947be",
+    "refinementMode": "Generation",
+    "pixelateTargetSize": 0,
+    "pixelateKeepImageSize": false,
+    "pixelatePixelBlockSize": 0,
+    "pixelateMode": 0,
+    "pixelateOutlineThickness": 0,
+    "doodles": {
+        "m_Items": []
+    },
+    "upscaleFactor": 0
+}

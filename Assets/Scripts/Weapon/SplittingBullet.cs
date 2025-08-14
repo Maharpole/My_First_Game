@@ -84,7 +84,7 @@ public class SplittingBullet : Bullet
             }
             
             // Set bullet's velocity
-            bulletRb.velocity = splitDirection * bulletSpeed;
+            bulletRb.linearVelocity = splitDirection * bulletSpeed;
             
             // Set bullet damage
             Bullet bulletComponent = splitBullet.GetComponent<Bullet>();

@@ -18,7 +18,7 @@ public class HomingBullet : Bullet
         base.Start();
         
         rb = GetComponent<Rigidbody>();
-        currentSpeed = rb.velocity.magnitude;
+        currentSpeed = rb.linearVelocity.magnitude;
     }
     
     void Update()
@@ -35,7 +35,7 @@ public class HomingBullet : Bullet
             Vector3 directionToTarget = (target.position - transform.position).normalized;
             
             // Calculate current direction
-            Vector3 currentDirection = rb.velocity.normalized;
+            Vector3 currentDirection = rb.linearVelocity.normalized;
             
             // Calculate angle between current direction and target direction
             float angle = Vector3.Angle(currentDirection, directionToTarget);
@@ -47,7 +47,7 @@ public class HomingBullet : Bullet
                 Vector3 newDirection = Vector3.Lerp(currentDirection, directionToTarget, turnSpeed * Time.deltaTime).normalized;
                 
                 // Apply new direction
-                rb.velocity = newDirection * currentSpeed;
+                rb.linearVelocity = newDirection * currentSpeed;
                 
                 // Rotate bullet to face direction
                 transform.rotation = Quaternion.LookRotation(newDirection);
@@ -55,7 +55,7 @@ public class HomingBullet : Bullet
             
             // Accelerate
             currentSpeed = Mathf.Min(currentSpeed + acceleration * Time.deltaTime, maxSpeed);
-            rb.velocity = rb.velocity.normalized * currentSpeed;
+            rb.linearVelocity = rb.linearVelocity.normalized * currentSpeed;
         }
     }
     

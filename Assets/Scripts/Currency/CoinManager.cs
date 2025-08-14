@@ -53,7 +53,7 @@ public class CoinManager : MonoBehaviour
         if (coinText == null)
         {
             // Look for any TextMeshProUGUI component with "coin" in its name
-            TextMeshProUGUI[] texts = FindObjectsOfType<TextMeshProUGUI>();
+            TextMeshProUGUI[] texts = Object.FindObjectsByType<TextMeshProUGUI>(FindObjectsSortMode.None);
             foreach (TextMeshProUGUI text in texts)
             {
                 if (text.gameObject.name.ToLower().Contains("coin"))

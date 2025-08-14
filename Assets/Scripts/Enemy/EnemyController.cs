@@ -73,7 +73,7 @@ public class EnemyController : MonoBehaviour
             if (!isAggro)
             {
                 // idle: do nothing; ensure we aren't drifting
-                if (rb != null) rb.velocity = new Vector3(0f, rb.velocity.y, 0f);
+                if (rb != null) rb.linearVelocity = new Vector3(0f, rb.linearVelocity.y, 0f);
                 return;
             }
 
@@ -88,7 +88,7 @@ public class EnemyController : MonoBehaviour
                 // Move towards player
                 if (rb != null)
                 {
-                    rb.velocity = new Vector3(direction.x * moveSpeed, rb.velocity.y, direction.z * moveSpeed);
+                    rb.linearVelocity = new Vector3(direction.x * moveSpeed, rb.linearVelocity.y, direction.z * moveSpeed);
                 }
 
                 // Face the player
@@ -113,7 +113,7 @@ public class EnemyController : MonoBehaviour
     public void ClearAggro()
     {
         isAggro = false;
-        if (rb != null) rb.velocity = new Vector3(0f, rb.velocity.y, 0f);
+        if (rb != null) rb.linearVelocity = new Vector3(0f, rb.linearVelocity.y, 0f);
     }
 
     void OnDestroy()

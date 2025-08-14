@@ -59,8 +59,8 @@ public class BouncingBullet : Bullet
                 Vector3 direction = (newTarget.transform.position - transform.position).normalized;
                 
                 // Apply new velocity
-                float currentSpeed = rb.velocity.magnitude * bounceSpeedMultiplier;
-                rb.velocity = direction * currentSpeed;
+                float currentSpeed = rb.linearVelocity.magnitude * bounceSpeedMultiplier;
+                rb.linearVelocity = direction * currentSpeed;
                 
                 // Rotate to face new direction
                 transform.rotation = Quaternion.LookRotation(direction);

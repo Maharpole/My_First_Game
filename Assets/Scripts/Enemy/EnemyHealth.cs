@@ -71,7 +71,7 @@ public class EnemyHealth : MonoBehaviour
         {
             // Fallback: if no group, aggro this enemy toward the player
             var controller = GetComponent<EnemyController>();
-            var player = FindObjectOfType<Player>();
+            var player = Object.FindFirstObjectByType<Player>();
             if (controller != null && player != null)
             {
                 controller.ForceAggro(player.transform);
@@ -81,6 +81,9 @@ public class EnemyHealth : MonoBehaviour
         // Flash red
         StartCoroutine(FlashColor(damageColor));
         
+        // Debug logging for tuning
+        CombatDebug.LogDamage(gameObject, damage, Mathf.Max(0, currentHealth), maxHealth);
+
         // Check if enemy is dead
         if (currentHealth <= 0)
         {
