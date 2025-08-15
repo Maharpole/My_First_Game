@@ -91,6 +91,12 @@ public class EnemyHealth : MonoBehaviour
         }
     }
 
+    public void TakeReflectDamage(int damage)
+    {
+        // Bypass aggro kick and flash differences if desired; here we reuse the same path
+        TakeDamage(damage);
+    }
+
     public void Heal(int amount)
     {
         // Increase health, but don't exceed max health
@@ -120,8 +126,15 @@ public class EnemyHealth : MonoBehaviour
     
     void Die()
     {
-        // Trigger death event
+        // Trigger death event (drops, etc.)
         onDeath.Invoke();
+        // Award XP if enemy had a level component
+        var levelComp = GetComponent<EnemyLevel>();
+        if (levelComp != null)
+        {
+            var player = Object.FindFirstObjectByType<PlayerXP>();
+            if (player != null) player.AddXP(levelComp.GetXPReward());
+        }
         // Also notify aggro group to avoid lingering idle
         var group = GetComponentInParent<AggroGroup>();
         if (group != null)
@@ -142,7 +155,7 @@ public class EnemyHealth : MonoBehaviour
             Destroy(deathParticles.gameObject, deathParticles.main.duration);
         }
         
-        // Destroy the enemy
+        // Destroy the enemy next frame to let listeners complete without blocking this frame
         Destroy(gameObject);
     }
     

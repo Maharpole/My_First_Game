@@ -459,9 +459,6 @@ MonoBehaviour:
   onHeal:
     m_PersistentCalls:
       m_Calls: []
-  damageNumberPrefab: {fileID: 0}
-  damageNumberOffset: {x: 0, y: 1.5, z: 0}
-  damageNumberColor: {r: 1, g: 1, b: 1, a: 1}
 --- !u!114 &-142393245941017192
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -514,7 +511,7 @@ MonoBehaviour:
   enemySpecificPool: {fileID: 0}
   replaceGeneralWithSpecific: 0
   affixDatabase: {fileID: 11400000, guid: 587a9f723a7bc654a963569d9e61d0be, type: 2}
-  dropChance: 0.1
+  dropChance: 1
   minItemLevel: 1
   maxItemLevel: 20
   pickupPrefab: {fileID: 7460202890058008193, guid: 763cec4231a8d2241a76d9d07ec1a449, type: 3}

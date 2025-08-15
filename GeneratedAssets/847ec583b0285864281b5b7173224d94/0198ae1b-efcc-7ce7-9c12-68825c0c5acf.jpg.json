@@ -1,0 +1,20 @@
+{
+    "asset": "847ec583b0285864281b5b7173224d94",
+    "fileName": "0198ae1b-efcc-7ce7-9c12-68825c0c5acf.jpg",
+    "prompt": "a shard of broken glass tied to a piece of butcher chord in a loop",
+    "negativePrompt": "",
+    "model": "03d5ab0c-51c5-44a0-ba07-822e93561aca",
+    "modelName": "Game Icons",
+    "customSeed": -1,
+    "w3CTraceId": "6c3914931e0d275d7210f9f47d33dcef",
+    "refinementMode": "Generation",
+    "pixelateTargetSize": 0,
+    "pixelateKeepImageSize": false,
+    "pixelatePixelBlockSize": 0,
+    "pixelateMode": 0,
+    "pixelateOutlineThickness": 0,
+    "doodles": {
+        "m_Items": []
+    },
+    "upscaleFactor": 0
+}

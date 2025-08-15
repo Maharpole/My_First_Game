@@ -1,0 +1,11 @@
+{
+    "asset": "d4b9a168bda8c0440bc65f6fa8f8716e",
+    "fileName": "0198ae48-39b2-7c61-898a-67609446fbf8_Preview.png",
+    "prompt": "Glowing Golden Metal coin",
+    "negativePrompt": "",
+    "model": "575ecf67-4425-4939-97b9-5e138b8ee234",
+    "modelName": "Unity Texture2D",
+    "customSeed": 1053661840,
+    "w3CTraceId": "d10a67e9a3a4975b7d22cb9a071474a5",
+    "refinementMode": "Generation"
+}

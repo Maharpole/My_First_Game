@@ -14,6 +14,8 @@ public class AffixDatabase : ScriptableObject
             if (a == null) continue;
             if (a.isPrefix != wantPrefix) continue;
             if (a.allowedSlots != null && a.allowedSlots.Count > 0 && !a.allowedSlots.Contains(slot)) continue;
+            // Skip deprecated Health (use MaxHealth / MaxHealthPercent instead)
+            if (a.statType == StatType.Health) continue;
             list.Add(a);
         }
         return list;

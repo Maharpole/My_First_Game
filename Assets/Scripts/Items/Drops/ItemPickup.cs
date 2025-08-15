@@ -16,6 +16,7 @@ public class ItemPickup : MonoBehaviour, IPointerClickHandler
     public int nameFontSize = 24;
 
     private TextMeshPro nameText;
+    private BoxCollider nameCollider;
     private RuntimeEquipmentItem runtime;
     
     [Header("Visual Scale")]
@@ -126,6 +127,9 @@ public class ItemPickup : MonoBehaviour, IPointerClickHandler
         {
             NormalizeVisualScale(vis);
         }
+
+        // Ensure root collider covers the visual so clicks on the model are captured
+        EnsureRootColliderFitsVisual();
     }
 
     GameObject CreateFallbackVisual(EquipmentData baseItem)
@@ -217,7 +221,7 @@ public class ItemPickup : MonoBehaviour, IPointerClickHandler
     // Click-to-pickup via UI EventSystem raycasts
     public void OnPointerClick(PointerEventData eventData)
     {
-        var player = FindObjectOfType<Player>();
+        var player = FindFirstObjectByType<Player>();
         if (player == null) return;
         // Optional: range check on click
         TryPickup(player, 3f);
@@ -291,15 +295,18 @@ public class ItemPickup : MonoBehaviour, IPointerClickHandler
         nameText.text = GetDisplayName();
         nameText.raycastTarget = false; // TextMeshPro (3D) uses physics, not UI raycasts
 
-        // Add a small collider so the label itself is clickable
-        var bc = go.AddComponent<BoxCollider>();
-        bc.isTrigger = false;
-        bc.center = new Vector3(0f, 0f, 0f);
-        bc.size = new Vector3(1.2f, 0.35f, 0.1f);
+        // Add a collider that will be auto-sized to the text bounds so the whole label is clickable
+        nameCollider = go.AddComponent<BoxCollider>();
+        nameCollider.isTrigger = false;
+        nameCollider.center = Vector3.zero;
+        nameCollider.size = new Vector3(1.2f, 0.35f, 0.1f); // temporary; will be updated dynamically
 
         // Relay clicks on the label up to the pickup
         var relay = go.AddComponent<ItemPickupClickRelay>();
         relay.target = this;
+
+        // Initial bounds fit
+        UpdateNameColliderBounds();
     }
 
     void UpdateNameLabel()
@@ -309,19 +316,24 @@ public class ItemPickup : MonoBehaviour, IPointerClickHandler
         if (nameText.text != desired)
         {
             nameText.text = desired;
+            nameText.ForceMeshUpdate();
+            UpdateNameColliderBounds();
         }
         var desiredColor = GetRarityColor();
         if (nameText.color != desiredColor) nameText.color = desiredColor;
+        else
+        {
+            // Even when text hasn't changed, ensure collider tracks any scale changes
+            UpdateNameColliderBounds();
+        }
     }
 
     string GetDisplayName()
     {
-        if (runtime != null && runtime.generated != null && runtime.generated.baseEquipment != null)
-        {
-            // Optionally prefix with rarity color
-            return runtime.GetDisplayName();
-        }
-        return "Item";
+        if (runtime == null) return "Item";
+        var gen = runtime.generated;
+        if (gen == null || gen.baseEquipment == null) return "Item";
+        return runtime.GetDisplayName();
     }
 
     Color GetRarityColor()
@@ -359,11 +371,25 @@ public class ItemPickup : MonoBehaviour, IPointerClickHandler
         copy.baseStats = new System.Collections.Generic.List<StatModifier>(baseItem.baseStats);
         // rolled stats
         var rolled = new System.Collections.Generic.List<StatModifier>();
+        var genAff = new System.Collections.Generic.List<GeneratedAffix>();
         if (gen.prefixes != null)
-            foreach (var p in gen.prefixes) rolled.Add(new StatModifier { statType = p.statType, value = p.value, isPercentage = p.isPercentage });
+        {
+            foreach (var p in gen.prefixes)
+            {
+                rolled.Add(new StatModifier { statType = p.statType, value = p.value, isPercentage = StatTypeInfo.EffectiveIsPercent(p.statType, false) });
+                genAff.Add(p);
+            }
+        }
         if (gen.suffixes != null)
-            foreach (var s in gen.suffixes) rolled.Add(new StatModifier { statType = s.statType, value = s.value, isPercentage = s.isPercentage });
+        {
+            foreach (var s in gen.suffixes)
+            {
+                rolled.Add(new StatModifier { statType = s.statType, value = s.value, isPercentage = StatTypeInfo.EffectiveIsPercent(s.statType, false) });
+                genAff.Add(s);
+            }
+        }
         copy.SetRandomAffixes(rolled);
+        copy.SetGeneratedAffixes(genAff);
         // rarity color (optional: map by rarity)
         copy.rarityColor = (runtime != null && runtime.generated != null) ? copy.rarityColor : copy.rarityColor;
         return copy;
@@ -380,5 +406,49 @@ public class ItemPickup : MonoBehaviour, IPointerClickHandler
         {
             if (cam.GetComponent<PhysicsRaycaster>() == null) cam.gameObject.AddComponent<PhysicsRaycaster>();
         }
+    }
+
+    void UpdateNameColliderBounds(float paddingX = 0.1f, float paddingY = 0.05f, float minDepth = 0.1f)
+    {
+        if (nameText == null || nameCollider == null) return;
+        var rend = nameText.GetComponent<MeshRenderer>();
+        if (rend == null) return;
+        // Convert world-space bounds to local space size for the collider
+        var sizeWorld = rend.bounds.size;
+        var ls = nameText.transform.lossyScale;
+        float sx = Mathf.Max(0.0001f, ls.x);
+        float sy = Mathf.Max(0.0001f, ls.y);
+        float sz = Mathf.Max(0.0001f, ls.z);
+        var sizeLocal = new Vector3(sizeWorld.x / sx, sizeWorld.y / sy, sizeWorld.z / sz);
+        nameCollider.size = new Vector3(sizeLocal.x + paddingX, sizeLocal.y + paddingY, Mathf.Max(minDepth, sizeLocal.z));
+        nameCollider.center = Vector3.zero;
+    }
+
+    void EnsureRootColliderFitsVisual(float pad = 0.05f)
+    {
+        var renderers = GetComponentsInChildren<Renderer>();
+        if (renderers == null || renderers.Length == 0) return;
+        // Aggregate bounds in local space of root
+        Bounds world = renderers[0].bounds;
+        for (int i = 1; i < renderers.Length; i++) world.Encapsulate(renderers[i].bounds);
+
+        // Convert world-size to local-size using root lossyScale
+        var ls = transform.lossyScale;
+        float sx = Mathf.Max(0.0001f, ls.x);
+        float sy = Mathf.Max(0.0001f, ls.y);
+        float sz = Mathf.Max(0.0001f, ls.z);
+        Vector3 sizeLocal = new Vector3(world.size.x / sx, world.size.y / sy, world.size.z / sz);
+        Vector3 centerLocal = transform.InverseTransformPoint(world.center);
+
+        // Prefer a BoxCollider on root
+        var box = GetComponent<BoxCollider>();
+        if (box == null)
+        {
+            // If a different collider exists, keep it but also add a BoxCollider for clicks
+            box = gameObject.AddComponent<BoxCollider>();
+        }
+        box.isTrigger = true; // keep trigger to avoid physics interference; raycasts still work
+        box.center = centerLocal - transform.localPosition; // center relative to root
+        box.size = new Vector3(sizeLocal.x + pad, sizeLocal.y + pad, sizeLocal.z + pad);
     }
 }

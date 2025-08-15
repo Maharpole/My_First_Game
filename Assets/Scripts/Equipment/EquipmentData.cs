@@ -39,6 +39,8 @@ public class EquipmentData : ScriptableObject
 
     [Header("Affixes (Generated at Runtime)")]
     [SerializeField] private List<StatModifier> randomAffixes = new List<StatModifier>();
+    // Extended info for UI (tier ranges, names)
+    [SerializeField] private List<GeneratedAffix> generatedAffixes = new List<GeneratedAffix>();
 
     [Header("Visual Settings")]
     public Color rarityColor = Color.white;
@@ -70,12 +72,40 @@ public class EquipmentData : ScriptableObject
     }
 
     public void SetRandomAffixes(List<StatModifier> affixes) { randomAffixes = affixes; }
+    public void SetGeneratedAffixes(List<GeneratedAffix> affixes) { generatedAffixes = affixes; }
 
     public string GetTooltipText()
     {
         string tooltip = $"<color=#{ColorUtility.ToHtmlStringRGB(rarityColor)}>{equipmentName}</color>\n";
         tooltip += $"{equipmentType} (Level {requiredLevel})\n\n";
-        foreach (var stat in AllStats) tooltip += stat.ToString() + "\n";
+        bool wroteAny = false;
+        // Base stats first
+        if (baseStats != null && baseStats.Count > 0)
+        {
+            for (int i = 0; i < baseStats.Count; i++)
+            {
+                var stat = baseStats[i];
+                if (!System.Enum.IsDefined(typeof(StatType), (int)stat.statType)) continue;
+                tooltip += StatTypeInfo.ToDisplayString(stat) + "\n";
+                wroteAny = true;
+            }
+        }
+        // Separator if both base and random exist
+        bool hasRandom = randomAffixes != null && randomAffixes.Count > 0;
+        if (wroteAny && hasRandom)
+        {
+            tooltip += "<color=#888888>────────────</color>\n";
+        }
+        // Random affixes next
+        if (hasRandom)
+        {
+            for (int i = 0; i < randomAffixes.Count; i++)
+            {
+                var stat = randomAffixes[i];
+                if (!System.Enum.IsDefined(typeof(StatType), (int)stat.statType)) continue;
+                tooltip += StatTypeInfo.ToDisplayString(stat) + "\n";
+            }
+        }
         if (!string.IsNullOrEmpty(description)) tooltip += "\n" + description;
         return tooltip;
     }

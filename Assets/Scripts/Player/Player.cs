@@ -65,8 +65,10 @@ public class Player : MonoBehaviour
     private CharacterEquipment characterEquipment;
         private float baseMoveSpeed;
         private int baseMaxHealth;
-        [Header("== STAT SCALARS ==")]
-        [Tooltip("How much max health is granted per 1 point of Vitality")] public int healthPerVitality = 1;
+        private float reflectFlatCurrent = 0f;
+        private float reflectPercentCurrent = 0f;
+        private int regenPerTickCurrent = 0;
+        private float regenTickSecondsCurrent = 1f;
     
     // Properties
     public int CurrentHealth => currentHealth;
@@ -286,6 +288,27 @@ public class Player : MonoBehaviour
         {
             Die();
         }
+        else
+        {
+            // Reflect damage to attacker if applicable
+            if (source != null)
+            {
+                var enemyHealth = source.GetComponentInParent<EnemyHealth>();
+                if (enemyHealth != null)
+                {
+                    int reflected = 0;
+                    if (reflectFlatCurrent > 0f) reflected += Mathf.RoundToInt(reflectFlatCurrent);
+                    if (reflectPercentCurrent > 0f)
+                    {
+                        reflected += Mathf.RoundToInt(damage * (reflectPercentCurrent / 100f));
+                    }
+                    if (reflected > 0)
+                    {
+                        enemyHealth.TakeReflectDamage(reflected);
+                    }
+                }
+            }
+        }
     }
     
     public void Heal(int amount)
@@ -410,9 +433,16 @@ public class Player : MonoBehaviour
         float flatDamage = 0f;
         float pctDamage = 0f;
         float pctAttackSpeed = 0f;
-        float flatVitality = 0f;
         float flatHealth = 0f;
         float pctHealth = 0f;
+        float reflectFlat = 0f;
+        float reflectPercent = 0f;
+        float regenPerTick = 0f;   // amount per tick
+        float regenTickSeconds = 1f; // default 1 second per tick
+        float critChanceFlat = 0f;        // percentage points added
+        float critChancePercent = 0f;     // % increased chance
+        float critMultiFlat = 0f;         // percentage points added to multiplier
+        float critMultiPercent = 0f;      // % increased multiplier
 
         if (characterEquipment == null) characterEquipment = GetComponent<CharacterEquipment>();
         if (characterEquipment != null)
@@ -421,28 +451,70 @@ public class Player : MonoBehaviour
             for (int i = 0; i < mods.Count; i++)
             {
                 var m = mods[i];
-                if (m.statType == StatType.MovementSpeed)
+                if (m.statType == StatType.MovementSpeedFlat)
                 {
-                    if (m.isPercentage) pctMove += m.value; else flatMove += m.value;
+                    flatMove += m.value;
+                }
+                else if (m.statType == StatType.MovementSpeedPercent)
+                {
+                    pctMove += m.value;
                 }
                 else if (m.statType == StatType.Damage)
                 {
                     if (m.isPercentage) pctDamage += m.value; else flatDamage += m.value;
                 }
+                else if (m.statType == StatType.DamageFlat)
+                {
+                    flatDamage += m.value;
+                }
+                else if (m.statType == StatType.DamagePercent)
+                {
+                    pctDamage += m.value;
+                }
                 else if (m.statType == StatType.AttackSpeed)
                 {
-                    // treat as percentage
+                    // inherent percent
                     pctAttackSpeed += m.value;
-                }
-                else if (m.statType == StatType.Vitality)
-                {
-                    // treat vitality as flat points
-                    flatVitality += m.value;
                 }
                 else if (m.statType == StatType.Health)
                 {
-                    if (m.isPercentage) pctHealth += m.value; else flatHealth += m.value;
+                    if (m.isPercentage) pctHealth += m.value; else flatHealth += m.value; // legacy support
                 }
+                else if (m.statType == StatType.MaxHealth)
+                {
+                    // treat as flat increased maximum health
+                    flatHealth += m.value;
+                }
+                else if (m.statType == StatType.MaxHealthPercent)
+                {
+                    // treat as % increased maximum health
+                    pctHealth += m.value;
+                }
+                else if (m.statType == StatType.DamageReflectFlat)
+                {
+                    reflectFlat += m.value;
+                }
+                else if (m.statType == StatType.DamageReflectPercent)
+                {
+                    reflectPercent += m.value;
+                }
+                else if (m.statType == StatType.HealthRegeneration)
+                {
+                    // Interpret as: value = amount per tick; use default tick time 1s for now
+                    // If percentage regen is desired in future, split stat like others
+                    regenPerTick += m.value;
+                }
+                else if (m.statType == StatType.CriticalChance)
+                {
+                    // legacy single type: treat as percent increased chance
+                    critChancePercent += m.value;
+                }
+                else if (m.statType == StatType.CriticalMultiplier)
+                {
+                    // legacy single type: treat as percent increased multiplier
+                    critMultiPercent += m.value;
+                }
+                
             }
         }
 
@@ -464,12 +536,23 @@ public class Player : MonoBehaviour
             var s = shooters[i];
             if (s != null)
             {
-                s.ApplyStatModifiers(flatDamage, pctDamage, pctAttackSpeed);
+                // Compute final crit values from base defaults (2% chance, 150% multiplier)
+                float baseCritChance = 2f;   // percentage points
+                float baseCritMult = 150f;   // percent multiplier
+
+                float finalCritChance = Mathf.Max(0f, baseCritChance + critChanceFlat);
+                finalCritChance *= (1f + Mathf.Max(0f, critChancePercent) * 0.01f);
+
+                float finalCritMult = Mathf.Max(0f, baseCritMult + critMultiFlat);
+                finalCritMult *= (1f + Mathf.Max(0f, critMultiPercent) * 0.01f);
+
+                s.ApplyStatModifiers(flatDamage, pctDamage, pctAttackSpeed, finalCritChance, finalCritMult);
             }
         }
 
-        // Compute max health from Vitality and Health modifiers
-        int computedMaxHealth = Mathf.Max(1, Mathf.RoundToInt(((baseMaxHealth + flatHealth) + (flatVitality * healthPerVitality)) * (1f + (pctHealth / 100f))));
+        // Compute max health: percent applies only to increased pool (flatHealth), not base
+        int bonusFromPercent = Mathf.RoundToInt(flatHealth * (pctHealth / 100f));
+        int computedMaxHealth = Mathf.Max(1, baseMaxHealth + Mathf.RoundToInt(flatHealth) + bonusFromPercent);
         if (computedMaxHealth != maxHealth)
         {
             float ratio = maxHealth > 0 ? (float)currentHealth / maxHealth : 1f;
@@ -477,6 +560,133 @@ public class Player : MonoBehaviour
             currentHealth = Mathf.Clamp(Mathf.RoundToInt(ratio * maxHealth), 1, maxHealth);
             onHealthChanged?.Invoke(currentHealth);
         }
+
+        // Cache reflect stats for use during damage events
+        reflectFlatCurrent = reflectFlat;
+        reflectPercentCurrent = reflectPercent;
+
+        // Apply/refresh passive health regeneration
+        ConfigureHealthRegen(regenPerTick, regenTickSeconds);
+    }
+    #endregion
+
+    #region HEALTH REGEN
+    private Coroutine regenRoutine;
+    void ConfigureHealthRegen(float amountPerTick, float tickSeconds)
+    {
+        if (regenRoutine != null)
+        {
+            StopCoroutine(regenRoutine);
+            regenRoutine = null;
+        }
+        regenPerTickCurrent = Mathf.RoundToInt(Mathf.Max(0f, amountPerTick));
+        regenTickSecondsCurrent = Mathf.Max(0.01f, tickSeconds);
+        if (regenPerTickCurrent > 0 && regenTickSecondsCurrent > 0.01f)
+        {
+            regenRoutine = StartCoroutine(DoHealthRegen(regenPerTickCurrent, regenTickSecondsCurrent));
+        }
+    }
+
+    System.Collections.IEnumerator DoHealthRegen(int amountPerTick, float tickSeconds)
+    {
+        var wait = new WaitForSeconds(tickSeconds);
+        while (true)
+        {
+            yield return wait;
+            if (!IsAlive) continue;
+            if (currentHealth >= maxHealth) continue;
+            int before = currentHealth;
+            currentHealth = Mathf.Min(maxHealth, currentHealth + Mathf.Max(1, amountPerTick));
+            if (currentHealth != before) onHealthChanged?.Invoke(currentHealth);
+        }
+    }
+    #endregion
+
+    #region EXPOSED CURRENT STATS
+    public int CurrentRegenPerTick => regenPerTickCurrent;
+    public float CurrentRegenTickSeconds => regenTickSecondsCurrent;
+
+    public struct PlayerComputedStats
+    {
+        public float finalMoveSpeed;
+        public int finalMaxHealth;
+        public int currentHealth;
+        public float damageFlat;
+        public float damagePercent;
+        public float attackSpeedPercent;
+        public float critChancePercent;     // final
+        public float critMultiplierPercent; // final
+        public float reflectFlat;
+        public float reflectPercent;
+        public int regenPerTick;
+        public float regenTickSeconds;
+    }
+
+    public PlayerComputedStats GetComputedStats()
+    {
+        float flatMove = 0f;
+        float pctMove = 0f;
+        float flatDamage = 0f;
+        float pctDamage = 0f;
+        float pctAttackSpeed = 0f;
+        float flatHealth = 0f;
+        float pctHealth = 0f;
+        float reflectFlat = 0f;
+        float reflectPercent = 0f;
+        float critChanceFlat = 0f;
+        float critChancePercent = 0f;
+        float critMultiFlat = 0f;
+        float critMultiPercent = 0f;
+        float regenPerTick = 0f;
+        float regenTickSeconds = 1f;
+
+        var mods = GetAllStatModifiers();
+        for (int i = 0; i < mods.Count; i++)
+        {
+            var m = mods[i];
+            if (m.statType == StatType.MovementSpeedFlat) flatMove += m.value;
+            else if (m.statType == StatType.MovementSpeedPercent) pctMove += m.value;
+            else if (m.statType == StatType.Damage) { if (m.isPercentage) pctDamage += m.value; else flatDamage += m.value; }
+            else if (m.statType == StatType.DamageFlat) flatDamage += m.value;
+            else if (m.statType == StatType.DamagePercent) pctDamage += m.value;
+            else if (m.statType == StatType.AttackSpeed) pctAttackSpeed += m.value;
+            else if (m.statType == StatType.Health) { if (m.isPercentage) pctHealth += m.value; else flatHealth += m.value; }
+            else if (m.statType == StatType.MaxHealth) flatHealth += m.value;
+            else if (m.statType == StatType.MaxHealthPercent) pctHealth += m.value;
+            else if (m.statType == StatType.DamageReflectFlat) reflectFlat += m.value;
+            else if (m.statType == StatType.DamageReflectPercent) reflectPercent += m.value;
+            else if (m.statType == StatType.CriticalChance) critChancePercent += m.value;
+            else if (m.statType == StatType.CriticalMultiplier) critMultiPercent += m.value;
+            else if (m.statType == StatType.HealthRegeneration) regenPerTick += m.value;
+        }
+
+        float computedMove = (baseMoveSpeed + flatMove) * (1f + (pctMove / 100f));
+
+        float baseCritChance = 2f;
+        float baseCritMult = 150f;
+        float finalCritChance = Mathf.Max(0f, baseCritChance + critChanceFlat);
+        finalCritChance *= (1f + Mathf.Max(0f, critChancePercent) * 0.01f);
+        float finalCritMult = Mathf.Max(0f, baseCritMult + critMultiFlat);
+        finalCritMult *= (1f + Mathf.Max(0f, critMultiPercent) * 0.01f);
+
+        int bonusFromPercent = Mathf.RoundToInt(flatHealth * (pctHealth / 100f));
+        int finalMaxHp = Mathf.Max(1, baseMaxHealth + Mathf.RoundToInt(flatHealth) + bonusFromPercent);
+
+        return new PlayerComputedStats
+        {
+            finalMoveSpeed = Mathf.Max(0.1f, computedMove),
+            finalMaxHealth = finalMaxHp,
+            currentHealth = currentHealth,
+            damageFlat = flatDamage,
+            damagePercent = pctDamage,
+            attackSpeedPercent = pctAttackSpeed,
+            critChancePercent = finalCritChance,
+            critMultiplierPercent = finalCritMult,
+            reflectFlat = reflectFlat,
+            reflectPercent = reflectPercent,
+            regenPerTick = Mathf.RoundToInt(regenPerTick),
+            regenTickSeconds = regenTickSeconds
+        };
     }
     #endregion
     

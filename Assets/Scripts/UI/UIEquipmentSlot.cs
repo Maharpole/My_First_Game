@@ -49,6 +49,8 @@ using UnityEngine.InputSystem;
     void OnDisable()
     {
         if (equipment != null) equipment.onEquipmentChanged.RemoveListener(UpdateIcon);
+        // Ensure any lingering tooltip is hidden when this UI element is disabled
+        UITooltip.Hide();
     }
 
     EquipmentSlot ResolveSlot()

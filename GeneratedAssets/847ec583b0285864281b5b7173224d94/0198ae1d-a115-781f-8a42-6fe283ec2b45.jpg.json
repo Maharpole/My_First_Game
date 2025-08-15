@@ -1,0 +1,20 @@
+{
+    "asset": "847ec583b0285864281b5b7173224d94",
+    "fileName": "0198ae1d-a115-781f-8a42-6fe283ec2b45.jpg",
+    "prompt": "a shard of broken glass tied to a piece of butcher chord in a circle to look like a necklace",
+    "negativePrompt": "",
+    "model": "03d5ab0c-51c5-44a0-ba07-822e93561aca",
+    "modelName": "Game Icons",
+    "customSeed": -1,
+    "w3CTraceId": "78970c6f1230ba1e3ace5b49722b1784",
+    "refinementMode": "Generation",
+    "pixelateTargetSize": 0,
+    "pixelateKeepImageSize": false,
+    "pixelatePixelBlockSize": 0,
+    "pixelateMode": 0,
+    "pixelateOutlineThickness": 0,
+    "doodles": {
+        "m_Items": []
+    },
+    "upscaleFactor": 0
+}

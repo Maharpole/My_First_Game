@@ -138,7 +138,21 @@ public static class ItemGenerator
             var tier = WeightedPickTier(affix.tiers, itemLevel, tierBias);
             if (tier == null) continue;
 
-            float roll = Random.Range(tier.minValue, tier.maxValue);
+            // Roll whole-number values only within the provided range
+            float roll;
+            int minInt = Mathf.CeilToInt(tier.minValue);
+            int maxInt = Mathf.FloorToInt(tier.maxValue);
+            if (minInt <= maxInt)
+            {
+                // Inclusive integer roll
+                roll = Random.Range(minInt, maxInt + 1);
+            }
+            else
+            {
+                // Degenerate fractional span (<1 width). Fallback to rounding a float roll.
+                float raw = Random.Range(tier.minValue, tier.maxValue);
+                roll = Mathf.Round(raw);
+            }
 
             output.Add(new GeneratedAffix
             {
@@ -146,8 +160,10 @@ public static class ItemGenerator
                 tierName = tier.tierName,
                 isPrefix = affix.isPrefix,
                 statType = affix.statType,
-                isPercentage = affix.isPercentage,
                 value = roll,
+                tierMin = tier.minValue,
+                tierMax = tier.maxValue,
+                displayName = affix.displayName,
                 modGroup = affix.modGroup
             });
 

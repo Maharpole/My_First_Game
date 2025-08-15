@@ -14,3 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   affixes:
   - {fileID: 11400000, guid: d757b615ff4902140ba5d6a94c391d8e, type: 2}
+  - {fileID: 11400000, guid: aaf1a4552ee020b4091d182dd964a3e3, type: 2}
+  - {fileID: 11400000, guid: da47090ca255edd45a4d7cea90b65a26, type: 2}

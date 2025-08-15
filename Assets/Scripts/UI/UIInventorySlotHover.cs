@@ -6,6 +6,11 @@ public class UIInventorySlotHover : MonoBehaviour, IPointerEnterHandler, IPointe
     public SimpleInventory inventory;
     public int slotIndex;
 
+    void OnDisable()
+    {
+        UITooltip.Hide();
+    }
+
     public void OnPointerEnter(PointerEventData eventData)
     {
         var data = ResolveItem();

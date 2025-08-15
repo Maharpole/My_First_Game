@@ -24,6 +24,24 @@ public class UITooltip : MonoBehaviour
     private RectTransform _root;
     private Image _background;
     private TextMeshProUGUI _text;
+    private bool _extendedView;
+    private EquipmentData _currentData;
+    private static bool _globalExtendedView;
+
+    public static void SetExtendedView(bool enabled)
+    {
+        _globalExtendedView = enabled;
+        var t = _instance;
+        if (t != null)
+        {
+            t._extendedView = enabled;
+            if (t._visible && t._currentData != null)
+            {
+                t._text.text = enabled ? UITooltipExtensions.BuildExtendedTooltip(t._currentData) : t._currentData.GetTooltipText();
+                t.LayoutToContent();
+            }
+        }
+    }
     private bool _visible;
     private Vector2 _padding = new Vector2(12f, 8f);
     private Vector2 _offset = new Vector2(18f, -18f);
@@ -77,7 +95,13 @@ public class UITooltip : MonoBehaviour
     {
         if (data == null) { Hide(); return; }
         var t = Instance;
-        t._text.text = data.GetTooltipText();
+        bool ext = _globalExtendedView;
+        t._extendedView = ext;
+        t._currentData = data;
+        // Title color by rarity and body content
+        string body = ext ? UITooltipExtensions.BuildExtendedTooltip(data) : data.GetTooltipText();
+        // Ensure the first line (name) is properly colored by rarity (redundant but safe)
+        t._text.text = body;
         t.LayoutToContent();
         t.UpdatePosition(screenPosition);
         t.SetActive(true);
@@ -87,6 +111,18 @@ public class UITooltip : MonoBehaviour
     {
         var t = Instance;
         if (!t._visible) return;
+        // Rebuild text if extended toggle changes while hovering
+        bool ext = _globalExtendedView;
+        if (ext != t._extendedView)
+        {
+            t._extendedView = ext;
+            if (t._currentData != null)
+            {
+                string body = ext ? UITooltipExtensions.BuildExtendedTooltip(t._currentData) : t._currentData.GetTooltipText();
+                t._text.text = body;
+                t.LayoutToContent();
+            }
+        }
         t.UpdatePosition(screenPosition);
     }
 
@@ -121,6 +157,61 @@ public class UITooltip : MonoBehaviour
         // Because pivot is top-left, y decreases downward
         target.y = Mathf.Clamp(target.y, size.y, h);
         _root.anchoredPosition = new Vector2(target.x, - (h - target.y));
+    }
+}
+
+static class UITooltipExtensions
+{
+    public static string BuildExtendedTooltip(EquipmentData data)
+    {
+        if (data == null) return "";
+        // Compose extended view with tier info if available via EquipmentData API
+        // We use reflection to try to get generatedAffixes list without breaking encapsulation
+        var fi = typeof(EquipmentData).GetField("generatedAffixes", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        System.Text.StringBuilder sb = new System.Text.StringBuilder();
+        sb.AppendLine($"<color=#{ColorUtility.ToHtmlStringRGB(data.rarityColor)}>{data.equipmentName}</color>");
+        sb.AppendLine($"{data.equipmentType} (Level {data.requiredLevel})");
+        sb.AppendLine();
+        // Base first
+        if (data.baseStats != null)
+        {
+            for (int i = 0; i < data.baseStats.Count; i++)
+            {
+                var st = data.baseStats[i];
+                if (!System.Enum.IsDefined(typeof(StatType), (int)st.statType)) continue;
+                sb.AppendLine(StatTypeInfo.ToDisplayString(st));
+            }
+        }
+        // Separator
+        bool hasBase = data.baseStats != null && data.baseStats.Count > 0;
+        var genList = fi != null ? fi.GetValue(data) as System.Collections.IList : null;
+        bool hasGen = genList != null && genList.Count > 0;
+        if (hasBase && hasGen) sb.AppendLine("<color=#888888>────────────</color>");
+        // Random with tier info
+        if (hasGen)
+        {
+            for (int i = 0; i < genList.Count; i++)
+            {
+                var ga = genList[i];
+                var statType = (StatType)ga.GetType().GetField("statType").GetValue(ga);
+                float value = (float)ga.GetType().GetField("value").GetValue(ga);
+                float tmin = (float)ga.GetType().GetField("tierMin").GetValue(ga);
+                float tmax = (float)ga.GetType().GetField("tierMax").GetValue(ga);
+                string tname = (string)ga.GetType().GetField("tierName").GetValue(ga);
+                string aname = (string)ga.GetType().GetField("displayName").GetValue(ga);
+                bool isPct = StatTypeInfo.EffectiveIsPercent(statType, false);
+                string valStr = isPct ? $"+{value}%" : $"+{value}";
+                string rangeStr = isPct ? $"({Mathf.RoundToInt(tmin)}%–{Mathf.RoundToInt(tmax)}%)" : $"({Mathf.RoundToInt(tmin)}–{Mathf.RoundToInt(tmax)})";
+                string label = StatTypeInfo.GetDisplayLabel(statType);
+                sb.AppendLine($"{valStr} {label} <color=#7FA7FF>[{tname}] {aname} {rangeStr}</color>");
+            }
+        }
+        if (!string.IsNullOrEmpty(data.description))
+        {
+            sb.AppendLine();
+            sb.AppendLine(data.description);
+        }
+        return sb.ToString();
     }
 }
 

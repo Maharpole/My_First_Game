@@ -16,7 +16,6 @@ public class AffixDefinition : ScriptableObject
 
     [Header("Stat Output")]
     public StatType statType;          // single-stat for simplicity
-    public bool isPercentage;          // percent or flat
 
     [Header("Tiers")] 
     public List<AffixTier> tiers = new List<AffixTier>();
@@ -29,8 +28,8 @@ public class AffixDefinition : ScriptableObject
 public class AffixTier
 {
     public string tierName = "T1";     // e.g., T1, T2, ...
-    public int minItemLevel = 1;       // minimum ilvl to roll this tier
-    public float minValue = 1f;        // numeric range
-    public float maxValue = 5f;
+    public int minItemLevel = 1;    // minimum ilvl to roll this tier
+    public float maxValue = 5f;     // maximum value to roll for this tier
+    public float minValue = 1f;     // minimum value to roll for this tier
     public int weight = 100;           // selection weight within this affix
 }

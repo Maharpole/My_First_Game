@@ -29,8 +29,8 @@ MonoBehaviour:
   dropMesh: {fileID: 0}
   dropMeshMaterial: {fileID: 0}
   baseStats:
-  - statType: 3
-    value: 10
+  - statType: 17
+    value: 20
     isPercentage: 0
   randomAffixes: []
   rarityColor: {r: 1, g: 1, b: 1, a: 1}

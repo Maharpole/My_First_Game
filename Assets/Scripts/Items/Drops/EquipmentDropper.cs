@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class EquipmentDropper : MonoBehaviour
 {
-    [Header("Drop Settings")]
+    [Header("Drop Settings (Legacy)")]
     [Tooltip("Legacy direct list (used if no loot pools provided)")]
     public EquipmentData[] possibleBases;
     [Header("Loot Pools")]
@@ -44,6 +44,9 @@ public class EquipmentDropper : MonoBehaviour
 
     public void Drop()
     {
+        // Early out before any heavy work if no drop occurs
+        if (Random.value > dropChance) return;
+
         // Resolve base pool
         EquipmentData baseItem = null;
         if (generalPool != null || enemySpecificPool != null)
@@ -85,7 +88,6 @@ public class EquipmentDropper : MonoBehaviour
             if (possibleBases == null || possibleBases.Length == 0) return;
             baseItem = possibleBases[Random.Range(0, possibleBases.Length)];
         }
-        if (Random.value > dropChance) return;
         if (pickupPrefab == null || affixDatabase == null) return;
 
         int ilvl = Random.Range(minItemLevel, maxItemLevel + 1);

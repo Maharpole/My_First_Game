@@ -1,0 +1,20 @@
+{
+    "asset": "8058e2afc6b8cca46a34f7e985ec435b",
+    "fileName": "0198aeda-2670-7e5a-9a85-469954faf354.jpg",
+    "prompt": "an empty inventory slot for a low poly style game",
+    "negativePrompt": "",
+    "model": "73cd3343-4a41-4d96-b15d-10cd7a4db561",
+    "modelName": "Card Frames",
+    "customSeed": -1,
+    "w3CTraceId": "21e0cc3a9bb4b333c0a1c770f5446ac5",
+    "refinementMode": "Generation",
+    "pixelateTargetSize": 0,
+    "pixelateKeepImageSize": false,
+    "pixelatePixelBlockSize": 0,
+    "pixelateMode": 0,
+    "pixelateOutlineThickness": 0,
+    "doodles": {
+        "m_Items": []
+    },
+    "upscaleFactor": 0
+}

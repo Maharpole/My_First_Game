@@ -25,14 +25,26 @@ public class AutoShooter : MonoBehaviour
     
     private float nextFireTime;
     private AudioSource audioSource;
-    
-    // Baselines used to apply equipment/stat modifiers deterministically
-    [HideInInspector] public float damageBase;
-    [HideInInspector] public float fireRateBase;
+
+    // Baselines captured from weapon profile or defaults
+    private float baselineDamage;
+    private float baselineFireInterval;
+
+    // Runtime computed combat values
+    private float currentDamage;
+    private float currentFireInterval;
+    private float currentCritChancePercent = 2f;     // default base 2%
+    private float currentCritMultiplierPercent = 150f; // default base 150%
     
     void Start()
     {
-        nextFireTime = Time.time + fireRate;
+        // Initialize baselines if not set yet
+        if (baselineDamage <= 0f) baselineDamage = damage;
+        if (baselineFireInterval <= 0f) baselineFireInterval = fireRate;
+        // Initialize current values
+        currentDamage = damage;
+        currentFireInterval = fireRate;
+        nextFireTime = Time.time + currentFireInterval;
         
         // Set up audio source
         audioSource = GetComponent<AudioSource>();
@@ -69,18 +81,6 @@ public class AutoShooter : MonoBehaviour
         {
             impactEffect = weaponData.impactEffect;
         }
-
-        // Initialize baselines if not set
-        if (weaponData != null)
-        {
-            if (damageBase <= 0f) damageBase = weaponData.baseDamage;
-            if (fireRateBase <= 0f) fireRateBase = weaponData.baseFireRate;
-        }
-        else
-        {
-            if (damageBase <= 0f) damageBase = damage;
-            if (fireRateBase <= 0f) fireRateBase = fireRate;
-        }
     }
     
     void Update()
@@ -99,25 +99,10 @@ public class AutoShooter : MonoBehaviour
                 // Fire bullets
                 FireBullets(direction);
                 
-                // Set next fire time
-                nextFireTime = Time.time + fireRate;
+                // Set next fire time using current interval (affected by attack speed)
+                nextFireTime = Time.time + currentFireInterval;
             }
         }
-    }
-
-    // Called by WeaponAttachController or Player stat pipeline
-    public void SetBaselines(float baseDamage, float baseFireRate)
-    {
-        damageBase = baseDamage;
-        fireRateBase = baseFireRate;
-    }
-
-    // Apply equipment/stat modifiers (flat and percent). Attack speed reduces fire interval.
-    public void ApplyStatModifiers(float flatDamage, float percentDamage, float percentAttackSpeed)
-    {
-        damage = Mathf.Max(0f, (damageBase + flatDamage) * (1f + percentDamage / 100f));
-        float speedMultiplier = Mathf.Max(0.1f, 1f + percentAttackSpeed / 100f);
-        fireRate = Mathf.Max(0.05f, fireRateBase / speedMultiplier);
     }
     
     GameObject FindNearestEnemy()
@@ -189,7 +174,17 @@ public class AutoShooter : MonoBehaviour
             Bullet bulletComponent = bullet.GetComponent<Bullet>();
             if (bulletComponent != null)
             {
-                bulletComponent.damage = damage;
+                float dmg = currentDamage;
+                // Roll crit
+                if (currentCritChancePercent > 0f)
+                {
+                    if (Random.value < (currentCritChancePercent * 0.01f))
+                    {
+                        float mult = Mathf.Max(0f, currentCritMultiplierPercent) * 0.01f; // 150% -> 1.5
+                        dmg *= mult;
+                    }
+                }
+                bulletComponent.damage = dmg;
                 
                 // Set weapon-specific properties
                 if (weaponData != null)
@@ -199,5 +194,32 @@ public class AutoShooter : MonoBehaviour
                 }
             }
         }
+    }
+
+    // Called by weapon attach or player stat system to set the unmodified baseline values
+    public void SetBaselines(float baseDamage, float baseFireInterval)
+    {
+        baselineDamage = Mathf.Max(0f, baseDamage);
+        baselineFireInterval = Mathf.Max(0.01f, baseFireInterval);
+        // Reset current based on baselines
+        currentDamage = baselineDamage;
+        currentFireInterval = baselineFireInterval;
+    }
+
+    // Applies player stat modifiers to this shooter
+    public void ApplyStatModifiers(float flatDamage, float pctDamage, float pctAttackSpeed, float finalCritChancePercent, float finalCritMultiplierPercent)
+    {
+        // Damage: (base + flat) * (1 + %/100)
+        currentDamage = (baselineDamage + flatDamage) * (1f + Mathf.Max(0f, pctDamage) * 0.01f);
+        damage = currentDamage; // keep public field in sync for debugging
+
+        // Fire interval: divide by (1 + attack speed%)
+        float speedFactor = 1f + Mathf.Max(0f, pctAttackSpeed) * 0.01f;
+        currentFireInterval = Mathf.Max(0.01f, baselineFireInterval / Mathf.Max(0.01f, speedFactor));
+        fireRate = currentFireInterval; // keep public field in sync
+
+        // Crit
+        currentCritChancePercent = Mathf.Max(0f, finalCritChancePercent);
+        currentCritMultiplierPercent = Mathf.Max(0f, finalCritMultiplierPercent);
     }
 } 

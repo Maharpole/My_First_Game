@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 public class Coin : MonoBehaviour
 {
@@ -51,6 +52,22 @@ public class Coin : MonoBehaviour
     private Collider playerCollider;
     private Material originalMaterial;
     private MeshRenderer meshRenderer;
+
+    // Dedicated canvas for floating coin text so it doesn't depend on other UI panels
+    private static Canvas floatingCanvas;
+
+    private static Canvas GetOrCreateFloatingCanvas()
+    {
+        if (floatingCanvas != null) return floatingCanvas;
+        var go = new GameObject("FloatingTextCanvas");
+        var c = go.AddComponent<Canvas>();
+        c.renderMode = RenderMode.ScreenSpaceOverlay;
+        c.sortingOrder = 9500; // below tooltip (10000), above typical HUD
+        go.AddComponent<GraphicRaycaster>();
+        Object.DontDestroyOnLoad(go);
+        floatingCanvas = c;
+        return floatingCanvas;
+    }
 
     private void Start()
     {
@@ -147,8 +164,6 @@ public class Coin : MonoBehaviour
     {
         if (isCollected) return;
         isCollected = true;
-
-        Debug.Log("Coin collected by player!");
         
         // Play collection sound
         if (collectSound != null)
@@ -175,15 +190,15 @@ public class Coin : MonoBehaviour
             Camera mainCamera = Camera.main;
             if (mainCamera != null)
             {
-                // Find canvas and convert to local UI position
-                Canvas canvas = Object.FindFirstObjectByType<Canvas>();
+                // Use a dedicated overlay canvas so floating text always shows
+                Canvas canvas = GetOrCreateFloatingCanvas();
                 if (canvas != null)
                 {
                     // Convert world to screen, then to canvas local point
                     Vector3 screenPos = mainCamera.WorldToScreenPoint(transform.position);
                     RectTransform canvasRect = canvas.GetComponent<RectTransform>();
                     Vector2 localPoint;
-                    RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, screenPos, canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera, out localPoint);
+                    RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, screenPos, null, out localPoint);
 
                     // Instantiate under canvas and set anchored position
                     GameObject floatingTextObj = Instantiate(floatingTextPrefab);

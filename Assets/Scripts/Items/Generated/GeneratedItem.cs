@@ -22,11 +22,11 @@ public class GeneratedItem
         // prefix/suffix stats
         foreach (var p in prefixes)
         {
-            list.Add(new StatModifier { statType = p.statType, value = p.value, isPercentage = p.isPercentage });
+            list.Add(new StatModifier { statType = p.statType, value = p.value, isPercentage = StatTypeInfo.EffectiveIsPercent(p.statType, false) });
         }
         foreach (var s in suffixes)
         {
-            list.Add(new StatModifier { statType = s.statType, value = s.value, isPercentage = s.isPercentage });
+            list.Add(new StatModifier { statType = s.statType, value = s.value, isPercentage = StatTypeInfo.EffectiveIsPercent(s.statType, false) });
         }
         return list;
     }

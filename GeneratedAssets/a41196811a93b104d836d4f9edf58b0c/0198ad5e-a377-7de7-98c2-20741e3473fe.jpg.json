@@ -1,0 +1,20 @@
+{
+    "asset": "a41196811a93b104d836d4f9edf58b0c",
+    "fileName": "0198ad5e-a377-7de7-98c2-20741e3473fe.jpg",
+    "prompt": "Leather moccasins",
+    "negativePrompt": "",
+    "model": "03d5ab0c-51c5-44a0-ba07-822e93561aca",
+    "modelName": "Game Icons",
+    "customSeed": -1,
+    "w3CTraceId": "e45df74ddfa638291837789a2e2d6cb8",
+    "refinementMode": "Generation",
+    "pixelateTargetSize": 0,
+    "pixelateKeepImageSize": false,
+    "pixelatePixelBlockSize": 0,
+    "pixelateMode": 0,
+    "pixelateOutlineThickness": 0,
+    "doodles": {
+        "m_Items": []
+    },
+    "upscaleFactor": 0
+}

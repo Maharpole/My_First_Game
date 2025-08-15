@@ -30,14 +30,14 @@ public class CoinDropper : MonoBehaviour
     private void OnEnemyDeath()
     {
         if (coinPrefab == null) return;
-        // Check if we should drop coins
+        // Check if we should drop coins as the very first step to avoid unnecessary work
         if (Random.value > dropChance) return;
 
         int coinsToSpawn = Random.Range(minCoins, maxCoins + 1);
         for (int i = 0; i < coinsToSpawn; i++)
         {
             Vector3 offset = new Vector3(Random.Range(-dropSpread, dropSpread), 0.5f, Random.Range(-dropSpread, dropSpread));
-            Instantiate(coinPrefab, transform.position + offset, Quaternion.identity);
+            Instantiate(coinPrefab, transform.position + offset, coinPrefab.transform.rotation);
         }
     }
 

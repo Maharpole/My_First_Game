@@ -1,0 +1,20 @@
+{
+    "asset": "8058e2afc6b8cca46a34f7e985ec435b",
+    "fileName": "0198aed8-4f5d-7817-be8b-c96f57850d27.jpg",
+    "prompt": "an empty inventory slot for a low poly style game",
+    "negativePrompt": "",
+    "model": "03d5ab0c-51c5-44a0-ba07-822e93561aca",
+    "modelName": "Game Icons",
+    "customSeed": -1,
+    "w3CTraceId": "66bd7f726a3c9e0508e4c293f239da8d",
+    "refinementMode": "Generation",
+    "pixelateTargetSize": 0,
+    "pixelateKeepImageSize": false,
+    "pixelatePixelBlockSize": 0,
+    "pixelateMode": 0,
+    "pixelateOutlineThickness": 0,
+    "doodles": {
+        "m_Items": []
+    },
+    "upscaleFactor": 0
+}

@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f2a6876a660bf6444ba009b211aece92, type: 3}
+  m_Name: Percent Movement Speed
+  m_EditorClassIdentifier: 
+  affixId: Of Swiftness
+  displayName: Movement Speed
+  modGroup: Movement Speed
+  isPrefix: 1
+  allowedSlots: 06000000
+  statType: 22
+  tiers:
+  - tierName: Tier 1
+    minItemLevel: 0
+    maxValue: 30
+    minValue: 25
+    weight: 1
+  - tierName: Tier 2
+    minItemLevel: 0
+    maxValue: 25
+    minValue: 20
+    weight: 100
+  - tierName: Tier 3
+    minItemLevel: 0
+    maxValue: 20
+    minValue: 15
+    weight: 200
+  weight: 1
