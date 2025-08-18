@@ -76,7 +76,8 @@ public class EquipmentData : ScriptableObject
 
     public string GetTooltipText()
     {
-        string tooltip = $"<color=#{ColorUtility.ToHtmlStringRGB(rarityColor)}>{equipmentName}</color>\n";
+        var nameColor = GetTooltipRarityColor();
+        string tooltip = $"<size=30><b><color=#{ColorUtility.ToHtmlStringRGB(nameColor)}>{equipmentName}</color></b></size>\n";
         tooltip += $"{equipmentType} (Level {requiredLevel})\n\n";
         bool wroteAny = false;
         // Base stats first
@@ -108,5 +109,15 @@ public class EquipmentData : ScriptableObject
         }
         if (!string.IsNullOrEmpty(description)) tooltip += "\n" + description;
         return tooltip;
+    }
+
+    public Color GetTooltipRarityColor()
+    {
+        switch (rarity)
+        {
+            case EquipmentRarity.Magic: return new Color(0.4f, 0.6f, 1f, 1f);
+            case EquipmentRarity.Rare: return new Color(1f, 0.84f, 0f, 1f);
+            default: return Color.white;
+        }
     }
 }

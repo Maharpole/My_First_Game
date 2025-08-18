@@ -102,8 +102,6 @@ public class UIToggleHotkey : MonoBehaviour
         {
             if (p != null) p.SetActive(state);
         }
-        // Sync extended tooltip view with this panel visibility (character screen toggle)
-        UITooltip.SetExtendedView(state);
         if (!state)
         {
             // Hide any global tooltip when UI panels are closed

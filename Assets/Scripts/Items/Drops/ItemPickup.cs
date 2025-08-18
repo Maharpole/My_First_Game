@@ -3,7 +3,7 @@ using TMPro;
 using UnityEngine.EventSystems;
 
 [RequireComponent(typeof(Collider))]
-public class ItemPickup : MonoBehaviour, IPointerClickHandler
+public class ItemPickup : MonoBehaviour
 {
     public float rotateSpeed = 45f;
 
@@ -14,6 +14,7 @@ public class ItemPickup : MonoBehaviour, IPointerClickHandler
     public Color magicColor = new Color(0.4f,0.6f,1f,1f);
     public Color rareColor = new Color(1f,0.84f,0f,1f);
     public int nameFontSize = 24;
+    [Tooltip("Optional: background behind the floating item name")] public Color nameBackgroundColor = new Color(0f,0f,0f,0.35f);
 
     private TextMeshPro nameText;
     private BoxCollider nameCollider;
@@ -37,11 +38,10 @@ public class ItemPickup : MonoBehaviour, IPointerClickHandler
     void Awake()
     {
         runtime = GetComponent<RuntimeEquipmentItem>();
-        if (showNameLabel)
-        {
-            CreateNameLabel();
-        }
-        EnsureUIClickability();
+        // World label disabled: use overlay UI manager instead
+        // Register with overlay UI if available
+        var ui = ItemPickupUIManager.Instance;
+        if (ui != null) ui.Register(this);
     }
 
     void Start()
@@ -57,7 +57,7 @@ public class ItemPickup : MonoBehaviour, IPointerClickHandler
     void Update()
     {
         transform.Rotate(Vector3.up, rotateSpeed * Time.deltaTime, Space.World);
-        UpdateNameLabel();
+        // World label disabled
         // Late assignment safety: if generated was set after Start for any reason
         if (!visualSpawned && runtime != null && runtime.generated != null && runtime.generated.baseEquipment != null)
         {
@@ -218,14 +218,7 @@ public class ItemPickup : MonoBehaviour, IPointerClickHandler
         DoPickup(player);
     }
 
-    // Click-to-pickup via UI EventSystem raycasts
-    public void OnPointerClick(PointerEventData eventData)
-    {
-        var player = FindFirstObjectByType<Player>();
-        if (player == null) return;
-        // Optional: range check on click
-        TryPickup(player, 3f);
-    }
+    // Click-to-pickup disabled; overlay UI handles clicks
 
     void DoPickup(Player player)
     {
@@ -241,6 +234,9 @@ public class ItemPickup : MonoBehaviour, IPointerClickHandler
         {
             inv.Set(emptySlot, runtimeItem);
             Destroy(gameObject);
+            // Unregister overlay UI entry
+            var ui = ItemPickupUIManager.Instance;
+            if (ui != null) ui.Unregister(this);
             return;
         }
 
@@ -254,6 +250,23 @@ public class ItemPickup : MonoBehaviour, IPointerClickHandler
         }
         // Keep the item in world; do not destroy
         return;
+    }
+
+    // Exposed for UI overlay text
+    public string GetDisplayNameForUI()
+    {
+        return GetDisplayName();
+    }
+
+    public Color GetRarityColorForUI()
+    {
+        return GetRarityColor();
+    }
+
+    void OnDestroy()
+    {
+        var ui = ItemPickupUIManager.Instance;
+        if (ui != null) ui.Unregister(this);
     }
 
     // Find the SimpleInventory data even if its UI is currently inactive
@@ -295,15 +308,35 @@ public class ItemPickup : MonoBehaviour, IPointerClickHandler
         nameText.text = GetDisplayName();
         nameText.raycastTarget = false; // TextMeshPro (3D) uses physics, not UI raycasts
 
+        // Add a background quad behind the text for legibility, and size it to text bounds
+        var bg = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        bg.name = "NameBG";
+        bg.transform.SetParent(go.transform, false);
+        // place background slightly behind the text so text renders in front
+        bg.transform.localPosition = new Vector3(0f, 0f, 0.01f);
+        var bgMr = bg.GetComponent<MeshRenderer>();
+        var unlit = Shader.Find("Unlit/Color");
+        if (unlit != null)
+        {
+            var m = new Material(unlit);
+            m.color = nameBackgroundColor;
+            bgMr.sharedMaterial = m;
+        }
+        var bgCol = bg.GetComponent<Collider>();
+        if (bgCol != null) bgCol.enabled = false;
+        // Initial sizing
+        nameText.ForceMeshUpdate();
+        var sizeNow = nameText.GetRenderedValues(false);
+        var pad = new Vector2(0.25f, 0.15f);
+        bg.transform.localScale = new Vector3(Mathf.Max(0.05f, sizeNow.x + pad.x), Mathf.Max(0.05f, sizeNow.y + pad.y), 1f);
+
         // Add a collider that will be auto-sized to the text bounds so the whole label is clickable
         nameCollider = go.AddComponent<BoxCollider>();
         nameCollider.isTrigger = false;
         nameCollider.center = Vector3.zero;
         nameCollider.size = new Vector3(1.2f, 0.35f, 0.1f); // temporary; will be updated dynamically
 
-        // Relay clicks on the label up to the pickup
-        var relay = go.AddComponent<ItemPickupClickRelay>();
-        relay.target = this;
+        // Relay removed; overlay UI handles clicks
 
         // Initial bounds fit
         UpdateNameColliderBounds();
@@ -318,6 +351,14 @@ public class ItemPickup : MonoBehaviour, IPointerClickHandler
             nameText.text = desired;
             nameText.ForceMeshUpdate();
             UpdateNameColliderBounds();
+            // Also resize background to match new text size
+            var bg = nameText.transform.Find("NameBG");
+            if (bg != null)
+            {
+                var size = nameText.GetRenderedValues(false);
+                var pad = new Vector2(0.25f, 0.15f);
+                bg.localScale = new Vector3(Mathf.Max(0.05f, size.x + pad.x), Mathf.Max(0.05f, size.y + pad.y), 1f);
+            }
         }
         var desiredColor = GetRarityColor();
         if (nameText.color != desiredColor) nameText.color = desiredColor;
@@ -325,6 +366,13 @@ public class ItemPickup : MonoBehaviour, IPointerClickHandler
         {
             // Even when text hasn't changed, ensure collider tracks any scale changes
             UpdateNameColliderBounds();
+            var bg = nameText.transform.Find("NameBG");
+            if (bg != null)
+            {
+                var size = nameText.GetRenderedValues(false);
+                var pad = new Vector2(0.25f, 0.15f);
+                bg.localScale = new Vector3(Mathf.Max(0.05f, size.x + pad.x), Mathf.Max(0.05f, size.y + pad.y), 1f);
+            }
         }
     }
 
@@ -411,17 +459,26 @@ public class ItemPickup : MonoBehaviour, IPointerClickHandler
     void UpdateNameColliderBounds(float paddingX = 0.1f, float paddingY = 0.05f, float minDepth = 0.1f)
     {
         if (nameText == null || nameCollider == null) return;
-        var rend = nameText.GetComponent<MeshRenderer>();
-        if (rend == null) return;
-        // Convert world-space bounds to local space size for the collider
-        var sizeWorld = rend.bounds.size;
+        var textRend = nameText.GetComponent<MeshRenderer>();
+        if (textRend == null) return;
+        // Convert world-space bounds to local space size for the collider and background
+        var sizeWorld = textRend.bounds.size;
         var ls = nameText.transform.lossyScale;
         float sx = Mathf.Max(0.0001f, ls.x);
         float sy = Mathf.Max(0.0001f, ls.y);
         float sz = Mathf.Max(0.0001f, ls.z);
         var sizeLocal = new Vector3(sizeWorld.x / sx, sizeWorld.y / sy, sizeWorld.z / sz);
-        nameCollider.size = new Vector3(sizeLocal.x + paddingX, sizeLocal.y + paddingY, Mathf.Max(minDepth, sizeLocal.z));
+        var newSize = new Vector3(sizeLocal.x + paddingX, sizeLocal.y + paddingY, Mathf.Max(minDepth, sizeLocal.z));
+        nameCollider.size = newSize;
         nameCollider.center = Vector3.zero;
+
+        // Fit background quad to the same clickable area
+        var bg = nameText.transform.parent.Find("NameBG");
+        if (bg != null)
+        {
+            // the Quad is 1x1 in local space; scale to match collider size (X=width, Y=height)
+            bg.localScale = new Vector3(newSize.x, newSize.y, 1f);
+        }
     }
 
     void EnsureRootColliderFitsVisual(float pad = 0.05f)

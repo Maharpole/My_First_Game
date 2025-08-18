@@ -96,7 +96,7 @@ public partial class @Input_Control: IInputActionCollection2, IDisposable
                     ""name"": ""Dash"",
                     ""type"": ""Button"",
                     ""id"": ""d6448cd4-f81c-4b0a-95f7-b52336281590"",
-                    ""expectedControlType"": ""Button"",
+                    ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
@@ -177,7 +177,25 @@ public partial class @Input_Control: IInputActionCollection2, IDisposable
                     ""name"": ""ToggleInventory"",
                     ""type"": ""Button"",
                     ""id"": ""16b2c58e-a214-40a9-ac42-fde28d98acfe"",
-                    ""expectedControlType"": ""Button"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""AdvancedTooltipToggle"",
+                    ""type"": ""Button"",
+                    ""id"": ""939ed63d-e17c-4a5e-808d-adf6275ac688"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Pause"",
+                    ""type"": ""Button"",
+                    ""id"": ""d6aba95c-50d5-4c5f-b15c-46c5bdb22186"",
+                    ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
@@ -194,6 +212,28 @@ public partial class @Input_Control: IInputActionCollection2, IDisposable
                     ""action"": ""ToggleInventory"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""564ffca6-e4b2-4dc0-8671-8eb4e3d01d8a"",
+                    ""path"": ""<Keyboard>/leftAlt"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""AdvancedTooltipToggle"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""7c754a27-18e7-48c2-b66d-2945a9d94dd0"",
+                    ""path"": ""<Keyboard>/escape"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Pause"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -207,6 +247,8 @@ public partial class @Input_Control: IInputActionCollection2, IDisposable
         // UI
         m_UI = asset.FindActionMap("UI", throwIfNotFound: true);
         m_UI_ToggleInventory = m_UI.FindAction("ToggleInventory", throwIfNotFound: true);
+        m_UI_AdvancedTooltipToggle = m_UI.FindAction("AdvancedTooltipToggle", throwIfNotFound: true);
+        m_UI_Pause = m_UI.FindAction("Pause", throwIfNotFound: true);
     }
 
     ~@Input_Control()
@@ -396,6 +438,8 @@ public partial class @Input_Control: IInputActionCollection2, IDisposable
     private readonly InputActionMap m_UI;
     private List<IUIActions> m_UIActionsCallbackInterfaces = new List<IUIActions>();
     private readonly InputAction m_UI_ToggleInventory;
+    private readonly InputAction m_UI_AdvancedTooltipToggle;
+    private readonly InputAction m_UI_Pause;
     /// <summary>
     /// Provides access to input actions defined in input action map "UI".
     /// </summary>
@@ -411,6 +455,14 @@ public partial class @Input_Control: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "UI/ToggleInventory".
         /// </summary>
         public InputAction @ToggleInventory => m_Wrapper.m_UI_ToggleInventory;
+        /// <summary>
+        /// Provides access to the underlying input action "UI/AdvancedTooltipToggle".
+        /// </summary>
+        public InputAction @AdvancedTooltipToggle => m_Wrapper.m_UI_AdvancedTooltipToggle;
+        /// <summary>
+        /// Provides access to the underlying input action "UI/Pause".
+        /// </summary>
+        public InputAction @Pause => m_Wrapper.m_UI_Pause;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -440,6 +492,12 @@ public partial class @Input_Control: IInputActionCollection2, IDisposable
             @ToggleInventory.started += instance.OnToggleInventory;
             @ToggleInventory.performed += instance.OnToggleInventory;
             @ToggleInventory.canceled += instance.OnToggleInventory;
+            @AdvancedTooltipToggle.started += instance.OnAdvancedTooltipToggle;
+            @AdvancedTooltipToggle.performed += instance.OnAdvancedTooltipToggle;
+            @AdvancedTooltipToggle.canceled += instance.OnAdvancedTooltipToggle;
+            @Pause.started += instance.OnPause;
+            @Pause.performed += instance.OnPause;
+            @Pause.canceled += instance.OnPause;
         }
 
         /// <summary>
@@ -454,6 +512,12 @@ public partial class @Input_Control: IInputActionCollection2, IDisposable
             @ToggleInventory.started -= instance.OnToggleInventory;
             @ToggleInventory.performed -= instance.OnToggleInventory;
             @ToggleInventory.canceled -= instance.OnToggleInventory;
+            @AdvancedTooltipToggle.started -= instance.OnAdvancedTooltipToggle;
+            @AdvancedTooltipToggle.performed -= instance.OnAdvancedTooltipToggle;
+            @AdvancedTooltipToggle.canceled -= instance.OnAdvancedTooltipToggle;
+            @Pause.started -= instance.OnPause;
+            @Pause.performed -= instance.OnPause;
+            @Pause.canceled -= instance.OnPause;
         }
 
         /// <summary>
@@ -523,5 +587,19 @@ public partial class @Input_Control: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnToggleInventory(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "AdvancedTooltipToggle" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnAdvancedTooltipToggle(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Pause" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnPause(InputAction.CallbackContext context);
     }
 }

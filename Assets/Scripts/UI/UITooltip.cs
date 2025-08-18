@@ -73,7 +73,7 @@ public class UITooltip : MonoBehaviour
         _text = textGO.AddComponent<TextMeshProUGUI>();
         _text.richText = true;
         _text.textWrappingMode = TextWrappingModes.Normal;
-        _text.fontSize = 20f;
+        _text.fontSize = 15f; // body font size (matches normal tooltip)
         _text.color = Color.white;
 
         var textRT = _text.rectTransform;
@@ -100,11 +100,19 @@ public class UITooltip : MonoBehaviour
         t._currentData = data;
         // Title color by rarity and body content
         string body = ext ? UITooltipExtensions.BuildExtendedTooltip(data) : data.GetTooltipText();
-        // Ensure the first line (name) is properly colored by rarity (redundant but safe)
+        t.ApplyWrapping();
         t._text.text = body;
         t.LayoutToContent();
         t.UpdatePosition(screenPosition);
         t.SetActive(true);
+    }
+
+    void ApplyWrapping()
+    {
+        if (_text == null) return;
+        // Keep each modifier on one line by disabling word wrapping and allowing wider tooltips for extended view
+        _text.textWrappingMode = TextWrappingModes.NoWrap;
+        _maxWidth = 4020f;
     }
 
     public static void Move(Vector2 screenPosition)
@@ -119,6 +127,7 @@ public class UITooltip : MonoBehaviour
             if (t._currentData != null)
             {
                 string body = ext ? UITooltipExtensions.BuildExtendedTooltip(t._currentData) : t._currentData.GetTooltipText();
+                t.ApplyWrapping();
                 t._text.text = body;
                 t.LayoutToContent();
             }
@@ -169,7 +178,8 @@ static class UITooltipExtensions
         // We use reflection to try to get generatedAffixes list without breaking encapsulation
         var fi = typeof(EquipmentData).GetField("generatedAffixes", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
         System.Text.StringBuilder sb = new System.Text.StringBuilder();
-        sb.AppendLine($"<color=#{ColorUtility.ToHtmlStringRGB(data.rarityColor)}>{data.equipmentName}</color>");
+        var nameColor = data.GetTooltipRarityColor();
+        sb.AppendLine($"<size=30><b><color=#{ColorUtility.ToHtmlStringRGB(nameColor)}>{data.equipmentName}</color></b></size>");
         sb.AppendLine($"{data.equipmentType} (Level {data.requiredLevel})");
         sb.AppendLine();
         // Base first
@@ -201,9 +211,11 @@ static class UITooltipExtensions
                 string aname = (string)ga.GetType().GetField("displayName").GetValue(ga);
                 bool isPct = StatTypeInfo.EffectiveIsPercent(statType, false);
                 string valStr = isPct ? $"+{value}%" : $"+{value}";
-                string rangeStr = isPct ? $"({Mathf.RoundToInt(tmin)}%–{Mathf.RoundToInt(tmax)}%)" : $"({Mathf.RoundToInt(tmin)}–{Mathf.RoundToInt(tmax)})";
+                string rangeStr = isPct ? $" ({Mathf.RoundToInt(tmin)}%–{Mathf.RoundToInt(tmax)}%)" : $" ({Mathf.RoundToInt(tmin)}–{Mathf.RoundToInt(tmax)})";
                 string label = StatTypeInfo.GetDisplayLabel(statType);
-                sb.AppendLine($"{valStr} {label} <color=#7FA7FF>[{tname}] {aname} {rangeStr}</color>");
+                string inc = isPct ? " increased" : string.Empty;
+                // Inline range next to rolled value, then smaller parentheses for tier and affix name
+                sb.AppendLine($"{valStr}{rangeStr}{inc} {label} <size=80%><color=#7FA7FF>({tname}, {aname})</color></size>");
             }
         }
         if (!string.IsNullOrEmpty(data.description))
@@ -214,5 +226,6 @@ static class UITooltipExtensions
         return sb.ToString();
     }
 }
+
 
 

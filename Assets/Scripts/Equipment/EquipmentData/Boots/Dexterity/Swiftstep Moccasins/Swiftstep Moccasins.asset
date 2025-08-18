@@ -16,7 +16,7 @@ MonoBehaviour:
   description: 'test boots for movement speed
 
 '
-  icon: {fileID: 21300000, guid: 4317a01c617dd7143bf174eed0f0b2e1, type: 3}
+  icon: {fileID: 21300000, guid: a41196811a93b104d836d4f9edf58b0c, type: 3}
   modelPrefab: {fileID: 6732823504039379065, guid: 70b4c3764739b8045a793719e716f6fb, type: 3}
   equipmentType: 6
   rarity: 0
@@ -35,4 +35,5 @@ MonoBehaviour:
     value: 20
     isPercentage: 1
   randomAffixes: []
+  generatedAffixes: []
   rarityColor: {r: 1, g: 1, b: 1, a: 1}

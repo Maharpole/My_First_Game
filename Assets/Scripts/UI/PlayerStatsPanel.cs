@@ -47,7 +47,7 @@ public class PlayerStatsPanel : MonoBehaviour
             $"Move Speed: {s.finalMoveSpeed:F2}\n" +
             $"Increased Damage: +{s.damageFlat}\n" +
             $"Damage Modifier: {s.damagePercent}%\n" +
-            $"Percent Increased Attack Speed: {s.attackSpeedPercent}%\n" +
+            $"Percent IncreasedAttack Speed: {s.attackSpeedPercent}%\n" +
             $"Crit Chance: {s.critChancePercent}%\n" +
             $"Crit Multiplier: {s.critMultiplierPercent}%\n" +
             $"Reflect: +{s.reflectFlat} flat, {s.reflectPercent}%\n" +

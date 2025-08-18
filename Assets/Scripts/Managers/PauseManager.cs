@@ -1,11 +1,16 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 
 public class PauseManager : MonoBehaviour
 {
+
+
     [Header("Pause Settings")]
     [Tooltip("Key to toggle pause menu")]
-    public KeyCode pauseKey = KeyCode.Escape;
+    public InputActionReference toggleAction;
     
     [Tooltip("Whether the game starts paused")]
     public bool startPaused = false;
@@ -23,6 +28,12 @@ public class PauseManager : MonoBehaviour
     [Header("Debug")]
     [Tooltip("Enable detailed debug logs")]
     public bool enableDebugLogs = true;
+
+#if ENABLE_INPUT_SYSTEM
+    [Header("Input (New Input System)")]
+    [Tooltip("Action that toggles pause (performed to toggle)")]
+    public InputActionReference pauseAction;
+#endif
     
     // Singleton instance
     public static PauseManager Instance { get; private set; }
@@ -66,6 +77,30 @@ public class PauseManager : MonoBehaviour
         // Unsubscribe from scene loaded event
         SceneManager.sceneLoaded -= OnSceneLoaded;
         DebugLog("Unsubscribed from scene loaded event");
+    }
+
+    private void OnEnable()
+    {
+#if ENABLE_INPUT_SYSTEM
+        if (pauseAction != null)
+        {
+            pauseAction.action.performed += OnPausePerformed;
+            pauseAction.action.Enable();
+            DebugLog("Bound pauseAction to toggle pause");
+        }
+#endif
+    }
+
+    private void OnDisable()
+    {
+#if ENABLE_INPUT_SYSTEM
+        if (pauseAction != null)
+        {
+            pauseAction.action.performed -= OnPausePerformed;
+            pauseAction.action.Disable();
+            DebugLog("Unbound pauseAction");
+        }
+#endif
     }
     
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
@@ -216,15 +251,25 @@ public class PauseManager : MonoBehaviour
         }
     }
     
+    #if !ENABLE_INPUT_SYSTEM
     private void Update()
     {
-        // Check for pause key press
+        // Legacy input fallback
         if (Input.GetKeyDown(pauseKey))
         {
             DebugLog($"Pause key ({pauseKey}) pressed");
             TogglePause();
         }
     }
+    #endif
+
+#if ENABLE_INPUT_SYSTEM
+    private void OnPausePerformed(InputAction.CallbackContext _)
+    {
+        DebugLog("pauseAction performed");
+        TogglePause();
+    }
+#endif
     
     /// <summary>
     /// Toggles the pause state of the game

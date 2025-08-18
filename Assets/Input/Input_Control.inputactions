@@ -1,4 +1,5 @@
 {
+    "version": 1,
     "name": "Input_Control",
     "maps": [
         {
@@ -9,7 +10,7 @@
                     "name": "Dash",
                     "type": "Button",
                     "id": "d6448cd4-f81c-4b0a-95f7-b52336281590",
-                    "expectedControlType": "Button",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
@@ -90,7 +91,25 @@
                     "name": "ToggleInventory",
                     "type": "Button",
                     "id": "16b2c58e-a214-40a9-ac42-fde28d98acfe",
-                    "expectedControlType": "Button",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "AdvancedTooltipToggle",
+                    "type": "Button",
+                    "id": "939ed63d-e17c-4a5e-808d-adf6275ac688",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Pause",
+                    "type": "Button",
+                    "id": "d6aba95c-50d5-4c5f-b15c-46c5bdb22186",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
@@ -105,6 +124,28 @@
                     "processors": "",
                     "groups": "",
                     "action": "ToggleInventory",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "564ffca6-e4b2-4dc0-8671-8eb4e3d01d8a",
+                    "path": "<Keyboard>/leftAlt",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "AdvancedTooltipToggle",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "7c754a27-18e7-48c2-b66d-2945a9d94dd0",
+                    "path": "<Keyboard>/escape",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Pause",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

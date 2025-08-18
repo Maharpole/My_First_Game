@@ -69,6 +69,38 @@ public class Player : MonoBehaviour
         private float reflectPercentCurrent = 0f;
         private int regenPerTickCurrent = 0;
         private float regenTickSecondsCurrent = 1f;
+        public bool enableStatLogs = true;
+        StatsSnapshot _lastStats;
+
+        struct StatsSnapshot
+        {
+            public float baseMove, flatMove, pctMove;
+            public int baseHp, flatHp, bonusPctHp, maxHp, curHp;
+            public float dmgFlat, dmgPct, atkSpdPct;
+            public override string ToString()
+            {
+                float finalMove = (baseMove + flatMove) * (1f + pctMove / 100f);
+                return $"Move: base={baseMove} +{flatMove} {pctMove}% -> {finalMove:0.###}\n" +
+                       $"HP: base={baseHp} +{flatHp} +{bonusPctHp} => max={maxHp}, cur={curHp}\n" +
+                       $"Dmg: +{dmgFlat} {dmgPct}%  AS%={atkSpdPct}";
+            }
+        }
+
+        void LogStats(
+                float baseMove, float flatMove, float pctMove,
+                int baseHp, int flatHp, int bonusPctHp, int maxHp, int curHp,
+                float dmgFlat, float dmgPct, float atkSpdPct,
+                string reason)
+        {
+            if (!enableStatLogs) return;
+            _lastStats = new StatsSnapshot
+            {
+                baseMove = baseMove, flatMove = flatMove, pctMove = pctMove,
+                baseHp = baseHp, flatHp = flatHp, bonusPctHp = bonusPctHp, maxHp = maxHp, curHp = curHp,
+                dmgFlat = dmgFlat, dmgPct = dmgPct, atkSpdPct = atkSpdPct
+            };
+            Debug.Log($"[Stats] {reason}\n{_lastStats}");
+        }
     
     // Properties
     public int CurrentHealth => currentHealth;
@@ -132,6 +164,7 @@ public class Player : MonoBehaviour
         
         // Apply initial stats from any pre-equipped gear
         RecomputeAndApplyStats();
+        LogStats(baseMoveSpeed, 0f, 0f, baseMaxHealth, 0, 0, maxHealth, currentHealth, 0f, 0f, 0f, "Initialize");
         Debug.Log("Player initialized successfully!");
     }
     
@@ -420,6 +453,11 @@ public class Player : MonoBehaviour
     void HandleEquipmentChanged()
     {
         RecomputeAndApplyStats();
+        if (enableStatLogs)
+        {
+            var names = GetAllEquippedItems();
+            Debug.Log("[Stats] Equipped: " + string.Join(", ", names.ConvertAll(i => i != null ? i.equipmentName : "(null)")));
+        }
         onEquipmentChanged?.Invoke();
     }
     #endregion
@@ -560,6 +598,12 @@ public class Player : MonoBehaviour
             currentHealth = Mathf.Clamp(Mathf.RoundToInt(ratio * maxHealth), 1, maxHealth);
             onHealthChanged?.Invoke(currentHealth);
         }
+
+        LogStats(
+            baseMoveSpeed, flatMove, pctMove,
+            baseMaxHealth, Mathf.RoundToInt(flatHealth), bonusFromPercent, maxHealth, currentHealth,
+            flatDamage, pctDamage, pctAttackSpeed,
+            "Recompute (equipment changed)");
 
         // Cache reflect stats for use during damage events
         reflectFlatCurrent = reflectFlat;
