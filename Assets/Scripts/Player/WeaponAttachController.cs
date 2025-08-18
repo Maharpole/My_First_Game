@@ -18,6 +18,11 @@ public class WeaponAttachController : MonoBehaviour
     void OnEnable()
     {
         if (equipment != null) equipment.onEquipmentChanged.AddListener(HandleEquipmentChanged);
+    }
+
+    void Start()
+    {
+        // Defer initial attach until after Player.InitializePlayer has run
         HandleEquipmentChanged();
     }
 

@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using System.Collections.Generic;
 
+[DefaultExecutionOrder(-200)]
 /// <summary>
 /// Single, unified player script that handles everything player-related.
 /// No more multiple scripts - this is the ONLY script you need on your player.
@@ -129,9 +130,11 @@ public class Player : MonoBehaviour
     {
         // Initialize movement
         currentDashCharges = maxDashCharges;
+        if (moveSpeed <= 0f) moveSpeed = 5f; // guard against zeroed prefab values
         baseMoveSpeed = moveSpeed; // remember unmodified baseline for stat calculations
         
         // Initialize health
+        if (maxHealth <= 0) maxHealth = 100; // guard against zeroed prefab values
         baseMaxHealth = maxHealth; // remember unmodified baseline for max health
         currentHealth = maxHealth;
         
