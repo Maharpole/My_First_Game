@@ -13,6 +13,8 @@ public class Player : MonoBehaviour
     
     [Header("== MOVEMENT ==")]
     public float moveSpeed = 5f;
+    [Tooltip("Degrees per second to rotate towards movement direction")] public float rotationSpeed = 720f;
+    [Tooltip("Rotate to face the direction the player is moving")] public bool faceMoveDirection = true;
     public float dashSpeed = 20f;
     public float dashDuration = 0.2f;
     public int maxDashCharges = 3;
@@ -115,6 +117,12 @@ public class Player : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
+            // Persist the player across scene loads (must be on a root GameObject)
+            var root = transform.root != null ? transform.root.gameObject : gameObject;
+            if (root.transform.parent == null)
+            {
+                DontDestroyOnLoad(root);
+            }
         }
         else
         {
@@ -169,6 +177,10 @@ public class Player : MonoBehaviour
         RecomputeAndApplyStats();
         LogStats(baseMoveSpeed, 0f, 0f, baseMaxHealth, 0, 0, maxHealth, currentHealth, 0f, 0f, 0f, "Initialize");
         Debug.Log("Player initialized successfully!");
+
+        // Apply starting class to player (can be used to seed skill tree later)
+        var startingClass = PlayerProfile.StartingClass;
+        Debug.Log($"StartingClass: {startingClass}");
     }
     
     void Update()
@@ -216,7 +228,18 @@ public class Player : MonoBehaviour
         // Move the player
         if (movement.magnitude > 0.1f)
         {
-            transform.Translate(movement * moveSpeed * Time.deltaTime);
+            transform.Translate(movement * moveSpeed * Time.deltaTime, Space.World);
+
+            // Face movement direction
+            if (faceMoveDirection)
+            {
+                Vector3 look = new Vector3(movement.x, 0f, movement.z);
+                if (look.sqrMagnitude > 0.0001f)
+                {
+                    Quaternion target = Quaternion.LookRotation(look, Vector3.up);
+                    transform.rotation = Quaternion.RotateTowards(transform.rotation, target, rotationSpeed * Time.deltaTime);
+                }
+            }
         }
         
         // Handle dash
@@ -232,6 +255,13 @@ public class Player : MonoBehaviour
         dashTime = 0f;
         currentDashCharges--;
         dashDirection = direction.normalized;
+
+        // Face dash direction immediately
+        if (faceMoveDirection && dashDirection.sqrMagnitude > 0.0001f)
+        {
+            Quaternion target = Quaternion.LookRotation(new Vector3(dashDirection.x, 0f, dashDirection.z), Vector3.up);
+            transform.rotation = target;
+        }
         
         // Play sound
         if (dashSounds.Length > 0)
@@ -600,6 +630,13 @@ public class Player : MonoBehaviour
             maxHealth = computedMaxHealth;
             currentHealth = Mathf.Clamp(Mathf.RoundToInt(ratio * maxHealth), 1, maxHealth);
             onHealthChanged?.Invoke(currentHealth);
+        }
+
+        // Include skill-based reflect (from PlayerSkillHooks) before caching
+        var skillHooks = GetComponent<PlayerSkillHooks>();
+        if (skillHooks != null)
+        {
+            reflectFlat += skillHooks.GetSkillReflectFlat();
         }
 
         LogStats(

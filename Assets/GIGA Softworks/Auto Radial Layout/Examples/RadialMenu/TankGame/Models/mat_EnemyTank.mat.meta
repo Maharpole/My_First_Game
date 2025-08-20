@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: acdd39373a1a61242b99fcd4c3972a18
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 293726
+  packageName: Auto Radial Layout
+  packageVersion: 1.1.4
+  assetPath: Assets/GIGA Softworks/Auto Radial Layout/Examples/RadialMenu/TankGame/Models/mat_EnemyTank.mat
+  uploadId: 753132

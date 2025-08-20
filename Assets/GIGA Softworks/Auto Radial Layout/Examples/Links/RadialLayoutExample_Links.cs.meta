@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 4acad1093f0cc9c4280ec9b38edc0294
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 293726
+  packageName: Auto Radial Layout
+  packageVersion: 1.1.4
+  assetPath: Assets/GIGA Softworks/Auto Radial Layout/Examples/Links/RadialLayoutExample_Links.cs
+  uploadId: 753132

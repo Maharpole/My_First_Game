@@ -109,6 +109,24 @@ public partial class @Input_Control: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Spawn_Portal"",
+                    ""type"": ""Button"",
+                    ""id"": ""6ca7d5e5-facc-411b-9134-a0eb6e866232"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Interact"",
+                    ""type"": ""Button"",
+                    ""id"": ""7d0e356c-1b71-4c62-8ca8-2e0f19737c9f"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -166,6 +184,28 @@ public partial class @Input_Control: IInputActionCollection2, IDisposable
                     ""action"": ""Move"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""6507c491-f6d7-4635-8116-07d495803d79"",
+                    ""path"": ""<Keyboard>/p"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Spawn_Portal"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""29fbf8ff-cd68-4e57-baf8-5e0e8353322f"",
+                    ""path"": ""<Keyboard>/e"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Interact"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         },
@@ -195,6 +235,15 @@ public partial class @Input_Control: IInputActionCollection2, IDisposable
                     ""name"": ""Pause"",
                     ""type"": ""Button"",
                     ""id"": ""d6aba95c-50d5-4c5f-b15c-46c5bdb22186"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""ToggleSkillTree"",
+                    ""type"": ""Button"",
+                    ""id"": ""dbbb6c10-0995-4e51-ab54-51baa14d9e69"",
                     ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
@@ -234,6 +283,17 @@ public partial class @Input_Control: IInputActionCollection2, IDisposable
                     ""action"": ""Pause"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""d7ca764b-ba05-4eff-89a3-ac1287fdb2d9"",
+                    ""path"": ""<Keyboard>/l"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ToggleSkillTree"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -244,11 +304,14 @@ public partial class @Input_Control: IInputActionCollection2, IDisposable
         m_Gameplay = asset.FindActionMap("Gameplay", throwIfNotFound: true);
         m_Gameplay_Dash = m_Gameplay.FindAction("Dash", throwIfNotFound: true);
         m_Gameplay_Move = m_Gameplay.FindAction("Move", throwIfNotFound: true);
+        m_Gameplay_Spawn_Portal = m_Gameplay.FindAction("Spawn_Portal", throwIfNotFound: true);
+        m_Gameplay_Interact = m_Gameplay.FindAction("Interact", throwIfNotFound: true);
         // UI
         m_UI = asset.FindActionMap("UI", throwIfNotFound: true);
         m_UI_ToggleInventory = m_UI.FindAction("ToggleInventory", throwIfNotFound: true);
         m_UI_AdvancedTooltipToggle = m_UI.FindAction("AdvancedTooltipToggle", throwIfNotFound: true);
         m_UI_Pause = m_UI.FindAction("Pause", throwIfNotFound: true);
+        m_UI_ToggleSkillTree = m_UI.FindAction("ToggleSkillTree", throwIfNotFound: true);
     }
 
     ~@Input_Control()
@@ -332,6 +395,8 @@ public partial class @Input_Control: IInputActionCollection2, IDisposable
     private List<IGameplayActions> m_GameplayActionsCallbackInterfaces = new List<IGameplayActions>();
     private readonly InputAction m_Gameplay_Dash;
     private readonly InputAction m_Gameplay_Move;
+    private readonly InputAction m_Gameplay_Spawn_Portal;
+    private readonly InputAction m_Gameplay_Interact;
     /// <summary>
     /// Provides access to input actions defined in input action map "Gameplay".
     /// </summary>
@@ -351,6 +416,14 @@ public partial class @Input_Control: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "Gameplay/Move".
         /// </summary>
         public InputAction @Move => m_Wrapper.m_Gameplay_Move;
+        /// <summary>
+        /// Provides access to the underlying input action "Gameplay/Spawn_Portal".
+        /// </summary>
+        public InputAction @Spawn_Portal => m_Wrapper.m_Gameplay_Spawn_Portal;
+        /// <summary>
+        /// Provides access to the underlying input action "Gameplay/Interact".
+        /// </summary>
+        public InputAction @Interact => m_Wrapper.m_Gameplay_Interact;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -383,6 +456,12 @@ public partial class @Input_Control: IInputActionCollection2, IDisposable
             @Move.started += instance.OnMove;
             @Move.performed += instance.OnMove;
             @Move.canceled += instance.OnMove;
+            @Spawn_Portal.started += instance.OnSpawn_Portal;
+            @Spawn_Portal.performed += instance.OnSpawn_Portal;
+            @Spawn_Portal.canceled += instance.OnSpawn_Portal;
+            @Interact.started += instance.OnInteract;
+            @Interact.performed += instance.OnInteract;
+            @Interact.canceled += instance.OnInteract;
         }
 
         /// <summary>
@@ -400,6 +479,12 @@ public partial class @Input_Control: IInputActionCollection2, IDisposable
             @Move.started -= instance.OnMove;
             @Move.performed -= instance.OnMove;
             @Move.canceled -= instance.OnMove;
+            @Spawn_Portal.started -= instance.OnSpawn_Portal;
+            @Spawn_Portal.performed -= instance.OnSpawn_Portal;
+            @Spawn_Portal.canceled -= instance.OnSpawn_Portal;
+            @Interact.started -= instance.OnInteract;
+            @Interact.performed -= instance.OnInteract;
+            @Interact.canceled -= instance.OnInteract;
         }
 
         /// <summary>
@@ -440,6 +525,7 @@ public partial class @Input_Control: IInputActionCollection2, IDisposable
     private readonly InputAction m_UI_ToggleInventory;
     private readonly InputAction m_UI_AdvancedTooltipToggle;
     private readonly InputAction m_UI_Pause;
+    private readonly InputAction m_UI_ToggleSkillTree;
     /// <summary>
     /// Provides access to input actions defined in input action map "UI".
     /// </summary>
@@ -463,6 +549,10 @@ public partial class @Input_Control: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "UI/Pause".
         /// </summary>
         public InputAction @Pause => m_Wrapper.m_UI_Pause;
+        /// <summary>
+        /// Provides access to the underlying input action "UI/ToggleSkillTree".
+        /// </summary>
+        public InputAction @ToggleSkillTree => m_Wrapper.m_UI_ToggleSkillTree;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -498,6 +588,9 @@ public partial class @Input_Control: IInputActionCollection2, IDisposable
             @Pause.started += instance.OnPause;
             @Pause.performed += instance.OnPause;
             @Pause.canceled += instance.OnPause;
+            @ToggleSkillTree.started += instance.OnToggleSkillTree;
+            @ToggleSkillTree.performed += instance.OnToggleSkillTree;
+            @ToggleSkillTree.canceled += instance.OnToggleSkillTree;
         }
 
         /// <summary>
@@ -518,6 +611,9 @@ public partial class @Input_Control: IInputActionCollection2, IDisposable
             @Pause.started -= instance.OnPause;
             @Pause.performed -= instance.OnPause;
             @Pause.canceled -= instance.OnPause;
+            @ToggleSkillTree.started -= instance.OnToggleSkillTree;
+            @ToggleSkillTree.performed -= instance.OnToggleSkillTree;
+            @ToggleSkillTree.canceled -= instance.OnToggleSkillTree;
         }
 
         /// <summary>
@@ -572,6 +668,20 @@ public partial class @Input_Control: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnMove(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Spawn_Portal" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnSpawn_Portal(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Interact" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnInteract(InputAction.CallbackContext context);
     }
     /// <summary>
     /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "UI" which allows adding and removing callbacks.
@@ -601,5 +711,12 @@ public partial class @Input_Control: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnPause(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "ToggleSkillTree" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnToggleSkillTree(InputAction.CallbackContext context);
     }
 }

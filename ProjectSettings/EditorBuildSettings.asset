@@ -14,5 +14,15 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Market_Scene.unity
     guid: 5b39ecb60b514ba4db5054d4a3f8ec90
+  - enabled: 1
+    path: Assets/Haven_Scene.unity
+    guid: 8af95c96ce8fac84ebb4f85653e76652
+  - enabled: 1
+    path: Assets/Map_Scene.unity
+    guid: bfb2153c81428af449f222e411e1d4b7
+  - enabled: 1
+    path: Assets/CharacterCreation.unity
+    guid: 0edd1dc0177c1f046b128e42676532a9
   m_configObjects:
     com.unity.input.settings: {fileID: 11400000, guid: 1898c1cc5af83584d9eb9932f45a3b14, type: 2}
+  m_UseUCBPForAssetBundles: 0

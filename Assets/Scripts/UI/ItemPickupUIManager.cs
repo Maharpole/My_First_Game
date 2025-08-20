@@ -29,7 +29,12 @@ public class ItemPickupUIManager : MonoBehaviour
             return;
         }
         Instance = this;
-        DontDestroyOnLoad(gameObject);
+        // Ensure persistence: apply to root to satisfy DontDestroyOnLoad requirements
+        var root = transform.root != null ? transform.root.gameObject : gameObject;
+        if (root.transform.parent == null)
+        {
+            DontDestroyOnLoad(root);
+        }
 
         _cam = Camera.main;
         if (overlayCanvas == null)

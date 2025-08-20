@@ -6,6 +6,9 @@ public class PlayerStatsPanel : MonoBehaviour
 {
     public Player player;
     public TextMeshProUGUI text;
+    public TextMeshProUGUI NameText;
+    public TextMeshProUGUI ClassText;
+
     [Header("Refresh")]
     public float refreshInterval = 0.25f;
 
@@ -25,6 +28,36 @@ public class PlayerStatsPanel : MonoBehaviour
             rt.offsetMin = new Vector2(8, -300);
             rt.offsetMax = new Vector2(-8, -8);
         }
+
+        // Create name label if missing
+        if (NameText == null)
+        {
+            var nameGo = new GameObject("NameText");
+            NameText = nameGo.AddComponent<TextMeshProUGUI>();
+            NameText.fontSize = 24f;
+            NameText.color = Color.white;
+            var nrt = NameText.rectTransform;
+            nrt.anchorMin = new Vector2(0, 1);
+            nrt.anchorMax = new Vector2(1, 1);
+            nrt.pivot = new Vector2(0, 1);
+            nrt.offsetMin = new Vector2(8, -8);
+            nrt.offsetMax = new Vector2(-8, -40);
+        }
+
+        // Create class label if missing
+        if (ClassText == null)
+        {
+            var classGo = new GameObject("ClassText");
+            ClassText = classGo.AddComponent<TextMeshProUGUI>();
+            ClassText.fontSize = 20f;
+            ClassText.color = Color.yellow;
+            var crt = ClassText.rectTransform;
+            crt.anchorMin = new Vector2(0, 1);
+            crt.anchorMax = new Vector2(1, 1);
+            crt.pivot = new Vector2(0, 1);
+            crt.offsetMin = new Vector2(8, -44);
+            crt.offsetMax = new Vector2(-8, -72);
+        }
     }
 
     void OnEnable()
@@ -42,6 +75,9 @@ public class PlayerStatsPanel : MonoBehaviour
     {
         if (player == null) return;
         var s = player.GetComputedStats();
+        // Header info
+        if (NameText != null) NameText.text = PlayerProfile.CharacterName;
+        if (ClassText != null) ClassText.text = PlayerProfile.StartingClass.ToString();
         text.text =
             $"Health: {player.CurrentHealth}/{s.finalMaxHealth}\n" +
             $"Move Speed: {s.finalMoveSpeed:F2}\n" +

@@ -1,0 +1,19 @@
+fileFormatVersion: 2
+guid: 99c13f5cf7adecd47be0ec48140b3d19
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 293726
+  packageName: Auto Radial Layout
+  packageVersion: 1.1.4
+  assetPath: Assets/GIGA Softworks/Auto Radial Layout/Examples/RadialMenu/RadialMenu
+    Animations/RadialMenuAnimationsExampleManager.cs
+  uploadId: 753132

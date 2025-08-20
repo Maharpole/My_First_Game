@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 5e905f1e50100ac4ca28c342e9f7ceac
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 293726
+  packageName: Auto Radial Layout
+  packageVersion: 1.1.4
+  assetPath: Assets/GIGA Softworks/Auto Radial Layout/Examples/RadialMenu/TankGame/TankGamePlayer.cs
+  uploadId: 753132

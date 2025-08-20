@@ -194,6 +194,13 @@ public class AutoShooter : MonoBehaviour
                 }
             }
         }
+
+        // Notify animation listeners via AnimatorBridge, if present
+        var animBridge = GetComponentInParent<PlayerAnimatorBridge>();
+        if (animBridge != null)
+        {
+            animBridge.FlagRangedFired();
+        }
     }
 
     // Called by weapon attach or player stat system to set the unmodified baseline values

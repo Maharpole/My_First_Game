@@ -91,7 +91,7 @@ GameObject:
   - component: {fileID: 3579012425939360678}
   m_Layer: 5
   m_Name: Quit
-  m_TagString: Untagged
+  m_TagString: PauseMenu
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -716,6 +716,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4580636584860350497}
   - component: {fileID: 8490302431948617560}
+  - component: {fileID: 534022829955495640}
   m_Layer: 0
   m_Name: UI Manager
   m_TagString: Untagged
@@ -740,6 +741,7 @@ Transform:
   - {fileID: 7615555357640265598}
   - {fileID: 7367815978394492084}
   - {fileID: 898356571065359480}
+  - {fileID: 4119919600549190129}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &8490302431948617560
@@ -754,13 +756,40 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b6d9c5c728ced0047af4b78839a5b700, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PauseManager
-  toggleAction: {fileID: 0}
+  toggleAction: {fileID: 965381661125989708, guid: b4ab8dc1be5bfd34083a47b6c63a8d76, type: 3}
   startPaused: 0
   pauseMenuPanel: {fileID: 3434843440112272619}
   pauseMenuTag: PauseMenu
   mainMenuSceneName: MainMenu
   enableDebugLogs: 1
+  raiseSortingOrderOnPause: 1
+  pausedSortingOrder: 1000
   pauseAction: {fileID: 965381661125989708, guid: b4ab8dc1be5bfd34083a47b6c63a8d76, type: 3}
+--- !u!114 &534022829955495640
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2487747197018046209}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4cf6eb2311bc3f8469745a1b9282306b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UI.SkillTree.SkillTreeController
+  treePanel: {fileID: 4006823296761500378}
+  content: {fileID: 0}
+  viewport: {fileID: 0}
+  toggleAction: {fileID: -2157225803630343240, guid: b4ab8dc1be5bfd34083a47b6c63a8d76, type: 3}
+  panAction: {fileID: 0}
+  zoomAction: {fileID: 0}
+  pauseOnOpen: 1
+  closeOnEscape: 1
+  minZoom: 0.4
+  maxZoom: 3
+  zoomSensitivity: 0.1
+  panSensitivity: 1
+  panMouseButton: 2
 --- !u!1 &2969846381899021230
 GameObject:
   m_ObjectHideFlags: 0
@@ -774,7 +803,7 @@ GameObject:
   - component: {fileID: 5046632533100538263}
   m_Layer: 5
   m_Name: Text (TMP)
-  m_TagString: Untagged
+  m_TagString: PauseMenu
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -910,7 +939,7 @@ GameObject:
   - component: {fileID: 6367746752580149817}
   m_Layer: 5
   m_Name: Pause UI
-  m_TagString: Untagged
+  m_TagString: PauseMenu
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -990,7 +1019,7 @@ GameObject:
   - component: {fileID: 9026449242073600082}
   m_Layer: 5
   m_Name: Resume
-  m_TagString: Untagged
+  m_TagString: PauseMenu
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1425,6 +1454,8 @@ MonoBehaviour:
   exclusive: 0
   openOnStart: 0
   ignoreWhenTextFieldFocused: 1
+  allowCloseWhenTextFieldFocused: 1
+  allowOpenWhenTextFieldFocused: 1
 --- !u!114 &7143566810956655695
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1571,7 +1602,7 @@ GameObject:
   - component: {fileID: 3875577579701432279}
   m_Layer: 5
   m_Name: Main Menu
-  m_TagString: Untagged
+  m_TagString: PauseMenu
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1895,6 +1926,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerStatsPanel
   player: {fileID: 0}
   text: {fileID: 7762628635741657259}
+  NameText: {fileID: 0}
+  ClassText: {fileID: 0}
   refreshInterval: 0.25
 --- !u!1 &7076596851181600662
 GameObject:
@@ -1985,7 +2018,7 @@ GameObject:
   - component: {fileID: 5210795724430645427}
   m_Layer: 5
   m_Name: Text (TMP)
-  m_TagString: Untagged
+  m_TagString: PauseMenu
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -2121,7 +2154,7 @@ GameObject:
   - component: {fileID: 3785371271017732822}
   m_Layer: 5
   m_Name: Text (TMP)
-  m_TagString: Untagged
+  m_TagString: PauseMenu
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -2257,7 +2290,7 @@ GameObject:
   - component: {fileID: 5669769362409739118}
   m_Layer: 5
   m_Name: Text (TMP)
-  m_TagString: Untagged
+  m_TagString: PauseMenu
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -2583,6 +2616,121 @@ MonoBehaviour:
   resumeButton: {fileID: 9026449242073600082}
   mainMenuButton: {fileID: 3875577579701432279}
   quitButton: {fileID: 3579012425939360678}
+--- !u!1001 &2073520533046704547
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 4580636584860350497}
+    m_Modifications:
+    - target: {fileID: 2732131347565731922, guid: 74914e503041e9c4ca1c4c851e261bbf, type: 3}
+      propertyPath: m_Pivot.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2732131347565731922, guid: 74914e503041e9c4ca1c4c851e261bbf, type: 3}
+      propertyPath: m_Pivot.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2732131347565731922, guid: 74914e503041e9c4ca1c4c851e261bbf, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2732131347565731922, guid: 74914e503041e9c4ca1c4c851e261bbf, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2732131347565731922, guid: 74914e503041e9c4ca1c4c851e261bbf, type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2732131347565731922, guid: 74914e503041e9c4ca1c4c851e261bbf, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2732131347565731922, guid: 74914e503041e9c4ca1c4c851e261bbf, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2732131347565731922, guid: 74914e503041e9c4ca1c4c851e261bbf, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2732131347565731922, guid: 74914e503041e9c4ca1c4c851e261bbf, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2732131347565731922, guid: 74914e503041e9c4ca1c4c851e261bbf, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2732131347565731922, guid: 74914e503041e9c4ca1c4c851e261bbf, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2732131347565731922, guid: 74914e503041e9c4ca1c4c851e261bbf, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2732131347565731922, guid: 74914e503041e9c4ca1c4c851e261bbf, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2732131347565731922, guid: 74914e503041e9c4ca1c4c851e261bbf, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2732131347565731922, guid: 74914e503041e9c4ca1c4c851e261bbf, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2732131347565731922, guid: 74914e503041e9c4ca1c4c851e261bbf, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2732131347565731922, guid: 74914e503041e9c4ca1c4c851e261bbf, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2732131347565731922, guid: 74914e503041e9c4ca1c4c851e261bbf, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2732131347565731922, guid: 74914e503041e9c4ca1c4c851e261bbf, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2732131347565731922, guid: 74914e503041e9c4ca1c4c851e261bbf, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3124802697732074361, guid: 74914e503041e9c4ca1c4c851e261bbf, type: 3}
+      propertyPath: m_Name
+      value: Skill Tree Prefab
+      objectReference: {fileID: 0}
+    - target: {fileID: 3124802697732074361, guid: 74914e503041e9c4ca1c4c851e261bbf, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6804701079989864938, guid: 74914e503041e9c4ca1c4c851e261bbf, type: 3}
+      propertyPath: m_Color.a
+      value: 0.69411767
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 74914e503041e9c4ca1c4c851e261bbf, type: 3}
+--- !u!1 &4006823296761500378 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3124802697732074361, guid: 74914e503041e9c4ca1c4c851e261bbf, type: 3}
+  m_PrefabInstance: {fileID: 2073520533046704547}
+  m_PrefabAsset: {fileID: 0}
+--- !u!224 &4119919600549190129 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 2732131347565731922, guid: 74914e503041e9c4ca1c4c851e261bbf, type: 3}
+  m_PrefabInstance: {fileID: 2073520533046704547}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &2682181356708619689
 PrefabInstance:
   m_ObjectHideFlags: 0

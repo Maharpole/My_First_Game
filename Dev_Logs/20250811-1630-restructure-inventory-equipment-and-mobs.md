@@ -19,6 +19,45 @@
   - `SimpleInventory` (ScriptableObject): fixed array of `EquipmentData` references editable in the inspector (works in Edit/Play mode).
    - `SimpleInventoryUI`: builds a GridLayout of slot buttons; supports drag from slot to slot (swap), drag from slot to equipment slot (equip). Click-to-equip disabled by design.
 - Enemies (mobs/packs)
+
+## 2025-08-19 Skill Tree Integration (Radial Asset)
+
+Implemented a minimal, asset-agnostic skill tree layer that works with the purchased radial node/toggle prefab.
+
+- Skill points
+  - Uses existing `PlayerProfile.UnspentSkillPoints` (1 point per level from `PlayerXP`).
+  - New `SkillPointsLabel` (`Assets/Scripts/UI/SkillTree2/SkillPointsLabel.cs`) updates a TMP label with "{total}/{spent} skill points".
+
+- Node data and state
+  - `SkillNodeData` (ScriptableObject): id, description, parent nodes (pathing), cost (default 1), `OnApply` event.
+  - `SkillTreeState` (static): persists unlocked ids in PlayerPrefs, enforces parent requirements, spends 1 point on unlock, raises `OnUnlocked`.
+
+- Node binding
+  - `SkillNodeBinding` attaches to the radial Toggle node prefab.
+    - Disables Toggle until all parents are unlocked and a point is available.
+    - On Toggle ON: calls `SkillTreeState.TryUnlock(data)`, spends 1 point, invokes node `OnApply`, and sets Toggle permanently ON.
+    - On hover: shows tooltip using `UITooltip` with node description.
+
+- First skill node effects
+  - When unlocked, apply:
+    - Velocity affects player size: added `VelocityScaleBySpeed` component (disabled by default); `OnApply` flips `enabledBySkill = true`.
+    - +10 base damage reflect: hook a Player method or StatApplier event to add +10 reflect and call `Player.RecomputeAndApplyStats()`.
+    - +25 maximum health: add +25 to max health modifier and recompute.
+    - +10 health regeneration per second: add +10 regen and recompute (maps to regenPerTick = 10, tickSeconds = 1s).
+
+- Toggle skill tree
+  - Use existing `UIToggleHotkey` and bind the tree panel to the UI action (e.g., `UI/ToggleSkillTree`).
+
+Wiring instructions
+1) Create `SkillNodeData` assets for each node; set parents to match radial links.
+2) On each radial node prefab instance: add `SkillNodeBinding`, assign the node asset and its Toggle.
+3) Add `SkillPointsLabel` to a TMP text in the tree header.
+4) For the first node, add four `OnApply` handlers (either direct Player methods or a small StatApplier component) to apply reflect/health/regen and enable `VelocityScaleBySpeed` on the player.
+5) Bind `UIToggleHotkey` to the tree panel with the desired InputAction.
+
+Notes
+- Pathing is enforced strictly by the `parents` list on each node data asset.
+- Spent points are computed from unlocked count (cost=1 assumed).
   - Data-driven scaffolding with `EnemyType`, `MobType`, `MobModifier`, `SpawnTable`, `MapConfig`.
   - Runtime `MobDirector` places packs with spacing; `PackSpawner` projects spawns to ground/NavMesh.
   - `AggroGroup` keeps packs idle; aggro triggers by proximity or damage. `EnemyController` has aggro flag to avoid auto-chase on start.

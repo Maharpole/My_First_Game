@@ -135,6 +135,24 @@ public class UITooltip : MonoBehaviour
         t.UpdatePosition(screenPosition);
     }
 
+    public static void Show(string text, Vector2 screenPosition)
+    {
+        if (string.IsNullOrEmpty(text)) { Hide(); return; }
+        var t = Instance;
+        t._currentData = null; // generic text
+        t._extendedView = false;
+        // Use normal wrapping behavior for generic text
+        if (t._text != null)
+        {
+            t._text.textWrappingMode = TextWrappingModes.Normal;
+        }
+        t._maxWidth = 420f;
+        t._text.text = text;
+        t.LayoutToContent();
+        t.UpdatePosition(screenPosition);
+        t.SetActive(true);
+    }
+
     public static void Hide()
     {
         if (_instance == null) return;

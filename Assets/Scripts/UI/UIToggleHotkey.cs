@@ -24,6 +24,12 @@ public class UIToggleHotkey : MonoBehaviour
     [Tooltip("If true, hide all siblings under the same parent when showing these panels")] public bool exclusive = false;
     [Tooltip("Open panels on Start")] public bool openOnStart = false;
     [Tooltip("Ignore hotkey when a TMP/InputField is focused")] public bool ignoreWhenTextFieldFocused = true;
+    [Tooltip("If true, still allow closing panels even if a text field is focused")] public bool allowCloseWhenTextFieldFocused = true;
+    [Tooltip("If true, still allow opening panels even if a text field is focused")] public bool allowOpenWhenTextFieldFocused = true;
+    [Header("Pause Control")]
+    [Tooltip("Pause the game (Time.timeScale) while these panels are open")] public bool pauseWhenOpen = false;
+    [Tooltip("Time scale to use when paused (0 = fully paused)")] public float pausedTimeScale = 0f;
+    float _previousTimeScale = 1f;
 
     void OnEnable()
     {
@@ -42,6 +48,10 @@ public class UIToggleHotkey : MonoBehaviour
         }
 #endif
         if (openOnStart) SetActive(true);
+        if (panels != null && panels.Length > 0 && panels[0] != null)
+        {
+            Debug.Log($"[UIToggleHotkey] Enabled. Panels[0]={panels[0].name}. Action={(toggleAction!=null ? toggleAction.action.name : "(generated)")}");
+        }
     }
 
     void OnDisable()
@@ -64,7 +74,13 @@ public class UIToggleHotkey : MonoBehaviour
 #if ENABLE_INPUT_SYSTEM
     void OnToggle(UnityEngine.InputSystem.InputAction.CallbackContext _)
     {
-        if (ShouldIgnore()) return;
+        if (ShouldIgnore())
+        {
+            bool anyActive = AnyPanelActive();
+            bool wantOpen = !anyActive;
+            bool wantClose = anyActive;
+            if (!((wantClose && allowCloseWhenTextFieldFocused) || (wantOpen && allowOpenWhenTextFieldFocused))) return;
+        }
         Toggle();
     }
 #else
@@ -72,7 +88,13 @@ public class UIToggleHotkey : MonoBehaviour
     {
         if (Input.GetKeyDown(legacyKey))
         {
-            if (ShouldIgnore()) return;
+            if (ShouldIgnore())
+            {
+                bool anyActive = AnyPanelActive();
+                bool wantOpen = !anyActive;
+                bool wantClose = anyActive;
+                if (!((wantClose && allowCloseWhenTextFieldFocused) || (wantOpen && allowOpenWhenTextFieldFocused))) return;
+            }
             Toggle();
         }
     }
@@ -88,6 +110,17 @@ public class UIToggleHotkey : MonoBehaviour
         return go.GetComponent<TMP_InputField>() != null || go.GetComponent<InputField>() != null;
     }
 
+    bool AnyPanelActive()
+    {
+        if (panels == null) return false;
+        for (int i = 0; i < panels.Length; i++)
+        {
+            var p = panels[i];
+            if (p != null && p.activeInHierarchy) return true;
+        }
+        return false;
+    }
+
     public void Toggle()
     {
         if (panels == null || panels.Length == 0) return;
@@ -101,6 +134,18 @@ public class UIToggleHotkey : MonoBehaviour
         foreach (var p in panels)
         {
             if (p != null) p.SetActive(state);
+        }
+        if (pauseWhenOpen)
+        {
+            if (state)
+            {
+                _previousTimeScale = Time.timeScale;
+                Time.timeScale = Mathf.Clamp(pausedTimeScale, 0f, 1f);
+            }
+            else
+            {
+                Time.timeScale = _previousTimeScale <= 0f ? 1f : _previousTimeScale;
+            }
         }
         if (!state)
         {

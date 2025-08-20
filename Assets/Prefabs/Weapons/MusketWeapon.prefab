@@ -27,7 +27,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 15, y: 15, z: 15}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2828905101649854099}
@@ -49,7 +49,7 @@ MonoBehaviour:
   damage: 10
   fireRate: 1
   bulletSpeed: 20
-  bulletCount: 1
+  bulletCount: 5
   spreadAngle: 0
   detectionRange: 15
   bulletPrefab: {fileID: 5872955557811514956, guid: 36f4fa7a681e81f4b9e9d622fa48d94e, type: 3}

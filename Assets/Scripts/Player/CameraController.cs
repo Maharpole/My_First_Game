@@ -6,6 +6,9 @@ public class CameraController : MonoBehaviour
     [Tooltip("Target the camera follows. If empty, will try Player.Instance or an object tagged 'Player'.")]
     public Transform target;
 
+    [Tooltip("Automatically try to re-resolve the player target on scene loads or if missing")] 
+    public bool autoResolveTarget = true;
+
     [Header("Follow Settings")]
     [Tooltip("Base offset from the target in world space")] 
     public Vector3 baseOffset = new Vector3(0f, 12f, -7f);
@@ -45,19 +48,7 @@ public class CameraController : MonoBehaviour
         }
 
         // Resolve target if not assigned
-        if (target == null)
-        {
-            var playerSingleton = Object.FindFirstObjectByType<Player>();
-            if (playerSingleton != null)
-            {
-                target = playerSingleton.transform;
-            }
-            else
-            {
-                var playerByTag = GameObject.FindGameObjectWithTag("Player");
-                if (playerByTag != null) target = playerByTag.transform;
-            }
-        }
+        if (target == null) ResolveTarget();
 
         currentZoom = Mathf.Clamp(initialZoom, minZoom, maxZoom);
 
@@ -68,11 +59,20 @@ public class CameraController : MonoBehaviour
             transform.position = desired;
             transform.LookAt(target.position);
         }
+
+        if (autoResolveTarget)
+        {
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
+        }
     }
 
     void LateUpdate()
     {
-        if (target == null) return;
+        if (target == null && autoResolveTarget)
+        {
+            ResolveTarget();
+            if (target == null) return;
+        }
 
         HandleZoomInput();
 
@@ -88,6 +88,39 @@ public class CameraController : MonoBehaviour
         }
 
         transform.LookAt(target.position);
+    }
+
+    void OnDestroy()
+    {
+        if (autoResolveTarget)
+        {
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneLoaded;
+        }
+    }
+
+    void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
+    {
+        if (!autoResolveTarget) return;
+        // Delay one frame to allow Player to initialize/warp
+        StartCoroutine(ResolveNextFrame());
+    }
+
+    System.Collections.IEnumerator ResolveNextFrame()
+    {
+        yield return null;
+        ResolveTarget();
+    }
+
+    void ResolveTarget()
+    {
+        var playerSingleton = Object.FindFirstObjectByType<Player>();
+        if (playerSingleton != null)
+        {
+            target = playerSingleton.transform;
+            return;
+        }
+        var playerByTag = GameObject.FindGameObjectWithTag("Player");
+        if (playerByTag != null) target = playerByTag.transform;
     }
 
     Vector3 ComputeDesiredPosition()

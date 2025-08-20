@@ -1,12 +1,18 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Collections;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 
 public class Portal : MonoBehaviour
 {
     [Header("Portal Settings")]
     [Tooltip("Name of the scene to teleport to")]
     public string targetSceneName;
+
+    [Tooltip("Optional spawn point id in the target scene. If set, the player will appear at the matching PlayerSpawnPoint.")]
+    public string targetSpawnId = "";
 
     [Tooltip("Time in seconds the player must stay in the portal to trigger teleportation")]
     public float teleportDelay = 2f;
@@ -16,6 +22,14 @@ public class Portal : MonoBehaviour
 
     [Tooltip("Visual effect to show teleportation progress (optional)")]
     public GameObject progressEffect;
+
+    [Header("Use Action (New Input System)")]
+    [Tooltip("If true, requires pressing the useAction while in range to teleport. If false, uses teleportDelay.")]
+    public bool requireUseAction = true;
+#if ENABLE_INPUT_SYSTEM
+    [Tooltip("Input action to use the portal when in range (performed triggers teleport).")]
+    public InputActionReference useAction;
+#endif
 
     [Header("Debug")]
     [Tooltip("Enable debug logs")]
@@ -64,6 +78,26 @@ public class Portal : MonoBehaviour
             Debug.Log($"Portal Layer: {gameObject.layer} ({LayerMask.LayerToName(gameObject.layer)})");
         }
     }
+
+#if ENABLE_INPUT_SYSTEM
+    private void OnEnable()
+    {
+        if (requireUseAction && useAction != null)
+        {
+            useAction.action.performed += OnUsePerformed;
+            useAction.action.Enable();
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (requireUseAction && useAction != null)
+        {
+            useAction.action.performed -= OnUsePerformed;
+            useAction.action.Disable();
+        }
+    }
+#endif
 
     private void CheckPlayerSetup()
     {
@@ -128,8 +162,8 @@ public class Portal : MonoBehaviour
             }
         }
 
-        // Update teleportation progress
-        if (playerInPortal && !isTeleporting)
+        // Update teleportation progress (only when not requiring explicit use)
+        if (!requireUseAction && playerInPortal && !isTeleporting)
         {
             timeInPortal += Time.deltaTime;
 
@@ -147,6 +181,15 @@ public class Portal : MonoBehaviour
             }
         }
     }
+
+#if ENABLE_INPUT_SYSTEM
+    private void OnUsePerformed(InputAction.CallbackContext _)
+    {
+        if (!requireUseAction || isTeleporting) return;
+        if (!playerInPortal) return;
+        StartTeleportation();
+    }
+#endif
 
     private void OnTriggerEnter(Collider other)
     {
@@ -211,6 +254,9 @@ public class Portal : MonoBehaviour
         {
             Debug.Log($"Teleporting to scene: {targetSceneName}");
         }
+
+        // Inform the spawn resolver where to place the player in the next scene
+        PortalSpawnData.SetNext(targetSceneName, targetSpawnId);
 
         // Start the teleportation coroutine
         StartCoroutine(TeleportToScene());

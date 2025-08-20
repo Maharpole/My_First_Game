@@ -1,3 +1,25 @@
+## 2025-08-19 — Character Creation, Class Seed, Level-Up Feedback, Skill Points
+
+- Added `CharacterCreation` flow:
+  - `MainMenu` now exposes `New Game` → loads `CharacterCreation` scene.
+  - `CharacterCreationUI` lets the player pick a starting class (Strength/Dexterity/Intelligence) and enter a name (TMP or legacy InputField). Confirmation saves to `PlayerProfile` and loads `Map_Scene`.
+  - `PlayerProfile` persists selected class, name, and unspent skill points.
+
+- Player initialization:
+  - `Player` logs `StartingClass` on init for debugging and future skill-tree routing.
+
+- XP / Level system enhancements:
+  - `PlayerXP` now grants +1 unspent skill point on each level-up, persists it, and plays feedback.
+  - Level-up feedback: optional VFX (`levelUpVFX`) and SFX (`levelUpSFX`, volume) serialized on `PlayerXP` for per-character tuning.
+
+- Portal spawn polish:
+  - Added scene spawn framework (`PlayerSpawnPoint`, `SceneSpawnResolver`, `PortalSpawnData`). `Portal` and `PortalSpawner` can target spawn ids; resolver places player accurately on scene load.
+
+- Movement facing polish:
+  - `Player` rotates to face movement and dash direction; `ClickToMoveController` aligns rotation with agent velocity (agent.updateRotation=false).
+
+Next: Implement first-level skill tree gate that branches dash functionality and introduces class-specific charges.
+
 ### 2025-08-13 — UI hotkey fallback, equipment placeholders, and drag-from-equipment fix
 
 - **Context**: After a power surge, some changes regressed. Restored and hardened UI hotkey, inventory UI, and equipment drag-and-drop behavior.

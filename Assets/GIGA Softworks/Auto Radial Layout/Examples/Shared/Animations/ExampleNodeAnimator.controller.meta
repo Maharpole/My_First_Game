@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: cfb702ece8375f44aa511075a5d9b757
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 9100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 293726
+  packageName: Auto Radial Layout
+  packageVersion: 1.1.4
+  assetPath: Assets/GIGA Softworks/Auto Radial Layout/Examples/Shared/Animations/ExampleNodeAnimator.controller
+  uploadId: 753132

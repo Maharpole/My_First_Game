@@ -291,6 +291,7 @@ GameObject:
   - component: {fileID: -142393245941017192}
   - component: {fileID: 325820798844203787}
   - component: {fileID: -6928982707864977593}
+  - component: {fileID: 1163650170939019856}
   m_Layer: 8
   m_Name: Enemy_BaseEnemy
   m_TagString: Enemy
@@ -321,7 +322,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8757707649924228711}
-  m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+  m_Mesh: {fileID: 1588110511326799053, guid: 6a1de68524efa9f4dbd21a03266e8490, type: 3}
 --- !u!23 &6995047700782350124
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -347,7 +348,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 52736da6190625a4c967b2cfd44c26da, type: 2}
+  - {fileID: 2100000, guid: 316b38e782bcb7345af0bc5cd8bace66, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -520,3 +521,21 @@ MonoBehaviour:
   maxPrefixes: 3
   minSuffixes: 0
   maxSuffixes: 3
+--- !u!114 &1163650170939019856
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8757707649924228711}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8fc0defb851bbc646803f531bb8b2890, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyLevel
+  level: 1
+  baseMaxHealth: 10
+  healthPerLevel: 5
+  healthLevelMultiplier: 1
+  baseXP: 5
+  xpPerLevel: 2

@@ -20,6 +20,8 @@ public class ClickToMoveController : MonoBehaviour
         if (agent != null)
         {
             agent.stoppingDistance = stopDistance;
+            // We'll handle rotation manually to face movement direction
+            agent.updateRotation = false;
         }
     }
 
@@ -57,6 +59,18 @@ public class ClickToMoveController : MonoBehaviour
             {
                 pendingPickup.TryPickup(player, itemPickupDistance);
                 pendingPickup = null;
+            }
+        }
+
+        // Face agent velocity when using click-to-move
+        if (agent != null && agent.isOnNavMesh && player != null && player.isActiveAndEnabled)
+        {
+            Vector3 vel = agent.velocity;
+            vel.y = 0f;
+            if (vel.sqrMagnitude > 0.001f)
+            {
+                Quaternion target = Quaternion.LookRotation(vel.normalized, Vector3.up);
+                transform.rotation = Quaternion.RotateTowards(transform.rotation, target, player.rotationSpeed * Time.deltaTime);
             }
         }
     }

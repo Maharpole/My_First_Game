@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 3b7fb235f2f151942adc5c18220f57e0
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 293726
+  packageName: Auto Radial Layout
+  packageVersion: 1.1.4
+  assetPath: Assets/GIGA Softworks/Auto Radial Layout/Scripts/QuerySystem/RadialLayoutQueryManager.cs
+  uploadId: 753132

@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 210b90e033c0f394eb67544075d4d77b
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 293726
+  packageName: Auto Radial Layout
+  packageVersion: 1.1.4
+  assetPath: Assets/GIGA Softworks/Auto Radial Layout/Examples/RadialMenu/TankGame/Models/mat_PlayerTank.mat
+  uploadId: 753132

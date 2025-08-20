@@ -23,6 +23,24 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "Spawn_Portal",
+                    "type": "Button",
+                    "id": "6ca7d5e5-facc-411b-9134-a0eb6e866232",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Interact",
+                    "type": "Button",
+                    "id": "7d0e356c-1b71-4c62-8ca8-2e0f19737c9f",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -80,6 +98,28 @@
                     "action": "Move",
                     "isComposite": false,
                     "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "6507c491-f6d7-4635-8116-07d495803d79",
+                    "path": "<Keyboard>/p",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Spawn_Portal",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "29fbf8ff-cd68-4e57-baf8-5e0e8353322f",
+                    "path": "<Keyboard>/e",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Interact",
+                    "isComposite": false,
+                    "isPartOfComposite": false
                 }
             ]
         },
@@ -109,6 +149,15 @@
                     "name": "Pause",
                     "type": "Button",
                     "id": "d6aba95c-50d5-4c5f-b15c-46c5bdb22186",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "ToggleSkillTree",
+                    "type": "Button",
+                    "id": "dbbb6c10-0995-4e51-ab54-51baa14d9e69",
                     "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
@@ -146,6 +195,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "Pause",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "d7ca764b-ba05-4eff-89a3-ac1287fdb2d9",
+                    "path": "<Keyboard>/l",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ToggleSkillTree",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

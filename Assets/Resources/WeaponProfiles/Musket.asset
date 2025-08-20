@@ -13,13 +13,13 @@ MonoBehaviour:
   m_Name: Musket
   m_EditorClassIdentifier: 
   weaponName: Musket
-  weaponPrefab: {fileID: 6300456138507507717, guid: 3e27078b0e5c6a44fb980026743779f9, type: 3}
+  weaponPrefab: {fileID: 919132149155446097, guid: 98152696c030c6e4790155f867acc856, type: 3}
   bulletPrefab: {fileID: 5872955557811514956, guid: 36f4fa7a681e81f4b9e9d622fa48d94e, type: 3}
   weaponIcon: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
-  baseDamage: 1
+  baseDamage: 5
   baseFireRate: 1
-  baseBulletSpeed: 20
-  baseBulletCount: 1
+  baseBulletSpeed: 50
+  baseBulletCount: 3
   baseSpreadAngle: 3
   availableUpgrades:
   - upgradeName: Damage Upgrade
