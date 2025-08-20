@@ -89,7 +89,6 @@ public static class SkillTreeState
         Unlocked.Add(node.id);
         Log($"TryUnlock: success for '{node.id}', spent={cost}, remaining={PlayerProfile.UnspentSkillPoints}");
         Save();
-        node.OnApply?.Invoke();
         OnUnlocked?.Invoke(node);
         return true;
     }
