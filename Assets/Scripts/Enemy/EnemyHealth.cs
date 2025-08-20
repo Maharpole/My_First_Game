@@ -4,13 +4,31 @@ using System.Collections;
 
 public class EnemyHealth : MonoBehaviour
 {
-    [Header("Health Settings")]
-    [Tooltip("Maximum health of the enemy")]
-    public int maxHealth = 10;
-    
-    [Tooltip("Current health of the enemy")]
-    public int currentHealth;
-    
+    [Header("Core Stats")]
+    [Tooltip("Maximum health of the enemy")] public int maxHealth = 10;
+    [Tooltip("Current health of the enemy")] public int currentHealth;
+    [Tooltip("Move speed used by controllers")] public float moveSpeed = 3.5f;
+    [Tooltip("Attacks per second (for AI that uses it)")] public float attackSpeed = 1f;
+    [Tooltip("Base contact or hit damage")] public int contactDamage = 10;
+    [Range(0f,100f)] [Tooltip("Chance to critically hit the player (percent)")] public float critChancePercent = 5f;
+    [Tooltip("Critical damage multiplier (e.g., 1.5 = 150%)")] public float critMultiplier = 1.5f;
+    [Header("Projectile")] public int extraProjectiles = 0;
+
+    [Header("Movement & Aggro")]
+    [Tooltip("If true, the enemy starts aggroed")] public bool startAggro = false;
+    [Tooltip("Enable gravity on the Rigidbody")] public bool useGravity = true;
+    [Tooltip("Radius within which the enemy becomes aggro when the player enters")] public float aggroRange = 8f;
+
+    [Header("Leveling")]
+    [Tooltip("Apply level-based max health at start unless overridden by spawner")] public bool useLevelScaling = true;
+    [Min(1)] public int level = 1;
+    [Min(1)] public int baseMaxHealth = 10;
+    [Tooltip("Health gained per level above 1")] public int healthPerLevel = 5;
+    [Tooltip("Multiplier per level (applied after flat)")] public float healthLevelMultiplier = 1.0f;
+
+    [Header("Experience Reward")] public int baseXP = 5;
+    [Tooltip("XP gained per level above 1")] public int xpPerLevel = 2;
+
     [Header("Visual Effects")]
     [Tooltip("Duration of the damage flash effect")]
     public float flashDuration = 0.1f;
@@ -27,17 +45,51 @@ public class EnemyHealth : MonoBehaviour
     private Material originalMaterial;
     private Renderer enemyRenderer;
     private Color originalColor;
+
+    // Movement state
+    private Transform playerTransform;
+    private Rigidbody rb;
+    private bool isAggro = false;
+    [HideInInspector] public bool ignoreLevelScaling = false; // set true by spawner if it overrides maxHealth
     
-    [Header("Events")]
-    public UnityEvent onDeath;
-    public UnityEvent onDamage;
-    public UnityEvent onHeal;
+    [Header("Events")] public UnityEvent onDeath; public UnityEvent onDamage; public UnityEvent onHeal;
 
     void Start()
     {
-        // Initialize health
+        // Apply level scaling unless a spawner told us to ignore it
+        if (useLevelScaling && !ignoreLevelScaling)
+        {
+            ApplyLevelToHealth();
+        }
+        // Initialize current health from max
         currentHealth = maxHealth;
         
+        // Cache player reference
+        var playerObj = Object.FindFirstObjectByType<Player>();
+        if (playerObj != null) playerTransform = playerObj.transform;
+
+        // Ensure physics components
+        rb = GetComponent<Rigidbody>();
+        if (rb == null)
+        {
+            rb = gameObject.AddComponent<Rigidbody>();
+        }
+        rb.freezeRotation = true;
+        rb.useGravity = useGravity;
+        rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+        rb.interpolation = RigidbodyInterpolation.Interpolate;
+        rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
+
+        if (GetComponent<Collider>() == null)
+        {
+            CapsuleCollider capsule = gameObject.AddComponent<CapsuleCollider>();
+            capsule.height = 2.0f;
+            capsule.radius = 0.5f;
+            capsule.center = new Vector3(0, 1.0f, 0);
+        }
+
+        isAggro = startAggro;
+
         // Get the renderer component
         enemyRenderer = GetComponent<Renderer>();
         if (enemyRenderer != null)
@@ -51,6 +103,45 @@ public class EnemyHealth : MonoBehaviour
         if (deathParticles == null)
         {
             deathParticles = GetComponentInChildren<ParticleSystem>();
+        }
+    }
+
+    void Update()
+    {
+        if (rb == null) return;
+
+        // Ensure we have a player reference (handles player re-spawn)
+        if (playerTransform == null)
+        {
+            var p = Object.FindFirstObjectByType<Player>();
+            if (p != null) playerTransform = p.transform;
+        }
+
+        // Auto-aggro when within range
+        if (!isAggro && playerTransform != null)
+        {
+            Vector3 d = playerTransform.position - transform.position;
+            d.y = 0f;
+            if (d.sqrMagnitude <= aggroRange * aggroRange)
+            {
+                ForceAggro(playerTransform);
+            }
+        }
+
+        // Simple chase movement when aggroed
+        if (!isAggro || playerTransform == null) return;
+
+        Vector3 toPlayer = playerTransform.position - transform.position;
+        toPlayer.y = 0f;
+        Vector3 dir = toPlayer.sqrMagnitude > 0.0001f ? toPlayer.normalized : Vector3.zero;
+
+        // Move using Rigidbody
+        rb.linearVelocity = new Vector3(dir.x * moveSpeed, rb.linearVelocity.y, dir.z * moveSpeed);
+
+        // Face the player
+        if (dir != Vector3.zero)
+        {
+            transform.rotation = Quaternion.LookRotation(dir);
         }
     }
     
@@ -70,11 +161,10 @@ public class EnemyHealth : MonoBehaviour
         else
         {
             // Fallback: if no group, aggro this enemy toward the player
-            var controller = GetComponent<EnemyController>();
             var player = Object.FindFirstObjectByType<Player>();
-            if (controller != null && player != null)
+            if (player != null)
             {
-                controller.ForceAggro(player.transform);
+                ForceAggro(player.transform);
             }
         }
         
@@ -89,6 +179,20 @@ public class EnemyHealth : MonoBehaviour
         {
             Die();
         }
+    }
+
+    void OnCollisionStay(Collision collision)
+    {
+        var player = collision.gameObject.GetComponentInParent<Player>();
+        if (player == null) return;
+        int dmg = Mathf.Max(0, contactDamage);
+        if (dmg <= 0) return;
+        // Simple crit roll
+        if (Random.value < Mathf.Clamp01(critChancePercent * 0.01f))
+        {
+            dmg = Mathf.RoundToInt(dmg * Mathf.Max(1f, critMultiplier));
+        }
+        player.TakeDamage(gameObject, dmg);
     }
 
     public void TakeReflectDamage(int damage)
@@ -128,12 +232,13 @@ public class EnemyHealth : MonoBehaviour
     {
         // Trigger death event (drops, etc.)
         onDeath.Invoke();
-        // Award XP if enemy had a level component
-        var levelComp = GetComponent<EnemyLevel>();
-        if (levelComp != null)
+        // Award XP based on level settings
+        var xpTarget = Object.FindFirstObjectByType<PlayerXP>();
+        if (xpTarget != null)
         {
-            var player = Object.FindFirstObjectByType<PlayerXP>();
-            if (player != null) player.AddXP(levelComp.GetXPReward());
+            int clampedLevel = Mathf.Max(1, level);
+            int reward = Mathf.Max(0, baseXP + (clampedLevel - 1) * xpPerLevel);
+            xpTarget.AddXP(reward);
         }
         // Also notify aggro group to avoid lingering idle
         var group = GetComponentInParent<AggroGroup>();
@@ -145,14 +250,45 @@ public class EnemyHealth : MonoBehaviour
         // Play death particles if available
         if (deathParticles != null)
         {
-            // Detach particles from enemy
-            deathParticles.transform.parent = null;
-            
-            // Play the particles
-            deathParticles.Play();
-            
-            // Destroy particles after they finish
-            Destroy(deathParticles.gameObject, deathParticles.main.duration);
+            ParticleSystem psInstance = deathParticles;
+            bool isSceneObject = psInstance.gameObject.scene.IsValid();
+            bool isChildOfThis = psInstance.transform.IsChildOf(transform);
+
+            // If the assigned particle is a prefab asset or not a child of this enemy, instantiate a runtime copy
+            if (!isSceneObject || !isChildOfThis)
+            {
+                psInstance = Instantiate(deathParticles, transform.position, Quaternion.identity);
+            }
+            else
+            {
+                // Detach child particle system to let it play after enemy is destroyed
+                psInstance.transform.parent = null;
+                psInstance.transform.position = transform.position;
+                psInstance.transform.rotation = Quaternion.identity;
+            }
+
+            // Normalize transform so parent scale/motion doesn't speed things up
+            psInstance.transform.localScale = Vector3.one;
+
+            // Force world-space, local scaling mode, and sane speeds regardless of prefab settings
+            var main = psInstance.main;
+            main.simulationSpace = ParticleSystemSimulationSpace.World;
+            main.scalingMode = ParticleSystemScalingMode.Local;
+            main.simulationSpeed = 1f;
+
+            var inherit = psInstance.inheritVelocity;
+            inherit.enabled = false;
+
+            // Optional: disable velocity over lifetime to avoid unexpected bursts
+            var vol = psInstance.velocityOverLifetime;
+            if (vol.enabled)
+            {
+                vol.enabled = false;
+            }
+
+            // Play and clean up after duration
+            psInstance.Play();
+            Destroy(psInstance.gameObject, psInstance.main.duration);
         }
         
         // Destroy the enemy next frame to let listeners complete without blocking this frame
@@ -166,5 +302,26 @@ public class EnemyHealth : MonoBehaviour
         {
             Destroy(originalMaterial);
         }
+    }
+
+    public void ForceAggro(Transform target)
+    {
+        playerTransform = target;
+        isAggro = true;
+    }
+
+    public void ClearAggro()
+    {
+        isAggro = false;
+        if (rb != null) rb.linearVelocity = new Vector3(0f, rb.linearVelocity.y, 0f);
+    }
+
+    public void ApplyLevelToHealth()
+    {
+        int clampedLevel = Mathf.Max(1, level);
+        int flat = Mathf.Max(1, baseMaxHealth) + (clampedLevel - 1) * Mathf.Max(0, healthPerLevel);
+        float scaled = flat * Mathf.Max(0.1f, Mathf.Pow(Mathf.Max(0.0001f, healthLevelMultiplier), clampedLevel - 1));
+        maxHealth = Mathf.Max(1, Mathf.RoundToInt(scaled));
+        currentHealth = maxHealth;
     }
 } 

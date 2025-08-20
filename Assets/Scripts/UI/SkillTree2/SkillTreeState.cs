@@ -108,6 +108,25 @@ public static class SkillTreeState
         Log("ClearAllUnlocks: removed persisted unlocks");
     }
 
+    // Save/Load helpers for external save system
+    public static string ExportCsv()
+    {
+        return string.Join("|", Unlocked);
+    }
+
+    public static void ImportCsv(string csv, bool replace = true)
+    {
+        if (replace && _unlocked != null) _unlocked.Clear();
+        var target = Unlocked;
+        if (!string.IsNullOrEmpty(csv))
+        {
+            var parts = csv.Split('|');
+            for (int i = 0; i < parts.Length; i++) if (!string.IsNullOrEmpty(parts[i])) target.Add(parts[i]);
+        }
+        Save();
+        Log($"ImportCsv: loaded {_unlocked.Count} ids");
+    }
+
     static int TotalCost()
     {
         // If needed we could also persist a total cost; for now approximate by counting ids

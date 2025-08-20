@@ -33,6 +33,6 @@ MonoBehaviour:
   - type: 2
     value: 25
   - type: 3
-    value: 10
+    value: 1
   cost: 1
   allowRefund: 1

@@ -21,6 +21,20 @@ public static class CleanMissingScripts
             $"Removed {totalRemoved} missing script component(s) from open scenes.", "OK");
     }
 
+    [MenuItem("Tools/Project/Clean Missing Scripts In Selected Prefabs")] 
+    public static void CleanInSelectedPrefabs()
+    {
+        int totalRemoved = 0;
+        foreach (var obj in Selection.gameObjects)
+        {
+            totalRemoved += RemoveMissingRecursively(obj);
+            EditorUtility.SetDirty(obj);
+        }
+        AssetDatabase.SaveAssets();
+        EditorUtility.DisplayDialog("Clean Missing Scripts",
+            $"Removed {totalRemoved} missing script component(s) from selected prefabs.", "OK");
+    }
+
     static int RemoveMissingRecursively(GameObject go)
     {
         int removed = GameObjectUtility.RemoveMonoBehavioursWithMissingScript(go);

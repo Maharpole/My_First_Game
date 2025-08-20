@@ -21,4 +21,4 @@ MonoBehaviour:
   minPacks: 10
   maxPacks: 20
   minPackSpacing: 8
-  seed: 512
+  seed: 2147483647

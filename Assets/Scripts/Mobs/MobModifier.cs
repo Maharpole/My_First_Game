@@ -17,12 +17,12 @@ public class MobModifier : ScriptableObject
     [Header("FX (optional)")]
     public GameObject auraPrefab; // e.g., electrified aura
 
-    public void ApplyToEnemy(EnemyStats stats)
+    public void ApplyToEnemy(EnemyHealth stats)
     {
         if (stats == null) return;
         stats.moveSpeed *= moveSpeedMultiplier;
         stats.attackSpeed *= attackSpeedMultiplier;
-        stats.damage *= damageMultiplier;
+        stats.contactDamage = Mathf.RoundToInt(stats.contactDamage * damageMultiplier);
         stats.maxHealth = Mathf.CeilToInt(stats.maxHealth * healthMultiplier);
         stats.currentHealth = Mathf.Min(stats.currentHealth, stats.maxHealth);
         stats.extraProjectiles += extraProjectiles;

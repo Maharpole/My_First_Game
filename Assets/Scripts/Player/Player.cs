@@ -29,7 +29,7 @@ public class Player : MonoBehaviour
     public int maxHealth = 100;
     [SerializeField] private int currentHealth = 100;
     public float damageCooldown = 1f;
-    public int contactDamage = 10;
+    [HideInInspector] public int contactDamage = 0; // deprecated
     
     [Header("== CURRENCY ==")]
     [SerializeField] private int coins = 0;
@@ -305,13 +305,7 @@ public class Player : MonoBehaviour
     #endregion
     
     #region HEALTH & COMBAT
-    void OnCollisionStay(Collision collision)
-    {
-        if (collision.gameObject.CompareTag("Enemy"))
-        {
-            TakeDamage(collision.gameObject, contactDamage);
-        }
-    }
+    // Contact damage moved to Enemy; player no longer takes automatic contact damage here
     
     public void TakeDamage(GameObject source, int damage)
     {

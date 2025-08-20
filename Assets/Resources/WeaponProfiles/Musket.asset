@@ -18,8 +18,8 @@ MonoBehaviour:
   weaponIcon: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
   baseDamage: 5
   baseFireRate: 1
-  baseBulletSpeed: 50
-  baseBulletCount: 3
+  baseBulletSpeed: 20
+  baseBulletCount: 1
   baseSpreadAngle: 3
   availableUpgrades:
   - upgradeName: Damage Upgrade

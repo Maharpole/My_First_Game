@@ -286,9 +286,7 @@ GameObject:
   - component: {fileID: 6995047700782350124}
   - component: {fileID: 1254259005304804746}
   - component: {fileID: 7167259163824179869}
-  - component: {fileID: 8780003723383481558}
   - component: {fileID: -1080064559492507165}
-  - component: {fileID: -142393245941017192}
   - component: {fileID: 325820798844203787}
   - component: {fileID: -6928982707864977593}
   - component: {fileID: 1163650170939019856}
@@ -419,20 +417,6 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
---- !u!114 &8780003723383481558
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8757707649924228711}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4d5184204bba5fa46ac27c2b420de6f3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  moveSpeed: 3
-  startAggro: 0
 --- !u!114 &-1080064559492507165
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -445,9 +429,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e1586cb4f414b7c4f8bd7e8642d8fe5f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxHealth: 3
-  currentHealth: 3
-  flashDuration: 0.1
+  maxHealth: 10
+  currentHealth: 10
+  moveSpeed: 5
+  attackSpeed: 1
+  contactDamage: 100
+  critChancePercent: 5
+  critMultiplier: 1.5
+  extraProjectiles: 0
+  startAggro: 0
+  useGravity: 1
+  aggroRange: 15
+  flashDuration: 1
   damageColor: {r: 1, g: 0, b: 0, a: 1}
   healColor: {r: 0, g: 1, b: 0, a: 1}
   deathParticles: {fileID: 0}
@@ -460,24 +453,6 @@ MonoBehaviour:
   onHeal:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &-142393245941017192
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8757707649924228711}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b4134d0bc4b7f634786685e4b804d441, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  moveSpeed: 3.5
-  attackSpeed: 1
-  damage: 10
-  maxHealth: 50
-  currentHealth: 0
-  extraProjectiles: 0
 --- !u!114 &325820798844203787
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -534,8 +509,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyLevel
   level: 1
-  baseMaxHealth: 10
-  healthPerLevel: 5
-  healthLevelMultiplier: 1
+  baseMaxHealth: 100
+  healthPerLevel: 10
+  healthLevelMultiplier: 3
   baseXP: 5
   xpPerLevel: 2

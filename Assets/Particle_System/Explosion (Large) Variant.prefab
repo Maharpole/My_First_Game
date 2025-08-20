@@ -13,6 +13,10 @@ PrefabInstance:
       value: Explosion (Large) Variant
       objectReference: {fileID: 0}
     - target: {fileID: 1022125766285311628, guid: 221b40d57d8c3b34e9934e17943da051, type: 3}
+      propertyPath: simulationSpeed
+      value: 0.1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1022125766285311628, guid: 221b40d57d8c3b34e9934e17943da051, type: 3}
       propertyPath: InitialModule.startSize.scalar
       value: 1
       objectReference: {fileID: 0}

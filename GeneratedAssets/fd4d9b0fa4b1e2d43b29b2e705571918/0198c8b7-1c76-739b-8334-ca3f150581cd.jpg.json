@@ -1,0 +1,20 @@
+{
+    "asset": "fd4d9b0fa4b1e2d43b29b2e705571918",
+    "fileName": "0198c8b7-1c76-739b-8334-ca3f150581cd.jpg",
+    "prompt": "Two Handed double barrel side by side Shotgun with big smoking barrels",
+    "negativePrompt": "",
+    "model": "03d5ab0c-51c5-44a0-ba07-822e93561aca",
+    "modelName": "Game Icons",
+    "customSeed": -1,
+    "w3CTraceId": "cd4e5aad7b8ddb97f938945f6e4875c2",
+    "refinementMode": "Generation",
+    "pixelateTargetSize": 0,
+    "pixelateKeepImageSize": false,
+    "pixelatePixelBlockSize": 0,
+    "pixelateMode": 0,
+    "pixelateOutlineThickness": 0,
+    "doodles": {
+        "m_Items": []
+    },
+    "upscaleFactor": 0
+}

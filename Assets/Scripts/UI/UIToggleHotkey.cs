@@ -30,6 +30,8 @@ public class UIToggleHotkey : MonoBehaviour
     [Tooltip("Pause the game (Time.timeScale) while these panels are open")] public bool pauseWhenOpen = false;
     [Tooltip("Time scale to use when paused (0 = fully paused)")] public float pausedTimeScale = 0f;
     float _previousTimeScale = 1f;
+    [Header("Optional Save Button")]
+    [Tooltip("If true, when toggling this panel ON, will show a Save button if a SavePanelHook is present")] public bool enableSaveButton = false;
 
     void OnEnable()
     {

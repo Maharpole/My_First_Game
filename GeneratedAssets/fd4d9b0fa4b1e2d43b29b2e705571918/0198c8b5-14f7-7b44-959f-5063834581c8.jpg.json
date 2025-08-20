@@ -1,0 +1,20 @@
+{
+    "asset": "fd4d9b0fa4b1e2d43b29b2e705571918",
+    "fileName": "0198c8b5-14f7-7b44-959f-5063834581c8.jpg",
+    "prompt": "Two Handed double barrel Shotgun ",
+    "negativePrompt": "",
+    "model": "03d5ab0c-51c5-44a0-ba07-822e93561aca",
+    "modelName": "Game Icons",
+    "customSeed": -1,
+    "w3CTraceId": "017810448c92e993fd4aff8b9ee3d9f4",
+    "refinementMode": "Generation",
+    "pixelateTargetSize": 0,
+    "pixelateKeepImageSize": false,
+    "pixelatePixelBlockSize": 0,
+    "pixelateMode": 0,
+    "pixelateOutlineThickness": 0,
+    "doodles": {
+        "m_Items": []
+    },
+    "upscaleFactor": 0
+}
