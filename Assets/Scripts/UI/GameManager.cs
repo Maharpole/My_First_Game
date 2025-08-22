@@ -47,11 +47,7 @@ public class GameManager : MonoBehaviour
             quitButton.onClick.AddListener(QuitGame);
         }
         
-        // Find the weapon manager
-        WeaponManager weaponManager = Object.FindFirstObjectByType<WeaponManager>();
-        
-        // Add the musket as the starting weapon (index 0)
-        weaponManager.AddWeapon(0);
+        // Weapon system is under refactor; starting weapon assignment removed.
     }
     
     public void GameOver()
