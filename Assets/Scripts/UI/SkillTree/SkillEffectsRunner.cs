@@ -29,12 +29,12 @@ public class SkillEffectsRunner : MonoBehaviour
         }
     }
 
-    void HandleUnlocked(SkillNodeData node)
+    void HandleUnlocked(SkillNodeDefinition node)
     {
         Apply(node);
     }
 
-    void Apply(SkillNodeData node)
+    void Apply(SkillNodeDefinition node)
     {
         if (node == null) return;
         if (_hooks == null) _hooks = FindFirstObjectByType<PlayerSkillHooks>();

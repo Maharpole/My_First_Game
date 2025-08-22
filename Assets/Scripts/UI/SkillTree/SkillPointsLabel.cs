@@ -23,7 +23,7 @@ public class SkillPointsLabel : MonoBehaviour
         SkillTreeState.OnUnlocked -= OnChanged;
     }
 
-    void OnChanged(SkillNodeData _)
+    void OnChanged(SkillNodeDefinition _)
     {
         Refresh();
     }

@@ -4,7 +4,7 @@ using UnityEngine.EventSystems;
 
 public class SkillNodeBinding : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
-    public SkillNodeData data;
+    public SkillNodeDefinition data;
     public Toggle toggle;
     public Graphic lockOverlay;
     public Color lockedColor = new Color(0.5f,0.5f,0.5f,1f);
@@ -36,7 +36,7 @@ public class SkillNodeBinding : MonoBehaviour, IPointerEnterHandler, IPointerExi
         SkillTreeState.OnUnlocked -= OnAnyUnlocked;
     }
 
-    void OnAnyUnlocked(SkillNodeData _)
+    void OnAnyUnlocked(SkillNodeDefinition _)
     {
         UpdateVisual();
     }

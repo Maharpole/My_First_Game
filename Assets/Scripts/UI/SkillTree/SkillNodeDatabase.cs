@@ -3,13 +3,13 @@ using UnityEngine;
 
 public static class SkillNodeDatabase
 {
-    static Dictionary<string, SkillNodeData> _nodes;
+    static Dictionary<string, SkillNodeDefinition> _nodes;
 
     public static void LoadAll()
     {
         if (_nodes != null) return;
-        _nodes = new Dictionary<string, SkillNodeData>();
-        var assets = Resources.LoadAll<SkillNodeData>("");
+        _nodes = new Dictionary<string, SkillNodeDefinition>();
+        var assets = Resources.LoadAll<SkillNodeDefinition>("");
         for (int i = 0; i < assets.Length; i++)
         {
             var node = assets[i];
@@ -20,7 +20,7 @@ public static class SkillNodeDatabase
         }
     }
 
-    public static SkillNodeData Get(string id)
+    public static SkillNodeDefinition Get(string id)
     {
         if (string.IsNullOrEmpty(id)) return null;
         LoadAll();
@@ -28,7 +28,7 @@ public static class SkillNodeDatabase
         return node;
     }
 
-    public static IEnumerable<SkillNodeData> All
+    public static IEnumerable<SkillNodeDefinition> All
     {
         get
         {

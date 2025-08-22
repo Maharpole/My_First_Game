@@ -3,11 +3,11 @@ using UnityEngine;
 using UnityEngine.Events;
 
 [CreateAssetMenu(menuName = "SkillTree/Skill Node")]
-public class SkillNodeData : ScriptableObject
+public class SkillNodeDefinition : ScriptableObject
 {
     [Tooltip("Unique id for persistence")] public string id;
     [TextArea] public string description;
-    [Tooltip("Parents that must be unlocked before this node (references)")] public List<SkillNodeData> parents = new List<SkillNodeData>();
+    [Tooltip("Parents that must be unlocked before this node (references)")] public List<SkillNodeDefinition> parents = new List<SkillNodeDefinition>();
     [Tooltip("Parent ids (for data-driven graph)")] public List<string> parentIds = new List<string>();
 
     [Header("Effects on Unlock (LEGACY - safe to leave empty)")] public UnityEvent OnApply;

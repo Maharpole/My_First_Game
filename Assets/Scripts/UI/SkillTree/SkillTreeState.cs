@@ -6,7 +6,7 @@ public static class SkillTreeState
 {
     const string SaveKey = "skilltree.unlocked.ids";
     static HashSet<string> _unlocked;
-    public static event Action<SkillNodeData> OnUnlocked;
+    public static event Action<SkillNodeDefinition> OnUnlocked;
 
     // Verbose logging to help diagnose unlock flow and toggle behavior
     static bool _verboseLogging = true; // set to false to silence logs
@@ -31,9 +31,9 @@ public static class SkillTreeState
         }
     }
 
-    public static bool IsUnlocked(SkillNodeData node) => node != null && !string.IsNullOrEmpty(node.id) && Unlocked.Contains(node.id);
+    public static bool IsUnlocked(SkillNodeDefinition node) => node != null && !string.IsNullOrEmpty(node.id) && Unlocked.Contains(node.id);
 
-    public static bool ParentsSatisfied(SkillNodeData node)
+    public static bool ParentsSatisfied(SkillNodeDefinition node)
     {
         if (node == null)
         {
@@ -45,7 +45,7 @@ public static class SkillTreeState
         {
             for (int i = 0; i < node.parentIds.Count; i++)
             {
-                var p = SkillNodeDatabase.Get(node.parentIds[i]);
+            var p = SkillNodeDatabase.Get(node.parentIds[i]);
                 if (!IsUnlocked(p))
                 {
                     Log($"ParentsSatisfied: parent '{node.parentIds[i]}' not unlocked for '{node.id}'");
@@ -71,7 +71,7 @@ public static class SkillTreeState
     public static int SpentPoints => Unlocked.Count; // assumes cost=1 per node
     public static int TotalPoints => RemainingPoints + SpentPoints;
 
-    public static bool CanUnlock(SkillNodeData node)
+    public static bool CanUnlock(SkillNodeDefinition node)
     {
         string id = node != null ? node.id : "<null>";
         if (node == null)
@@ -92,7 +92,7 @@ public static class SkillTreeState
         return points >= cost;
     }
 
-    public static bool TryUnlock(SkillNodeData node)
+    public static bool TryUnlock(SkillNodeDefinition node)
     {
         if (!CanUnlock(node))
         {

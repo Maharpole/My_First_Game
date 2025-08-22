@@ -5,7 +5,7 @@ using UnityEngine;
 public class PlayerSkillNodeApplier : MonoBehaviour
 {
     [Header("Node Assets")]
-    public SkillNodeData reflectorClassDefinitionNode; // assign the asset for the first node
+    public SkillNodeDefinition reflectorClassDefinitionNode; // assign the asset for the first node
 
     [Header("Targets")]
     public PlayerSkillHooks skillHooks; // assign the Player's component
@@ -30,7 +30,7 @@ public class PlayerSkillNodeApplier : MonoBehaviour
         SkillTreeState.OnUnlocked -= HandleUnlocked;
     }
 
-    void HandleUnlocked(SkillNodeData node)
+    void HandleUnlocked(SkillNodeDefinition node)
     {
         if (node == null || skillHooks == null) return;
         if (node == reflectorClassDefinitionNode)
