@@ -1,9 +1,7 @@
 using UnityEngine;
 using UnityEngine.Events;
 using System.Collections.Generic;
-#if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
-#endif
 
 [DefaultExecutionOrder(-200)]
 /// <summary>
@@ -71,9 +69,7 @@ public class Player : MonoBehaviour
     private bool isFlashing = false;
     private CharacterEquipment characterEquipment;
     private PlayerAnimatorBridge _animBridge;
-#if ENABLE_INPUT_SYSTEM
     private Input_Control _input;
-#endif
         private float baseMoveSpeed;
         private int baseMaxHealth;
         private float reflectFlatCurrent = 0f;
@@ -200,7 +196,6 @@ public class Player : MonoBehaviour
         Debug.Log($"StartingClass: {startingClass}");
     }
     
-#if ENABLE_INPUT_SYSTEM
     void OnEnable()
     {
         if (_input == null)
@@ -231,7 +226,6 @@ public class Player : MonoBehaviour
             PerformDash(dir);
         }
     }
-#endif
     
     void Update()
     {
@@ -293,34 +287,15 @@ public class Player : MonoBehaviour
             }
         }
         
-        // Handle dash
-        // Old Input fallback only when new input system is not enabled
-#if !ENABLE_INPUT_SYSTEM
-        if (Input.GetKeyDown(KeyCode.Space) && currentDashCharges > 0 && movement.magnitude > 0.1f)
-        {
-            PerformDash(movement);
-        }
-#endif
+        // Dash is handled via input actions (OnDashAction)
     }
 
     Vector3 GetMoveVector()
     {
-#if ENABLE_INPUT_SYSTEM
-        // Derive WASD from Input System keyboard state
-        var kb = Keyboard.current;
-        if (kb != null)
-        {
-            float x = (kb.dKey.isPressed ? 1f : 0f) + (kb.aKey.isPressed ? -1f : 0f);
-            float z = (kb.wKey.isPressed ? 1f : 0f) + (kb.sKey.isPressed ? -1f : 0f);
-            Vector3 v = new Vector3(x, 0f, z);
-            if (v.sqrMagnitude > 1f) v.Normalize();
-            return v;
-        }
-#endif
-        // Legacy Input Manager fallback
-        float horizontal = Input.GetAxis("Horizontal");
-        float vertical = Input.GetAxis("Vertical");
-        return new Vector3(horizontal, 0f, vertical).normalized;
+        Vector2 move = _input != null ? _input.Gameplay.Move.ReadValue<Vector2>() : Vector2.zero;
+        Vector3 v = new Vector3(move.x, 0f, move.y);
+        if (v.sqrMagnitude > 1f) v.Normalize();
+        return v;
     }
     
     void PerformDash(Vector3 direction)

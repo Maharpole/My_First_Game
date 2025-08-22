@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class CameraController : MonoBehaviour
 {
@@ -142,10 +143,10 @@ public class CameraController : MonoBehaviour
 
     void HandleZoomInput()
     {
-        float scroll = Input.GetAxis("Mouse ScrollWheel");
+        float scroll = Mouse.current != null ? Mouse.current.scroll.ReadValue().y : 0f;
         if (Mathf.Abs(scroll) < 0.0001f) return;
 
-        currentZoom = Mathf.Clamp(currentZoom - scroll * zoomSensitivity, minZoom, maxZoom);
+        currentZoom = Mathf.Clamp(currentZoom - scroll * 0.01f * zoomSensitivity, minZoom, maxZoom);
 
         if (useOrthographicZoom && unityCamera != null)
         {

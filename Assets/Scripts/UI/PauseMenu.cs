@@ -1,9 +1,6 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
-
-#if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
-#endif
 
 namespace POEAutoShooter.UI
 {
@@ -27,10 +24,8 @@ namespace POEAutoShooter.UI
 		private bool isPaused;
 		private float previousTimeScale = 1f;
 
-#if ENABLE_INPUT_SYSTEM
-		[Header("Input (New Input System - optional)")]
-		[SerializeField] private InputActionReference togglePauseAction; // Bind to your Pause action (e.g., Escape)
-#endif
+                [Header("Input (New Input System - optional)")]
+                [SerializeField] private InputActionReference togglePauseAction; // Bind to your Pause action (e.g., Escape)
 
 		public bool IsPaused => isPaused;
 
@@ -50,36 +45,23 @@ namespace POEAutoShooter.UI
 			}
 		}
 
-		private void OnEnable()
-		{
-#if ENABLE_INPUT_SYSTEM
-			if (togglePauseAction != null && togglePauseAction.action != null)
-			{
-				togglePauseAction.action.performed += OnTogglePausePerformed;
-				togglePauseAction.action.Enable();
-			}
-#endif
-		}
+                private void OnEnable()
+                {
+                        if (togglePauseAction != null && togglePauseAction.action != null)
+                        {
+                                togglePauseAction.action.performed += OnTogglePausePerformed;
+                                togglePauseAction.action.Enable();
+                        }
+                }
 
-		private void OnDisable()
-		{
-#if ENABLE_INPUT_SYSTEM
-			if (togglePauseAction != null && togglePauseAction.action != null)
-			{
-				togglePauseAction.action.performed -= OnTogglePausePerformed;
-				togglePauseAction.action.Disable();
-			}
-#endif
-		}
-
-		private void Update()
-		{
-			// Legacy input fallback (Escape toggles pause)
-			if (Input.GetKeyDown(KeyCode.Escape))
-			{
-				TogglePause();
-			}
-		}
+                private void OnDisable()
+                {
+                        if (togglePauseAction != null && togglePauseAction.action != null)
+                        {
+                                togglePauseAction.action.performed -= OnTogglePausePerformed;
+                                togglePauseAction.action.Disable();
+                        }
+                }
 
 		public void TogglePause()
 		{
@@ -185,15 +167,13 @@ namespace POEAutoShooter.UI
 #endif
 		}
 
-#if ENABLE_INPUT_SYSTEM
-		private void OnTogglePausePerformed(InputAction.CallbackContext context)
-		{
-			if (context.performed)
-			{
-				TogglePause();
-			}
-		}
-#endif
+                private void OnTogglePausePerformed(InputAction.CallbackContext context)
+                {
+                        if (context.performed)
+                        {
+                                TogglePause();
+                        }
+                }
 	}
 }
 
