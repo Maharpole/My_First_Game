@@ -40,6 +40,21 @@ public static class SkillTreeState
             Log("ParentsSatisfied: node=null → false");
             return false;
         }
+        // Prefer id-based parent lookup if populated
+        if (node.parentIds != null && node.parentIds.Count > 0)
+        {
+            for (int i = 0; i < node.parentIds.Count; i++)
+            {
+                var p = SkillNodeDatabase.Get(node.parentIds[i]);
+                if (!IsUnlocked(p))
+                {
+                    Log($"ParentsSatisfied: parent '{node.parentIds[i]}' not unlocked for '{node.id}'");
+                    return false;
+                }
+            }
+            return true;
+        }
+        // Fallback to asset references for older nodes
         if (node.parents == null || node.parents.Count == 0) return true;
         for (int i = 0; i < node.parents.Count; i++)
         {
