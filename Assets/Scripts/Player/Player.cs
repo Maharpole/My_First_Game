@@ -1,7 +1,9 @@
 using UnityEngine;
 using UnityEngine.Events;
 using System.Collections.Generic;
+#if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
+#endif
 
 [DefaultExecutionOrder(-200)]
 /// <summary>
@@ -69,7 +71,9 @@ public class Player : MonoBehaviour
     private bool isFlashing = false;
     private CharacterEquipment characterEquipment;
     private PlayerAnimatorBridge _animBridge;
+#if ENABLE_INPUT_SYSTEM
     [SerializeField] private PlayerInputs _inputs;
+#endif
         private float baseMoveSpeed;
         private int baseMaxHealth;
         private float reflectFlatCurrent = 0f;
@@ -196,6 +200,7 @@ public class Player : MonoBehaviour
         Debug.Log($"StartingClass: {startingClass}");
     }
     
+    #if ENABLE_INPUT_SYSTEM
     void OnEnable()
     {
         if (_inputs != null)
@@ -213,6 +218,12 @@ public class Player : MonoBehaviour
     }
 
     void OnDashAction(InputAction.CallbackContext _)
+    {
+        TryDash();
+    }
+    #endif
+
+    void TryDash()
     {
         if (isDashing || currentDashCharges <= 0) return;
         Vector3 dir = GetMoveVector();
@@ -232,6 +243,12 @@ public class Player : MonoBehaviour
         }
         UpdateDashCharges();
         UpdateDamageCooldowns();
+#if !ENABLE_INPUT_SYSTEM
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            TryDash();
+        }
+#endif
     }
     
     #region MOVEMENT
@@ -283,12 +300,16 @@ public class Player : MonoBehaviour
             }
         }
         
-        // Dash is handled via input actions (OnDashAction)
+        // Dash input is handled separately via TryDash
     }
 
     Vector3 GetMoveVector()
     {
+#if ENABLE_INPUT_SYSTEM
         Vector2 move = _inputs != null ? _inputs.Move.ReadValue<Vector2>() : Vector2.zero;
+#else
+        Vector2 move = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
+#endif
         Vector3 v = new Vector3(move.x, 0f, move.y);
         if (v.sqrMagnitude > 1f) v.Normalize();
         return v;
