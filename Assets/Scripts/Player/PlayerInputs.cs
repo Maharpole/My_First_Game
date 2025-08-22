@@ -1,3 +1,5 @@
+// Only compile this helper when the new Input System package is available.
+#if ENABLE_INPUT_SYSTEM
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -33,3 +35,4 @@ public class PlayerInputs : MonoBehaviour
         Dash.Disable();
     }
 }
+#endif // ENABLE_INPUT_SYSTEM
