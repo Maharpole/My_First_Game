@@ -112,24 +112,24 @@ public class PlayerSkillHooks : MonoBehaviour
         masochismExpireAt = 0f;
     }
 
-    public void ApplyStatModifier(SkillNodeData.StatModifier mod)
+    public void ApplyStatModifier(SkillNodeDefinition.StatModifier mod)
     {
         switch (mod.stat)
         {
-            case SkillNodeData.StatType.MaxHealth:
-                if (mod.op == SkillNodeData.ModifierOp.Add)
+            case SkillNodeDefinition.StatType.MaxHealth:
+                if (mod.op == SkillNodeDefinition.ModifierOp.Add)
                     AddMaxHealthFlat(Mathf.RoundToInt(mod.value));
                 break;
-            case SkillNodeData.StatType.ReflectFlat:
-                if (mod.op == SkillNodeData.ModifierOp.Add)
+            case SkillNodeDefinition.StatType.ReflectFlat:
+                if (mod.op == SkillNodeDefinition.ModifierOp.Add)
                     AddReflectFlat(Mathf.RoundToInt(mod.value));
                 break;
-            case SkillNodeData.StatType.ReflectPercent:
-                if (mod.op == SkillNodeData.ModifierOp.Add)
+            case SkillNodeDefinition.StatType.ReflectPercent:
+                if (mod.op == SkillNodeDefinition.ModifierOp.Add)
                     AddReflectPercent(mod.value);
                 break;
-            case SkillNodeData.StatType.RegenPerSecond:
-                if (mod.op == SkillNodeData.ModifierOp.Add)
+            case SkillNodeDefinition.StatType.RegenPerSecond:
+                if (mod.op == SkillNodeDefinition.ModifierOp.Add)
                     AddRegenPerSecond(Mathf.RoundToInt(mod.value));
                 break;
             default:

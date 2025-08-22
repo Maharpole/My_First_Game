@@ -29,7 +29,7 @@ Implemented a minimal, asset-agnostic skill tree layer that works with the purch
   - New `SkillPointsLabel` (`Assets/Scripts/UI/SkillTree2/SkillPointsLabel.cs`) updates a TMP label with "{total}/{spent} skill points".
 
 - Node data and state
-  - `SkillNodeData` (ScriptableObject): id, description, parent nodes (pathing), cost (default 1), `OnApply` event.
+  - `SkillNodeDefinition` (ScriptableObject): id, description, parent nodes (pathing), cost (default 1), `OnApply` event.
   - `SkillTreeState` (static): persists unlocked ids in PlayerPrefs, enforces parent requirements, spends 1 point on unlock, raises `OnUnlocked`.
 
 - Node binding
@@ -49,7 +49,7 @@ Implemented a minimal, asset-agnostic skill tree layer that works with the purch
   - Use existing `UIToggleHotkey` and bind the tree panel to the UI action (e.g., `UI/ToggleSkillTree`).
 
 Wiring instructions
-1) Create `SkillNodeData` assets for each node; set parents to match radial links.
+1) Create `SkillNodeDefinition` assets for each node; set parents to match radial links.
 2) On each radial node prefab instance: add `SkillNodeBinding`, assign the node asset and its Toggle.
 3) Add `SkillPointsLabel` to a TMP text in the tree header.
 4) For the first node, add four `OnApply` handlers (either direct Player methods or a small StatApplier component) to apply reflect/health/regen and enable `VelocityScaleBySpeed` on the player.
