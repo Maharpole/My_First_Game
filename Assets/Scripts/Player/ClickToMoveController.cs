@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(NavMeshAgent))]
 public class ClickToMoveController : MonoBehaviour
@@ -40,14 +41,18 @@ public class ClickToMoveController : MonoBehaviour
     void Update()
     {
         // Interrupt by WASD input
-        float h = Input.GetAxisRaw("Horizontal");
-        float v = Input.GetAxisRaw("Vertical");
-        if (Mathf.Abs(h) > 0.01f || Mathf.Abs(v) > 0.01f)
+        var kb = Keyboard.current;
+        if (kb != null)
         {
-            CancelClickMove();
+            float h = (kb.dKey.isPressed ? 1f : 0f) + (kb.aKey.isPressed ? -1f : 0f);
+            float v = (kb.wKey.isPressed ? 1f : 0f) + (kb.sKey.isPressed ? -1f : 0f);
+            if (Mathf.Abs(h) > 0.01f || Mathf.Abs(v) > 0.01f)
+            {
+                CancelClickMove();
+            }
         }
 
-        if (Input.GetMouseButtonDown(0))
+        if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
         {
             HandleClick();
         }
@@ -78,7 +83,8 @@ public class ClickToMoveController : MonoBehaviour
     void HandleClick()
     {
         if (Camera.main == null) return;
-        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        Vector2 mousePos = Mouse.current?.position.ReadValue() ?? Vector2.zero;
+        Ray ray = Camera.main.ScreenPointToRay(mousePos);
         if (Physics.Raycast(ray, out var hit, 500f))
         {
             // Item click?

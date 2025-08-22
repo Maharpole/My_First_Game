@@ -2,22 +2,14 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using TMPro;
-
-#if ENABLE_INPUT_SYSTEM
-using UnityEngine.InputSystem; // New Input System
-#endif
+using UnityEngine.InputSystem;
 
 public class UIToggleHotkey : MonoBehaviour
 {
-#if ENABLE_INPUT_SYSTEM
     [Header("Input (New Input System)")]
     [Tooltip("Action that triggers the toggle (performed callback). Bind this in your .inputactions (e.g., key C).")]
     public InputActionReference toggleAction;
     private Input_Control _actions; // fallback if toggleAction is not wired in the scene
-#else
-    [Header("Input (Legacy)")]
-    [Tooltip("Legacy fallback hotkey when New Input System is not enabled")] public KeyCode legacyKey = KeyCode.C;
-#endif
 
     [Header("Targets")]
     [Tooltip("Panels to toggle on/off when the action is triggered")] public GameObject[] panels;
@@ -35,7 +27,6 @@ public class UIToggleHotkey : MonoBehaviour
 
     void OnEnable()
     {
-#if ENABLE_INPUT_SYSTEM
         if (toggleAction != null)
         {
             toggleAction.action.performed += OnToggle;
@@ -48,7 +39,6 @@ public class UIToggleHotkey : MonoBehaviour
             _actions.Enable();
             _actions.UI.ToggleInventory.performed += OnToggle;
         }
-#endif
         if (openOnStart) SetActive(true);
         if (panels != null && panels.Length > 0 && panels[0] != null)
         {
@@ -58,7 +48,6 @@ public class UIToggleHotkey : MonoBehaviour
 
     void OnDisable()
     {
-#if ENABLE_INPUT_SYSTEM
         if (toggleAction != null)
         {
             toggleAction.action.performed -= OnToggle;
@@ -70,11 +59,9 @@ public class UIToggleHotkey : MonoBehaviour
             _actions.Dispose();
             _actions = null;
         }
-#endif
     }
 
-#if ENABLE_INPUT_SYSTEM
-    void OnToggle(UnityEngine.InputSystem.InputAction.CallbackContext _)
+    void OnToggle(InputAction.CallbackContext _)
     {
         if (ShouldIgnore())
         {
@@ -85,22 +72,6 @@ public class UIToggleHotkey : MonoBehaviour
         }
         Toggle();
     }
-#else
-    void Update()
-    {
-        if (Input.GetKeyDown(legacyKey))
-        {
-            if (ShouldIgnore())
-            {
-                bool anyActive = AnyPanelActive();
-                bool wantOpen = !anyActive;
-                bool wantClose = anyActive;
-                if (!((wantClose && allowCloseWhenTextFieldFocused) || (wantOpen && allowOpenWhenTextFieldFocused))) return;
-            }
-            Toggle();
-        }
-    }
-#endif
 
     bool ShouldIgnore()
     {

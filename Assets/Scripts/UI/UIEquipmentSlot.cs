@@ -1,9 +1,7 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-#if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
-#endif
 
     public class UIEquipmentSlot : MonoBehaviour, IDropHandler, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerDownHandler, IPointerUpHandler, IPointerEnterHandler, IPointerExitHandler, IPointerMoveHandler
 {
@@ -312,24 +310,17 @@ using UnityEngine.InputSystem;
     void Update()
     {
         if (!dragging || dragGhost == null) return;
-#if ENABLE_INPUT_SYSTEM
-        var screenPos = Mouse.current != null ? (Vector2)Mouse.current.position.ReadValue() : (Vector2)Input.mousePosition;
-#else
-        var screenPos = (Vector2)Input.mousePosition;
-#endif
+
+        var screenPos = Mouse.current?.position.ReadValue() ?? Vector2.zero;
         PositionGhost(screenPos);
 
-#if ENABLE_INPUT_SYSTEM
-        bool released = Mouse.current != null ? !Mouse.current.leftButton.isPressed : !Input.GetMouseButton(0);
-#else
-        bool released = !Input.GetMouseButton(0);
-#endif
+        bool released = Mouse.current == null || !Mouse.current.leftButton.isPressed;
         if (released)
         {
             FinishDragAt(screenPos);
             return;
         }
-        if (Input.GetKeyDown(KeyCode.Escape))
+        if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
         {
             CancelDrag();
         }

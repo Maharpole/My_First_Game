@@ -2,10 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
-
-#if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
-#endif
 
 internal static class InventoryUILogging
 {
@@ -189,30 +186,23 @@ public class UIDragSourceSlot : MonoBehaviour, IBeginDragHandler, IDragHandler, 
     void Update()
     {
         if (!dragging || dragGhost == null) return;
-#if ENABLE_INPUT_SYSTEM
-		var screenPos = Mouse.current != null ? (Vector2)Mouse.current.position.ReadValue() : (Vector2)Input.mousePosition;
-#else
-		var screenPos = (Vector2)Input.mousePosition;
-#endif
+
+        var screenPos = Mouse.current?.position.ReadValue() ?? Vector2.zero;
         PositionGhost(screenPos);
 
-		// If the primary button was released but OnEndDrag wasn't delivered, finish drop here
-#if ENABLE_INPUT_SYSTEM
-		bool released = Mouse.current != null ? !Mouse.current.leftButton.isPressed : !Input.GetMouseButton(0);
-#else
-		bool released = !Input.GetMouseButton(0);
-#endif
-		if (released)
-		{
-			FinishDragAt(screenPos);
-			return;
-		}
+        // If the primary button was released but OnEndDrag wasn't delivered, finish drop here
+        bool released = Mouse.current == null || !Mouse.current.leftButton.isPressed;
+        if (released)
+        {
+            FinishDragAt(screenPos);
+            return;
+        }
 
-		// Optional cancel with Escape
-		if (Input.GetKeyDown(KeyCode.Escape))
-		{
-			CancelDrag();
-		}
+        // Optional cancel with Escape
+        if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
+        {
+            CancelDrag();
+        }
     }
 
     public void OnPointerDown(PointerEventData eventData)
