@@ -69,7 +69,7 @@ public class Player : MonoBehaviour
     private bool isFlashing = false;
     private CharacterEquipment characterEquipment;
     private PlayerAnimatorBridge _animBridge;
-    private Input_Control _input;
+    [SerializeField] private PlayerInputs _inputs;
         private float baseMoveSpeed;
         private int baseMaxHealth;
         private float reflectFlatCurrent = 0f;
@@ -198,21 +198,17 @@ public class Player : MonoBehaviour
     
     void OnEnable()
     {
-        if (_input == null)
+        if (_inputs != null)
         {
-            _input = new Input_Control();
+            _inputs.Dash.performed += OnDashAction;
         }
-        _input.Enable();
-        // Dash via new input system
-        _input.Gameplay.Dash.performed += OnDashAction;
     }
 
     void OnDisable()
     {
-        if (_input != null)
+        if (_inputs != null)
         {
-            _input.Gameplay.Dash.performed -= OnDashAction;
-            _input.Disable();
+            _inputs.Dash.performed -= OnDashAction;
         }
     }
 
@@ -292,7 +288,7 @@ public class Player : MonoBehaviour
 
     Vector3 GetMoveVector()
     {
-        Vector2 move = _input != null ? _input.Gameplay.Move.ReadValue<Vector2>() : Vector2.zero;
+        Vector2 move = _inputs != null ? _inputs.Move.ReadValue<Vector2>() : Vector2.zero;
         Vector3 v = new Vector3(move.x, 0f, move.y);
         if (v.sqrMagnitude > 1f) v.Normalize();
         return v;
