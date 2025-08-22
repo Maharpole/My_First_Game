@@ -395,9 +395,61 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 2134451158181842358, guid: bf0fd95572f3caa4ea5cefc84afe355b, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2134451158181842358, guid: bf0fd95572f3caa4ea5cefc84afe355b, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2134451158181842358, guid: bf0fd95572f3caa4ea5cefc84afe355b, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2134451158181842358, guid: bf0fd95572f3caa4ea5cefc84afe355b, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 52.48
+      objectReference: {fileID: 0}
     - target: {fileID: 2589250707152711016, guid: bf0fd95572f3caa4ea5cefc84afe355b, type: 3}
       propertyPath: m_Name
       value: SkillTree Canvas
+      objectReference: {fileID: 0}
+    - target: {fileID: 4425505964640463852, guid: bf0fd95572f3caa4ea5cefc84afe355b, type: 3}
+      propertyPath: handle_snap
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4425505964640463852, guid: bf0fd95572f3caa4ea5cefc84afe355b, type: 3}
+      propertyPath: circleRadius
+      value: 52.48
+      objectReference: {fileID: 0}
+    - target: {fileID: 4425505964640463852, guid: bf0fd95572f3caa4ea5cefc84afe355b, type: 3}
+      propertyPath: nodeScaleFactor
+      value: 223.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 4425505964640463852, guid: bf0fd95572f3caa4ea5cefc84afe355b, type: 3}
+      propertyPath: handle_lockRadius
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4425505964640463852, guid: bf0fd95572f3caa4ea5cefc84afe355b, type: 3}
+      propertyPath: linksProgressMode
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4425505964640463852, guid: bf0fd95572f3caa4ea5cefc84afe355b, type: 3}
+      propertyPath: handle_lockRotation
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4425505964640463852, guid: bf0fd95572f3caa4ea5cefc84afe355b, type: 3}
+      propertyPath: scaleNodeWithRadius
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4627482421839650906, guid: bf0fd95572f3caa4ea5cefc84afe355b, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 5454.0864
+      objectReference: {fileID: 0}
+    - target: {fileID: 4627482421839650906, guid: bf0fd95572f3caa4ea5cefc84afe355b, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 2630.0518
       objectReference: {fileID: 0}
     - target: {fileID: 9034109406658229618, guid: bf0fd95572f3caa4ea5cefc84afe355b, type: 3}
       propertyPath: m_Pivot.x
@@ -478,6 +530,22 @@ PrefabInstance:
     - target: {fileID: 9034109406658229618, guid: bf0fd95572f3caa4ea5cefc84afe355b, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9116105172642745808, guid: bf0fd95572f3caa4ea5cefc84afe355b, type: 3}
+      propertyPath: nodeRadius
+      value: 39.6
+      objectReference: {fileID: 0}
+    - target: {fileID: 9116105172642745808, guid: bf0fd95572f3caa4ea5cefc84afe355b, type: 3}
+      propertyPath: fanSpanOverride
+      value: 85.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 9116105172642745808, guid: bf0fd95572f3caa4ea5cefc84afe355b, type: 3}
+      propertyPath: overrideFanSpan
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9116105172642745808, guid: bf0fd95572f3caa4ea5cefc84afe355b, type: 3}
+      propertyPath: showNodeRadiusGizmo
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

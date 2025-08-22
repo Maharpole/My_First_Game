@@ -21,7 +21,8 @@ MonoBehaviour:
     maximum health
 
     +10 health regeneration per second'
-  parents: []
+  parents:
+  - {fileID: 11400000, guid: a72e2f5bfe9f4f64da9e3b7b7285d889, type: 2}
   OnApply:
     m_PersistentCalls:
       m_Calls: []

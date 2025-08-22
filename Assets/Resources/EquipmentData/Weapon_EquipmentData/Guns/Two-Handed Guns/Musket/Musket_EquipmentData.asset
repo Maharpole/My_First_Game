@@ -15,7 +15,7 @@ MonoBehaviour:
   equipmentName: Musket
   description: 
   icon: {fileID: 21300000, guid: c672dc4ea6c37eb4bac3dea9be6d4623, type: 3}
-  modelPrefab: {fileID: 919132149155446097, guid: 98152696c030c6e4790155f867acc856, type: 3}
+  modelPrefab: {fileID: 6109142810155104380, guid: fe4699e2f9e96d545b99f4f2019e320f, type: 3}
   equipmentType: 8
   rarity: 0
   itemLevel: 1
@@ -24,8 +24,7 @@ MonoBehaviour:
   handUsage: 1
   allowedOffhands: 0
   occupiesBothHands: 1
-  weaponProfile: {fileID: 11400000, guid: 02e273bf7290c1b4e924379c023b8407, type: 2}
-  dropModelPrefab: {fileID: 0}
+  dropModelPrefab: {fileID: 6109142810155104380, guid: fe4699e2f9e96d545b99f4f2019e320f, type: 3}
   dropMesh: {fileID: 0}
   dropMeshMaterial: {fileID: 0}
   baseStats: []

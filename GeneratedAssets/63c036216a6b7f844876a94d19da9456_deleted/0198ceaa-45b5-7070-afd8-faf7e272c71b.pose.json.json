@@ -1,0 +1,11 @@
+{
+    "asset": "63c036216a6b7f844876a94d19da9456",
+    "fileName": "0198ceaa-45b5-7070-afd8-faf7e272c71b.pose.json",
+    "prompt": "Belly slam",
+    "negativePrompt": "",
+    "model": "a9c27ca4-3ec9-43e8-96cd-ee891aba64c5",
+    "modelName": "Text to Motion",
+    "customSeed": 1755622536,
+    "w3CTraceId": "3e23aff2f41775978ced9168a9469dd4",
+    "isTrimmed": false
+}

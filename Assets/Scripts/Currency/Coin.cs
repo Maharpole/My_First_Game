@@ -10,6 +10,8 @@ public class Coin : MonoBehaviour
     [Header("UI")]
     [Tooltip("Prefab for the floating text that appears when coin is collected")]
     public GameObject floatingTextPrefab;
+    [Tooltip("If true, show floating coin text on pickup. Disable to remove floating numbers.")]
+    public bool showFloatingText = false;
 
     [Tooltip("Rotation speed in degrees per second")]
     public float rotationSpeed = 90f;
@@ -171,8 +173,11 @@ public class Coin : MonoBehaviour
             AudioSource.PlayClipAtPoint(collectSound, transform.position, collectVolume);
         }
         
-        // Create floating text
-        CreateFloatingText();
+        // Create floating text (optional)
+        if (showFloatingText)
+        {
+            CreateFloatingText();
+        }
         
         // Add coins to the player
         CoinManager.Instance.AddCoins(value);
@@ -183,6 +188,7 @@ public class Coin : MonoBehaviour
 
     private void CreateFloatingText()
     {
+        if (!showFloatingText) return;
         // Check if the prefab reference is set
         if (floatingTextPrefab != null)
         {

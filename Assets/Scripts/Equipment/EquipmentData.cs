@@ -21,8 +21,7 @@ public class EquipmentData : ScriptableObject
     public HandUsage handUsage = HandUsage.OneHand; // two-hand blocks OffHand
     public OffhandCategory allowedOffhands = OffhandCategory.None; // for one-hand ranged (e.g., bow + quiver)
     public bool occupiesBothHands = false; // greatbow, staff
-    [Tooltip("If this equipment is a weapon, link the WeaponData profile to configure AutoShooter.")]
-    public WeaponData weaponProfile;
+    // WeaponData deprecated; weapon behavior is defined by AutoShooter on the model prefab
 
 	[Header("Visual Prefabs")]
 	[Tooltip("Optional: prefab to represent this item when dropped in the world. If not set, uses modelPrefab.")]

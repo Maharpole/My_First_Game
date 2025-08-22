@@ -1,6 +1,9 @@
 using UnityEngine;
 using UnityEngine.Events;
 using System.Collections.Generic;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 
 [DefaultExecutionOrder(-200)]
 /// <summary>
@@ -53,6 +56,7 @@ public class Player : MonoBehaviour
     public UnityEvent<int> onCoinsChanged;
     public UnityEvent onPlayerDeath;
     public UnityEvent onEquipmentChanged;
+    public UnityEvent<int> onDamaged;
     
     // Private fields
     private bool isDashing = false;
@@ -66,6 +70,10 @@ public class Player : MonoBehaviour
     private AudioSource audioSource;
     private bool isFlashing = false;
     private CharacterEquipment characterEquipment;
+    private PlayerAnimatorBridge _animBridge;
+#if ENABLE_INPUT_SYSTEM
+    private Input_Control _input;
+#endif
         private float baseMoveSpeed;
         private int baseMaxHealth;
         private float reflectFlatCurrent = 0f;
@@ -166,6 +174,15 @@ public class Player : MonoBehaviour
             audioSource = gameObject.AddComponent<AudioSource>();
         }
         
+        // Cache animator bridge for triggering dash animations
+        _animBridge = GetComponent<PlayerAnimatorBridge>();
+        if (_animBridge == null) _animBridge = GetComponentInChildren<PlayerAnimatorBridge>();
+        if (_animBridge == null) _animBridge = GetComponentInParent<PlayerAnimatorBridge>();
+        if (_animBridge == null)
+        {
+            Debug.LogWarning("[Player] PlayerAnimatorBridge not found on Player object or hierarchy; dash animation will not be triggered.");
+        }
+        
         // Initialize particle emission
         if (dashParticles != null)
         {
@@ -182,6 +199,39 @@ public class Player : MonoBehaviour
         var startingClass = PlayerProfile.StartingClass;
         Debug.Log($"StartingClass: {startingClass}");
     }
+    
+#if ENABLE_INPUT_SYSTEM
+    void OnEnable()
+    {
+        if (_input == null)
+        {
+            _input = new Input_Control();
+        }
+        _input.Enable();
+        // Dash via new input system
+        _input.Gameplay.Dash.performed += OnDashAction;
+    }
+
+    void OnDisable()
+    {
+        if (_input != null)
+        {
+            _input.Gameplay.Dash.performed -= OnDashAction;
+            _input.Disable();
+        }
+    }
+
+    void OnDashAction(InputAction.CallbackContext _)
+    {
+        if (isDashing || currentDashCharges <= 0) return;
+        Vector3 dir = GetMoveVector();
+        if (dir.sqrMagnitude < 0.01f) dir = new Vector3(transform.forward.x, 0f, transform.forward.z);
+        if (dir.sqrMagnitude > 0.0001f)
+        {
+            PerformDash(dir);
+        }
+    }
+#endif
     
     void Update()
     {
@@ -209,6 +259,7 @@ public class Player : MonoBehaviour
             {
                 isDashing = false;
                 dashDirection = Vector3.zero;
+                Debug.Log("Dash END");
                 // Stop dash particles after dash ends
                 if (dashParticles != null)
                 {
@@ -216,14 +267,14 @@ public class Player : MonoBehaviour
                     emission.enabled = false;
                     dashParticles.Stop(true, ParticleSystemStopBehavior.StopEmitting);
                 }
+                // Signal dash end to animator
+                if (_animBridge != null) _animBridge.FlagDashEnded();
             }
             return;
         }
         
         // Get input
-        float horizontal = Input.GetAxis("Horizontal");
-        float vertical = Input.GetAxis("Vertical");
-        Vector3 movement = new Vector3(horizontal, 0, vertical).normalized;
+        Vector3 movement = GetMoveVector();
         
         // Move the player
         if (movement.magnitude > 0.1f)
@@ -243,10 +294,33 @@ public class Player : MonoBehaviour
         }
         
         // Handle dash
+        // Old Input fallback only when new input system is not enabled
+#if !ENABLE_INPUT_SYSTEM
         if (Input.GetKeyDown(KeyCode.Space) && currentDashCharges > 0 && movement.magnitude > 0.1f)
         {
             PerformDash(movement);
         }
+#endif
+    }
+
+    Vector3 GetMoveVector()
+    {
+#if ENABLE_INPUT_SYSTEM
+        // Derive WASD from Input System keyboard state
+        var kb = Keyboard.current;
+        if (kb != null)
+        {
+            float x = (kb.dKey.isPressed ? 1f : 0f) + (kb.aKey.isPressed ? -1f : 0f);
+            float z = (kb.wKey.isPressed ? 1f : 0f) + (kb.sKey.isPressed ? -1f : 0f);
+            Vector3 v = new Vector3(x, 0f, z);
+            if (v.sqrMagnitude > 1f) v.Normalize();
+            return v;
+        }
+#endif
+        // Legacy Input Manager fallback
+        float horizontal = Input.GetAxis("Horizontal");
+        float vertical = Input.GetAxis("Vertical");
+        return new Vector3(horizontal, 0f, vertical).normalized;
     }
     
     void PerformDash(Vector3 direction)
@@ -255,6 +329,10 @@ public class Player : MonoBehaviour
         dashTime = 0f;
         currentDashCharges--;
         dashDirection = direction.normalized;
+        Debug.Log($"Dash START (charges left: {currentDashCharges})");
+
+        // Signal dash start to animator
+        if (_animBridge != null) _animBridge.FlagDashStarted();
 
         // Face dash direction immediately
         if (faceMoveDirection && dashDirection.sqrMagnitude > 0.0001f)
@@ -285,8 +363,40 @@ public class Player : MonoBehaviour
         Vector3 origin = transform.position + Vector3.up * groundRayHeight;
         if (Physics.Raycast(origin, Vector3.down, out var hit, groundRayHeight * 2f, groundMask))
         {
-            Vector3 target = hit.point + Vector3.up * groundOffset;
-            transform.position = new Vector3(transform.position.x, target.y, transform.position.z);
+            const float skin = 0.01f;
+            // Prefer collider bottom if present; else renderer bounds bottom
+            Collider col = GetComponent<Collider>() ?? GetComponentInChildren<Collider>();
+            float bottomWorldY = float.NaN;
+            if (col != null)
+            {
+                bottomWorldY = col.bounds.min.y;
+            }
+            else
+            {
+                var rends = GetComponentsInChildren<Renderer>();
+                if (rends != null && rends.Length > 0)
+                {
+                    float minY = float.PositiveInfinity;
+                    for (int i = 0; i < rends.Length; i++)
+                    {
+                        var b = rends[i].bounds;
+                        if (b.size.sqrMagnitude <= 0f) continue;
+                        if (b.min.y < minY) minY = b.min.y;
+                    }
+                    bottomWorldY = minY;
+                }
+            }
+            if (!float.IsNaN(bottomWorldY) && bottomWorldY < float.PositiveInfinity)
+            {
+                float delta = (hit.point.y + Mathf.Max(groundOffset, skin)) - bottomWorldY;
+                transform.position += new Vector3(0f, delta, 0f);
+            }
+            else
+            {
+                // Fallback: set pivot to ground + offset
+                float targetY = hit.point.y + groundOffset;
+                transform.position = new Vector3(transform.position.x, targetY, transform.position.z);
+            }
         }
     }
     
@@ -320,6 +430,7 @@ public class Player : MonoBehaviour
         // Apply damage
         currentHealth = Mathf.Max(0, currentHealth - damage);
         damageCooldowns[source] = Time.time + damageCooldown;
+        onDamaged?.Invoke(damage);
         
         // Play effects
         if (damageSound != null)
@@ -444,10 +555,7 @@ public class Player : MonoBehaviour
         return false;
     }
     
-    public bool CanAffordUpgrade(WeaponData.WeaponUpgrade upgrade)
-    {
-        return coins >= upgrade.cost;
-    }
+    // Upgrades removed; coins remain for other uses
     #endregion
     
     #region EQUIPMENT
@@ -631,6 +739,7 @@ public class Player : MonoBehaviour
         if (skillHooks != null)
         {
             reflectFlat += skillHooks.GetSkillReflectFlat();
+            reflectPercent += skillHooks.GetSkillReflectPercent();
         }
 
         LogStats(

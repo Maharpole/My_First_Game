@@ -63,15 +63,6 @@ public class PackSpawner : MonoBehaviour
             var enemy = Object.Instantiate(entry.enemyType.prefab, pos, Quaternion.identity);
 
             var stats = enemy.GetComponent<EnemyHealth>();
-            if (stats != null && entry.enemyType.maxHealthOverride > 0)
-            {
-                stats.maxHealth = entry.enemyType.maxHealthOverride;
-                stats.currentHealth = stats.maxHealth;
-            }
-            if (stats != null && entry.enemyType.moveSpeedOverride > 0f)
-            {
-                stats.moveSpeed = entry.enemyType.moveSpeedOverride;
-            }
 
             // Apply modifiers
             if (appliedModifiers != null)

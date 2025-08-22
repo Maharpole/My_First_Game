@@ -1,0 +1,11 @@
+{
+    "asset": "63c036216a6b7f844876a94d19da9456",
+    "fileName": "0198cea8-db3b-7b63-bbc0-c6ce4d785453.pose.json",
+    "prompt": "Wario Attack",
+    "negativePrompt": "",
+    "model": "a9c27ca4-3ec9-43e8-96cd-ee891aba64c5",
+    "modelName": "Text to Motion",
+    "customSeed": 1537447972,
+    "w3CTraceId": "aae5a47fe11409f16e00e6dbf0de1c5a",
+    "isTrimmed": false
+}

@@ -49,17 +49,90 @@ public class SceneSpawnResolver : MonoBehaviour
                 if (player != null)
                 {
                     var t = player.transform;
-                    t.position = target.Position;
-                    t.rotation = target.Rotation;
+                    Vector3 spawnPos = target.Position;
+                    Quaternion spawnRot = target.Rotation;
 
-                    // Try moving NavMeshAgent if any to avoid warp issues
+                    // If agent exists, warp first
                     var agent = player.GetComponent<UnityEngine.AI.NavMeshAgent>();
                     if (agent != null)
                     {
-                        agent.Warp(target.Position);
-                        t.rotation = target.Rotation;
+                        // Ensure base offset is zero so vertical placement is controlled here
+                        agent.baseOffset = 0f;
+                        agent.Warp(spawnPos);
+                        t.rotation = spawnRot;
                     }
+                    else
+                    {
+                        t.SetPositionAndRotation(spawnPos, spawnRot);
+                    }
+
+                    // Snap to ground next frame after everything initializes
+                    player.StartCoroutine(SnapToGroundNextFrame(player));
                 }
+            }
+        }
+    }
+
+    private System.Collections.IEnumerator SnapToGroundNextFrame(Player player)
+    {
+        yield return null; // wait one frame
+
+        if (player == null) yield break;
+        var root = player.transform;
+
+        // Prefer collider bounds for bottom, fallback to renderer bounds
+        var anyCol = player.GetComponent<Collider>() ?? player.GetComponentInChildren<Collider>();
+        var renderers = player.GetComponentsInChildren<Renderer>();
+        bool hasRenderers = renderers != null && renderers.Length > 0;
+        float bottomWorldY = float.NaN;
+        if (anyCol != null)
+        {
+            bottomWorldY = anyCol.bounds.min.y;
+        }
+        else if (hasRenderers)
+        {
+            float minY = float.PositiveInfinity;
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                if (renderers[i] == null) continue;
+                var b = renderers[i].bounds;
+                if (b.size.sqrMagnitude <= 0f) continue;
+                if (b.min.y < minY) minY = b.min.y;
+            }
+            bottomWorldY = minY;
+        }
+
+        // Determine cast height above current position
+        float castHeight = 3f;
+        if (anyCol is CapsuleCollider cap)
+        {
+            castHeight = Mathf.Max(castHeight, cap.height);
+        }
+        else if (anyCol is CharacterController cc)
+        {
+            castHeight = Mathf.Max(castHeight, cc.height);
+        }
+
+        Vector3 origin = root.position + Vector3.up * castHeight;
+        if (Physics.Raycast(origin, Vector3.down, out var hit, castHeight * 2f, ~0, QueryTriggerInteraction.Ignore))
+        {
+            const float skin = 0.01f;
+            if (!float.IsNaN(bottomWorldY) && bottomWorldY < float.PositiveInfinity)
+            {
+                float delta = (hit.point.y + skin) - bottomWorldY;
+                root.position += new Vector3(0f, delta, 0f);
+            }
+            else
+            {
+                root.position = new Vector3(root.position.x, hit.point.y + skin, root.position.z);
+            }
+        }
+        else
+        {
+            // Fallback: snap to NavMesh height if available
+            if (UnityEngine.AI.NavMesh.SamplePosition(root.position, out var navHit, 5f, UnityEngine.AI.NavMesh.AllAreas))
+            {
+                root.position = navHit.position;
             }
         }
     }

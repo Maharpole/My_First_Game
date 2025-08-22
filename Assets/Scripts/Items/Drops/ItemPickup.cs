@@ -414,7 +414,7 @@ public class ItemPickup : MonoBehaviour
         copy.handUsage = baseItem.handUsage;
         copy.allowedOffhands = baseItem.allowedOffhands;
         copy.occupiesBothHands = baseItem.occupiesBothHands;
-        copy.weaponProfile = baseItem.weaponProfile;
+        // weaponProfile removed; weapon behavior lives on the weapon prefab via AutoShooter
         // base stats
         copy.baseStats = new System.Collections.Generic.List<StatModifier>(baseItem.baseStats);
         // rolled stats

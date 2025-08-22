@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.Events;
 using System.Collections;
 
@@ -22,7 +23,6 @@ public class EnemyHealth : MonoBehaviour
     [Header("Leveling")]
     [Tooltip("Apply level-based max health at start unless overridden by spawner")] public bool useLevelScaling = true;
     [Min(1)] public int level = 1;
-    [Min(1)] public int baseMaxHealth = 10;
     [Tooltip("Health gained per level above 1")] public int healthPerLevel = 5;
     [Tooltip("Multiplier per level (applied after flat)")] public float healthLevelMultiplier = 1.0f;
 
@@ -49,6 +49,11 @@ public class EnemyHealth : MonoBehaviour
     // Movement state
     private Transform playerTransform;
     private Rigidbody rb;
+    private NavMeshAgent agent;
+    private bool usingAgent = false;
+    // Cache the core max health (from Core Stats) so level scaling uses that as the base
+    private int coreBaseMaxHealth;
+    private float lastAppliedMoveSpeed = -1f;
     private bool isAggro = false;
     [HideInInspector] public bool ignoreLevelScaling = false; // set true by spawner if it overrides maxHealth
     
@@ -56,6 +61,8 @@ public class EnemyHealth : MonoBehaviour
 
     void Start()
     {
+        // Capture the Core Stats maxHealth as the base for level scaling
+        coreBaseMaxHealth = Mathf.Max(1, maxHealth);
         // Apply level scaling unless a spawner told us to ignore it
         if (useLevelScaling && !ignoreLevelScaling)
         {
@@ -68,17 +75,36 @@ public class EnemyHealth : MonoBehaviour
         var playerObj = Object.FindFirstObjectByType<Player>();
         if (playerObj != null) playerTransform = playerObj.transform;
 
-        // Ensure physics components
-        rb = GetComponent<Rigidbody>();
-        if (rb == null)
+        // Movement components: prefer NavMeshAgent if present & enabled; otherwise, use Rigidbody
+        agent = GetComponent<NavMeshAgent>();
+        usingAgent = agent != null && agent.enabled;
+
+        if (usingAgent)
         {
-            rb = gameObject.AddComponent<Rigidbody>();
+            // Configure agent-based movement
+            ConfigureAgentMove();
+
+            // Ensure there is a Rigidbody but make it kinematic to avoid physics interference
+            rb = GetComponent<Rigidbody>();
+            if (rb == null) rb = gameObject.AddComponent<Rigidbody>();
+            rb.isKinematic = true;
         }
-        rb.freezeRotation = true;
-        rb.useGravity = useGravity;
-        rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
-        rb.interpolation = RigidbodyInterpolation.Interpolate;
-        rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
+        else
+        {
+            // Ensure physics components for RB-driven motion
+            rb = GetComponent<Rigidbody>();
+            if (rb == null)
+            {
+                rb = gameObject.AddComponent<Rigidbody>();
+            }
+            rb.isKinematic = false;
+            rb.freezeRotation = true;
+            rb.useGravity = useGravity;
+            rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+            rb.interpolation = RigidbodyInterpolation.Interpolate;
+            rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
+            rb.linearDamping = 0f;
+        }
 
         if (GetComponent<Collider>() == null)
         {
@@ -104,11 +130,19 @@ public class EnemyHealth : MonoBehaviour
         {
             deathParticles = GetComponentInChildren<ParticleSystem>();
         }
+
+        // Ensure root motion does not fight controller-driven movement
+        var anim = GetComponentInChildren<Animator>();
+        if (anim != null)
+        {
+            anim.applyRootMotion = false;
+        }
     }
 
     void Update()
     {
-        if (rb == null) return;
+        // If neither movement component exists, nothing to do
+        if (rb == null && agent == null) return;
 
         // Ensure we have a player reference (handles player re-spawn)
         if (playerTransform == null)
@@ -135,14 +169,48 @@ public class EnemyHealth : MonoBehaviour
         toPlayer.y = 0f;
         Vector3 dir = toPlayer.sqrMagnitude > 0.0001f ? toPlayer.normalized : Vector3.zero;
 
-        // Move using Rigidbody
-        rb.linearVelocity = new Vector3(dir.x * moveSpeed, rb.linearVelocity.y, dir.z * moveSpeed);
-
-        // Face the player
-        if (dir != Vector3.zero)
+        if (usingAgent && agent != null && agent.enabled)
         {
-            transform.rotation = Quaternion.LookRotation(dir);
+            // Update agent settings if speed changed so runtime moveSpeed takes effect quickly
+            if (!Mathf.Approximately(lastAppliedMoveSpeed, moveSpeed))
+            {
+                ConfigureAgentMove();
+            }
+            // Set destination toward the player; agent handles pathing
+            agent.SetDestination(playerTransform.position);
+            // Manual facing toward desired direction
+            if (dir != Vector3.zero)
+            {
+                transform.rotation = Quaternion.LookRotation(dir);
+            }
         }
+        else if (rb != null)
+        {
+            // RB-driven movement
+            // Use linearVelocity if available; maintain Y component for gravity
+            Vector3 newVel = new Vector3(dir.x * moveSpeed, rb.linearVelocity.y, dir.z * moveSpeed);
+            rb.linearVelocity = newVel;
+            // Face the player
+            if (dir != Vector3.zero)
+            {
+                transform.rotation = Quaternion.LookRotation(dir);
+            }
+        }
+    }
+
+    private void ConfigureAgentMove()
+    {
+        if (agent == null) return;
+        lastAppliedMoveSpeed = moveSpeed;
+        agent.speed = Mathf.Max(0f, moveSpeed);
+        // High acceleration helps large speeds feel responsive
+        agent.acceleration = Mathf.Max(10f, moveSpeed * 10f);
+        // Avoid constant slow-down near short destinations
+        agent.autoBraking = false;
+        // We handle rotation manually
+        agent.updateRotation = false;
+        // Reasonable stopping distance to reduce jitter
+        if (agent.stoppingDistance < 0.25f) agent.stoppingDistance = 0.25f;
     }
     
     public void TakeDamage(int damage)
@@ -313,13 +381,20 @@ public class EnemyHealth : MonoBehaviour
     public void ClearAggro()
     {
         isAggro = false;
-        if (rb != null) rb.linearVelocity = new Vector3(0f, rb.linearVelocity.y, 0f);
+        if (usingAgent && agent != null && agent.enabled)
+        {
+            agent.ResetPath();
+        }
+        else if (rb != null)
+        {
+            rb.linearVelocity = new Vector3(0f, rb.linearVelocity.y, 0f);
+        }
     }
 
     public void ApplyLevelToHealth()
     {
         int clampedLevel = Mathf.Max(1, level);
-        int flat = Mathf.Max(1, baseMaxHealth) + (clampedLevel - 1) * Mathf.Max(0, healthPerLevel);
+        int flat = Mathf.Max(1, coreBaseMaxHealth) + (clampedLevel - 1) * Mathf.Max(0, healthPerLevel);
         float scaled = flat * Mathf.Max(0.1f, Mathf.Pow(Mathf.Max(0.0001f, healthLevelMultiplier), clampedLevel - 1));
         maxHealth = Mathf.Max(1, Mathf.RoundToInt(scaled));
         currentHealth = maxHealth;

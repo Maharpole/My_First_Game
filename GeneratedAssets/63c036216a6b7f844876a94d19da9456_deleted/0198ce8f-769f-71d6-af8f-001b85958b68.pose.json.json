@@ -1,0 +1,11 @@
+{
+    "asset": "63c036216a6b7f844876a94d19da9456",
+    "fileName": "0198ce8f-769f-71d6-af8f-001b85958b68.pose.json",
+    "prompt": "running shoulder charge",
+    "negativePrompt": "",
+    "model": "a9c27ca4-3ec9-43e8-96cd-ee891aba64c5",
+    "modelName": "Text to Motion",
+    "customSeed": 2027387847,
+    "w3CTraceId": "4c69be0b7c4d0f39dc45e764e94c5154",
+    "isTrimmed": false
+}

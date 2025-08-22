@@ -1,0 +1,13 @@
+{
+    "asset": "7130c3e26fde21349aa233139a4ae70e",
+    "fileName": "0198cdc7-4275-7f6c-996f-fdaf423925a2.wav",
+    "prompt": "Rifle Gunshot",
+    "negativePrompt": "reverb",
+    "model": "0ee39b33-2893-4e0f-8c46-0e0bdd4eda85",
+    "modelName": "Text to Sound",
+    "customSeed": -1,
+    "w3CTraceId": "db89fe4d67c865c16c17430d6506af3a",
+    "duration": 1.0,
+    "autoTrim": true,
+    "hasReference": false
+}

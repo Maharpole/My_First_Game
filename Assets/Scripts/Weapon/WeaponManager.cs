@@ -5,7 +5,7 @@ using UnityEngine.Events;
 public class WeaponManager : MonoBehaviour
 {
     [Header("Weapon Settings")]
-    public WeaponData[] availableWeapons;
+    // Deprecated
     
     [Header("Weapon Positioning")]
     [Tooltip("Distance from player to weapons (in Unity units)")]
@@ -32,8 +32,7 @@ public class WeaponManager : MonoBehaviour
     public bool fixBackwardsWeapons = true;
 
     [Header("Events")]
-    public UnityEvent<WeaponData> onWeaponAdded;
-    public UnityEvent<WeaponData.WeaponUpgrade> onUpgradePurchased;
+    // Deprecated
     
     private List<GameObject> activeWeaponInstances = new List<GameObject>();
     private GameObject player;
@@ -42,116 +41,27 @@ public class WeaponManager : MonoBehaviour
     
     void Start()
     {
-        // Try to find the player
-        FindPlayer();
+        enabled = false;
     }
     
     void Update()
     {
-        // If not initialized, try to find the player
-        if (!isInitialized)
-        {
-            FindPlayer();
-            return;
-        }
-        
-        // Update player movement direction
-        UpdatePlayerMovementDirection();
-        
-        // Update weapon rotations
-        UpdateWeaponRotations();
+        return;
     }
     
     private void FindPlayer()
     {
-        if (player == null)
-        {
-            player = GameObject.FindGameObjectWithTag("Player");
-            if (player != null)
-            {
-                isInitialized = true;
-                Debug.Log("Player found and WeaponManager initialized");
-            }
-        }
+        return;
     }
     
     private void UpdatePlayerMovementDirection()
     {
-        if (player == null)
-        {
-            FindPlayer();
-            return;
-        }
-        
-        // Get player's movement direction from input or velocity
-        Rigidbody playerRb = player.GetComponent<Rigidbody>();
-        if (playerRb != null && playerRb.linearVelocity.magnitude > 0.1f)
-        {
-            playerMovementDirection = playerRb.linearVelocity.normalized;
-        }
-        else
-        {
-            // If no velocity, try to get direction from input
-            float horizontal = Input.GetAxis("Horizontal");
-            float vertical = Input.GetAxis("Vertical");
-            
-            if (Mathf.Abs(horizontal) > 0.1f || Mathf.Abs(vertical) > 0.1f)
-            {
-                playerMovementDirection = new Vector3(horizontal, 0, vertical).normalized;
-            }
-        }
+        return;
     }
     
     private void UpdateWeaponRotations()
     {
-        foreach (var weaponInstance in activeWeaponInstances)
-        {
-            if (weaponInstance == null) continue;
-            
-            AutoShooter shooter = weaponInstance.GetComponent<AutoShooter>();
-            if (shooter == null) continue;
-            
-            // Try to find a target
-            GameObject target = FindNearestEnemy(weaponInstance.transform.position, shooter.detectionRange);
-            
-            Vector3 targetDirection;
-            if (target != null)
-            {
-                // Face the target
-                targetDirection = (target.transform.position - weaponInstance.transform.position).normalized;
-            }
-            else
-            {
-                // Face the player's movement direction
-                targetDirection = playerMovementDirection;
-            }
-            
-            // Update weapon rotation smoothly
-            if (targetDirection != Vector3.zero)
-            {
-                // Calculate the target rotation
-                Quaternion targetRotation = Quaternion.LookRotation(targetDirection);
-                
-                // Apply 180-degree rotation if needed to fix backwards weapons
-                if (fixBackwardsWeapons)
-                {
-                    targetRotation *= Quaternion.Euler(0, 180, 0);
-                }
-                
-                // Calculate the angle difference between current and target rotation
-                float angleDifference = Quaternion.Angle(weaponInstance.transform.rotation, targetRotation);
-                
-                // Calculate dynamic rotation speed based on angle difference
-                float dynamicRotationSpeed = CalculateDynamicRotationSpeed(angleDifference);
-                
-                // Smoothly rotate towards the target rotation
-                weaponInstance.transform.rotation = Quaternion.RotateTowards(
-                    weaponInstance.transform.rotation, 
-                    targetRotation, 
-                    dynamicRotationSpeed * Time.deltaTime
-                );
-            }
-        }
+        return;
     }
     
     private float CalculateDynamicRotationSpeed(float angleDifference)
@@ -188,147 +98,15 @@ public class WeaponManager : MonoBehaviour
         return nearestEnemy;
     }
     
-    public void AddWeapon(int index)
-    {
-        if (index < 0 || index >= availableWeapons.Length) return;
-        
-        WeaponData weaponData = availableWeapons[index];
-        
-        // Check if weapon is already active
-        foreach (var instance in activeWeaponInstances)
-        {
-            AutoShooter autoShooter = instance.GetComponent<AutoShooter>();
-            if (autoShooter != null && autoShooter.weaponData == weaponData)
-            {
-                Debug.Log($"Weapon {weaponData.weaponName} is already active!");
-                return;
-            }
-        }
-        
-        // Find the player GameObject if not already found
-        if (player == null)
-        {
-            player = GameObject.FindGameObjectWithTag("Player");
-            if (player == null)
-            {
-                Debug.LogError("Player not found! Make sure your player has the 'Player' tag.");
-                return;
-            }
-        }
-        
-        // Create new weapon and parent it to the player
-        GameObject weaponInstance = Instantiate(weaponData.weaponPrefab, player.transform);
-        
-        // Calculate position based on number of active weapons
-        int weaponCount = activeWeaponInstances.Count;
-        float angle = (360f / weaponPositions) * weaponCount;
-        float radians = angle * Mathf.Deg2Rad;
-        
-        // Calculate position using trigonometry
-        float x = Mathf.Cos(radians) * weaponDistance;
-        float z = Mathf.Sin(radians) * weaponDistance;
-        
-        // Set position and rotation
-        weaponInstance.transform.localPosition = new Vector3(x, 0f, z);
-        weaponInstance.transform.rotation = Quaternion.identity;
-        
-        // Apply initial 180-degree rotation if needed to fix backwards weapons
-        if (fixBackwardsWeapons)
-        {
-            weaponInstance.transform.rotation = Quaternion.Euler(0, 180, 0);
-        }
-        
-        AutoShooter shooter = weaponInstance.GetComponent<AutoShooter>();
-        
-        if (shooter != null)
-        {
-            // Set the weapon data reference
-            shooter.weaponData = weaponData;
-            
-            // Apply upgrades
-            ApplyUpgrades(weaponData, shooter);
-            
-            // Add to active weapons
-            activeWeaponInstances.Add(weaponInstance);
-            
-            // TODO: Integrate with new equipment system if needed
-            // PlayerDataManager.Instance.AddWeapon(weaponData);
-            
-            // Notify listeners
-            onWeaponAdded.Invoke(weaponData);
-            
-            Debug.Log($"Added weapon: {weaponData.weaponName} to player at position {weaponInstance.transform.localPosition} with distance {weaponDistance}");
-        }
-    }
+    public void AddWeapon(int index) { }
     
-    public bool CanAffordUpgrade(WeaponData.WeaponUpgrade upgrade)
-    {
-        return Player.Instance != null && Player.Instance.CanAffordUpgrade(upgrade);
-    }
+    public bool CanAffordUpgrade(WeaponData.WeaponUpgrade upgrade) { return false; }
     
-    public bool PurchaseUpgrade(WeaponData weapon, WeaponData.WeaponUpgrade upgrade)
-    {
-        if (Player.Instance != null && Player.Instance.SpendCoins(upgrade.cost))
-        {
-            // Apply the upgrade to all instances of this weapon
-            foreach (var instance in activeWeaponInstances)
-            {
-                AutoShooter shooter = instance.GetComponent<AutoShooter>();
-                if (shooter != null && shooter.weaponData == weapon)
-                {
-                    ApplyUpgrades(weapon, shooter);
-                }
-            }
-            
-            onUpgradePurchased.Invoke(upgrade);
-            return true;
-        }
-        return false;
-    }
+    public bool PurchaseUpgrade(WeaponData weapon, WeaponData.WeaponUpgrade upgrade) { return false; }
     
-    private void ApplyUpgrades(WeaponData weapon, AutoShooter shooter)
-    {
-        if (shooter == null) return;
-        
-        // Reset to base stats
-        shooter.damage = weapon.baseDamage;
-        shooter.fireRate = weapon.baseFireRate;
-        shooter.bulletSpeed = weapon.baseBulletSpeed;
-        shooter.bulletCount = weapon.baseBulletCount;
-        shooter.spreadAngle = weapon.baseSpreadAngle;
-        
-        // Apply all purchased upgrades
-        // TODO: Implement upgrade tracking in new Player system
-        /*
-        foreach (var upgrade in PlayerDataManager.Instance.GetPurchasedUpgrades(weapon))
-        {
-            shooter.damage *= upgrade.damageMultiplier;
-            shooter.fireRate *= upgrade.fireRateMultiplier;
-            shooter.bulletSpeed *= upgrade.bulletSpeedMultiplier;
-            shooter.bulletCount = upgrade.bulletCount;
-            shooter.spreadAngle = upgrade.spreadAngle;
-        }
-        */
-    }
+    private void ApplyUpgrades(WeaponData weapon, AutoShooter shooter) { }
     
-    public List<WeaponData> GetActiveWeapons()
-    {
-        // Return weapons based on active instances for now
-        var weapons = new List<WeaponData>();
-        foreach (var instance in activeWeaponInstances)
-        {
-            var shooter = instance.GetComponent<AutoShooter>();
-            if (shooter != null && shooter.weaponData != null)
-            {
-                weapons.Add(shooter.weaponData);
-            }
-        }
-        return weapons;
-    }
+    public List<WeaponData> GetActiveWeapons() { return new List<WeaponData>(); }
     
-    public List<WeaponData.WeaponUpgrade> GetPurchasedUpgrades(WeaponData weapon)
-    {
-        // TODO: Implement upgrade tracking in new Player system
-        return new List<WeaponData.WeaponUpgrade>();
-    }
+    public List<WeaponData.WeaponUpgrade> GetPurchasedUpgrades(WeaponData weapon) { return new List<WeaponData.WeaponUpgrade>(); }
 } 

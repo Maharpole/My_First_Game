@@ -3,9 +3,7 @@ using System.Collections;
 
 public class AutoShooter : MonoBehaviour
 {
-    [Header("Weapon Data")]
-    public WeaponData weaponData;
-    
+    [Header("Weapon Stats (Prefab-defined)")]
     [Header("Shooting Settings")]
     public float damage = 10f;
     public float fireRate = 1.0f;
@@ -18,6 +16,12 @@ public class AutoShooter : MonoBehaviour
     public GameObject bulletPrefab;
     public ParticleSystem muzzleFlash;
     public ParticleSystem impactEffect;
+    
+    [Header("Muzzle")] 
+    [Tooltip("If set, bullets will spawn from this point; otherwise code will try to find a child named 'Muzzle'/'MuzzlePoint'/'BarrelEnd'.")]
+    public Transform muzzlePoint;
+    [Tooltip("Child name to search for if muzzlePoint is not assigned.")]
+    public string muzzleChildName = "Muzzle";
     
     [Header("Sound Effects")]
     public AudioClip[] shootSounds;
@@ -53,53 +57,59 @@ public class AutoShooter : MonoBehaviour
             audioSource = gameObject.AddComponent<AudioSource>();
         }
         
-        // Check if bullet prefab is assigned
-        if (bulletPrefab == null && weaponData != null)
-        {
-            bulletPrefab = weaponData.bulletPrefab;
-        }
+        // Ensure bullet prefab assigned via prefab
         
         if (bulletPrefab == null)
         {
             Debug.LogError("Bullet prefab not assigned to AutoShooter on " + gameObject.name);
         }
         
-        // Set up sound effects if not assigned
-        if ((shootSounds == null || shootSounds.Length == 0) && weaponData != null && weaponData.shootSounds != null && weaponData.shootSounds.Length > 0)
-        {
-            shootSounds = weaponData.shootSounds;
-            shootVolume = weaponData.shootVolume;
-        }
+        // Sounds come from prefab
         
-        // Set up visual effects if not assigned
-        if (muzzleFlash == null && weaponData != null && weaponData.muzzleFlash != null)
+        // VFX come from prefab
+
+        // Auto-find a muzzle point if not assigned
+        if (muzzlePoint == null)
         {
-            muzzleFlash = weaponData.muzzleFlash;
-        }
-        
-        if (impactEffect == null && weaponData != null && weaponData.impactEffect != null)
-        {
-            impactEffect = weaponData.impactEffect;
+            muzzlePoint = FindChildByName(transform, muzzleChildName);
+            if (muzzlePoint == null)
+            {
+                // Try common alternates
+                muzzlePoint = FindChildByName(transform, "MuzzlePoint") 
+                               ?? FindChildByName(transform, "BarrelEnd")
+                               ?? FindChildByName(transform, "Tip");
+            }
         }
     }
     
     void Update()
     {
-        // Check if it's time to fire
-        if (Time.time >= nextFireTime)
+        // Always look for a target to keep aim updated for facing
+        GameObject nearestEnemy = FindNearestEnemy();
+        if (nearestEnemy != null)
         {
-            // Find the nearest enemy
-            GameObject nearestEnemy = FindNearestEnemy();
-            
-            if (nearestEnemy != null)
+            Vector3 direction = (nearestEnemy.transform.position - transform.position);
+            direction.y = 0f;
+            if (direction.sqrMagnitude > 0.0001f)
             {
-                // Calculate direction to enemy
-                Vector3 direction = (nearestEnemy.transform.position - transform.position).normalized;
-                
-                // Fire bullets
-                FireBullets(direction);
-                
-                // Set next fire time using current interval (affected by attack speed)
+                direction.Normalize();
+                var animBridgeForFacing = GetComponentInParent<PlayerAnimatorBridge>();
+                if (animBridgeForFacing != null)
+                {
+                    animBridgeForFacing.ReportAimDirection(direction);
+                }
+            }
+        }
+
+        // Fire only when interval elapsed and a target exists
+        if (nearestEnemy != null && Time.time >= nextFireTime)
+        {
+            Vector3 fireDir = (nearestEnemy.transform.position - transform.position);
+            fireDir.y = 0f;
+            if (fireDir.sqrMagnitude > 0.0001f)
+            {
+                fireDir.Normalize();
+                FireBullets(fireDir);
                 nextFireTime = Time.time + currentFireInterval;
             }
         }
@@ -143,6 +153,12 @@ public class AutoShooter : MonoBehaviour
         float angleStep = spreadAngle / (bulletCount > 1 ? bulletCount - 1 : 1);
         float currentAngle = -spreadAngle / 2f;
         
+        // Determine spawn position and base rotation (prefer muzzle)
+        Vector3 basePos = (muzzlePoint != null) ? muzzlePoint.position : transform.position;
+        Quaternion baseRot = Quaternion.LookRotation(baseDirection);
+
+        // Aim reporting moved to Update to maintain facing between shots
+
         // Fire multiple bullets if needed
         for (int i = 0; i < bulletCount; i++)
         {
@@ -155,7 +171,7 @@ public class AutoShooter : MonoBehaviour
             }
             
             // Create bullet
-            GameObject bullet = Instantiate(bulletPrefab, transform.position, Quaternion.identity);
+            GameObject bullet = Instantiate(bulletPrefab, basePos, baseRot);
             
             // Set bullet's rotation to face the direction it's moving
             bullet.transform.rotation = Quaternion.LookRotation(direction);
@@ -186,12 +202,7 @@ public class AutoShooter : MonoBehaviour
                 }
                 bulletComponent.damage = dmg;
                 
-                // Set weapon-specific properties
-                if (weaponData != null)
-                {
-                    // You can add special properties here based on weapon type
-                    // For example, piercing bullets, explosive bullets, etc.
-                }
+                // Hook for weapon-specific properties can be added here on the bullet if needed
             }
         }
 
@@ -201,6 +212,19 @@ public class AutoShooter : MonoBehaviour
         {
             animBridge.FlagRangedFired();
         }
+    }
+
+    private Transform FindChildByName(Transform root, string name)
+    {
+        if (root == null || string.IsNullOrEmpty(name)) return null;
+        if (root.name == name) return root;
+        for (int i = 0; i < root.childCount; i++)
+        {
+            var c = root.GetChild(i);
+            var r = FindChildByName(c, name);
+            if (r != null) return r;
+        }
+        return null;
     }
 
     // Called by weapon attach or player stat system to set the unmodified baseline values

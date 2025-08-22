@@ -13,6 +13,4 @@ MonoBehaviour:
   m_Name: EnemyType
   m_EditorClassIdentifier: 
   enemyName: Goblin
-  prefab: {fileID: 8757707649924228711, guid: e702cd0b219d6ee4fadca17cd03f2ab4, type: 3}
-  moveSpeedOverride: 1
-  maxHealthOverride: 1
+  prefab: {fileID: 1281458906737136496, guid: 5864c81afa99ee1458cce217081984d3, type: 3}
