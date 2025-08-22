@@ -1,4 +1,4 @@
-// Only compile full helper when the new Input System package is available.
+// Only compile this helper when the new Input System package is available.
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine;
 using UnityEngine.InputSystem;
