@@ -1,13 +1,8 @@
 using UnityEngine;
-using System.Collections.Generic;
-
 // Single runner that listens for any node unlock and applies data-driven effects to the Player.
 public class SkillEffectsRunner : MonoBehaviour
 {
     PlayerSkillHooks _hooks;
-    [Header("Nodes to scan on start (optional if using Resources)")]
-    public List<SkillNodeData> allNodes = new List<SkillNodeData>();
-    [Tooltip("If true, also scan Resources for SkillNodeData on start")] public bool scanResources = true;
 
     void Awake()
     {
@@ -26,26 +21,11 @@ public class SkillEffectsRunner : MonoBehaviour
 
     void Start()
     {
-        // On load, apply effects for already-unlocked nodes
-        if (allNodes != null)
+        // Build database and apply effects for already-unlocked nodes
+        SkillNodeDatabase.LoadAll();
+        foreach (var n in SkillNodeDatabase.All)
         {
-            for (int i = 0; i < allNodes.Count; i++)
-            {
-                var n = allNodes[i];
-                if (n != null && SkillTreeState.IsUnlocked(n)) Apply(n);
-            }
-        }
-        if (scanResources)
-        {
-            var nodes = Resources.LoadAll<SkillNodeData>("");
-            if (nodes != null)
-            {
-                for (int i = 0; i < nodes.Length; i++)
-                {
-                    var n = nodes[i];
-                    if (n != null && SkillTreeState.IsUnlocked(n)) Apply(n);
-                }
-            }
+            if (n != null && SkillTreeState.IsUnlocked(n)) Apply(n);
         }
     }
 
@@ -63,35 +43,16 @@ public class SkillEffectsRunner : MonoBehaviour
             Debug.LogWarning("[SkillEffectsRunner] PlayerSkillHooks not found; cannot apply node effects.");
             return;
         }
-        var list = node.effects;
-        if (list == null || list.Count == 0) return; // nothing to do
-        for (int i = 0; i < list.Count; i++)
+        var list = node.statModifiers;
+        if (list != null)
         {
-            var e = list[i];
-            switch (e.type)
+            for (int i = 0; i < list.Count; i++)
             {
-                case SkillNodeData.EffectType.EnableVelocityScale:
-                    _hooks.EnableVelocityScale();
-                    break;
-                case SkillNodeData.EffectType.ReflectFlat:
-                    _hooks.AddReflectFlat(Mathf.RoundToInt(e.value));
-                    break;
-                case SkillNodeData.EffectType.ReflectPercent:
-                    _hooks.AddReflectPercent(e.value);
-                    break;
-                case SkillNodeData.EffectType.MaxHealthFlat:
-                    _hooks.AddMaxHealthFlat(Mathf.RoundToInt(e.value));
-                    break;
-                case SkillNodeData.EffectType.RegenPerSecond:
-                    _hooks.AddRegenPerSecond(Mathf.RoundToInt(e.value));
-                    break;
-                case SkillNodeData.EffectType.EnableMasochism:
-                    _hooks.EnableMasochism();
-                    break;
+                _hooks.ApplyStatModifier(list[i]);
             }
         }
         _hooks.Recompute();
-        Debug.Log($"[SkillEffectsRunner] Applied {list.Count} data effect(s) for node '{node.id}'.");
+        Debug.Log($"[SkillEffectsRunner] Applied {(list!=null?list.Count:0)} modifier(s) for node '{node.id}'.");
     }
 }
 
