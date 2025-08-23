@@ -25,6 +25,14 @@ public class UIToggleHotkey : MonoBehaviour
     [Header("Optional Save Button")]
     [Tooltip("If true, when toggling this panel ON, will show a Save button if a SavePanelHook is present")] public bool enableSaveButton = false;
 
+    void Awake()
+    {
+        if (panels == null || panels.Length == 0)
+        {
+            panels = new GameObject[] { gameObject };
+        }
+    }
+
     void OnEnable()
     {
         if (toggleAction != null)
@@ -97,7 +105,7 @@ public class UIToggleHotkey : MonoBehaviour
     public void Toggle()
     {
         if (panels == null || panels.Length == 0) return;
-        bool target = !panels[0].activeSelf;
+        bool target = !AnyPanelActive();
         SetActive(target);
     }
 
