@@ -35,4 +35,8 @@ public class PlayerInputs : MonoBehaviour
         Dash.Disable();
     }
 }
+#else
+// Minimal stub so projects without the new Input System still compile.
+using UnityEngine;
+public class PlayerInputs : MonoBehaviour { }
 #endif // ENABLE_INPUT_SYSTEM
