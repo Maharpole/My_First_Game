@@ -19,6 +19,11 @@ public class EnemyHealth : MonoBehaviour
     [Tooltip("If true, the enemy starts aggroed")] public bool startAggro = false;
     [Tooltip("Enable gravity on the Rigidbody")] public bool useGravity = true;
     [Tooltip("Radius within which the enemy becomes aggro when the player enters")] public float aggroRange = 8f;
+    [Tooltip("Prefer NavMeshAgent for pathfinding (auto-adds if missing)")] public bool preferNavMeshAgent = true;
+
+    [Header("Contact Damage")]
+    [Tooltip("Meters from enemy center to apply touch damage to the player")] public float contactRange = 0.8f;
+    [Tooltip("Seconds between consecutive contact damage ticks")] public float contactDamageInterval = 0.5f;
 
     [Header("Leveling")]
     [Tooltip("Apply level-based max health at start unless overridden by spawner")] public bool useLevelScaling = true;
@@ -59,6 +64,8 @@ public class EnemyHealth : MonoBehaviour
     
     [Header("Events")] public UnityEvent onDeath; public UnityEvent onDamage; public UnityEvent onHeal;
 
+    private float _lastContactDamageTime = -999f;
+
     void Start()
     {
         // Capture the Core Stats maxHealth as the base for level scaling
@@ -77,7 +84,25 @@ public class EnemyHealth : MonoBehaviour
 
         // Movement components: prefer NavMeshAgent if present & enabled; otherwise, use Rigidbody
         agent = GetComponent<NavMeshAgent>();
+        if (preferNavMeshAgent && (agent == null))
+        {
+            agent = gameObject.AddComponent<NavMeshAgent>();
+            agent.enabled = true;
+        }
         usingAgent = agent != null && agent.enabled;
+        // Ensure the agent is actually on a NavMesh; otherwise fall back to RB
+        if (usingAgent)
+        {
+            if (NavMesh.SamplePosition(transform.position, out var hit, 2f, NavMesh.AllAreas))
+            {
+                agent.Warp(hit.position);
+            }
+            else
+            {
+                agent.enabled = false;
+                usingAgent = false;
+            }
+        }
 
         if (usingAgent)
         {
@@ -88,6 +113,7 @@ public class EnemyHealth : MonoBehaviour
             rb = GetComponent<Rigidbody>();
             if (rb == null) rb = gameObject.AddComponent<Rigidbody>();
             rb.isKinematic = true;
+            rb.useGravity = false;
         }
         else
         {
@@ -196,6 +222,9 @@ public class EnemyHealth : MonoBehaviour
                 transform.rotation = Quaternion.LookRotation(dir);
             }
         }
+
+        // Apply proximity-based contact damage (works with NavMeshAgent or Rigidbody)
+        TryApplyContactDamage();
     }
 
     private void ConfigureAgentMove()
@@ -207,10 +236,24 @@ public class EnemyHealth : MonoBehaviour
         agent.acceleration = Mathf.Max(10f, moveSpeed * 10f);
         // Avoid constant slow-down near short destinations
         agent.autoBraking = false;
+        agent.autoRepath = true;
         // We handle rotation manually
         agent.updateRotation = false;
+        agent.updatePosition = true;
         // Reasonable stopping distance to reduce jitter
         if (agent.stoppingDistance < 0.25f) agent.stoppingDistance = 0.25f;
+        // Ensure agent radius/height roughly match collider for better avoidance
+        var col = GetComponent<Collider>() as CapsuleCollider;
+        if (col != null)
+        {
+            agent.radius = Mathf.Max(0.1f, col.radius);
+            agent.height = Mathf.Max(0.5f, col.height);
+            // Base offset 0 assumes model pivot is near feet. Adjust in prefab if needed.
+            agent.baseOffset = 0f;
+        }
+        // Enable obstacle avoidance
+        agent.obstacleAvoidanceType = ObstacleAvoidanceType.HighQualityObstacleAvoidance;
+        agent.avoidancePriority = Mathf.Clamp(50, 0, 99);
     }
     
     public void TakeDamage(int damage)
@@ -267,6 +310,36 @@ public class EnemyHealth : MonoBehaviour
     {
         // Bypass aggro kick and flash differences if desired; here we reuse the same path
         TakeDamage(damage);
+    }
+
+    private void TryApplyContactDamage()
+    {
+        if (playerTransform == null) return;
+        if (contactDamage <= 0) return;
+        if (Time.time < _lastContactDamageTime + Mathf.Max(0.01f, contactDamageInterval)) return;
+
+        Vector3 a = transform.position;
+        Vector3 b = playerTransform.position;
+        a.y = 0f; b.y = 0f;
+        float dist = Vector3.Distance(a, b);
+        if (dist <= Mathf.Max(0.05f, contactRange))
+        {
+            var player = playerTransform.GetComponent<Player>();
+            if (player != null)
+            {
+                int dmg = Mathf.Max(0, contactDamage);
+                if (dmg > 0)
+                {
+                    // Simple crit roll to mirror OnCollisionStay behavior
+                    if (Random.value < Mathf.Clamp01(critChancePercent * 0.01f))
+                    {
+                        dmg = Mathf.RoundToInt(dmg * Mathf.Max(1f, critMultiplier));
+                    }
+                    player.TakeDamage(gameObject, dmg);
+                    _lastContactDamageTime = Time.time;
+                }
+            }
+        }
     }
 
     public void Heal(int amount)

@@ -18,6 +18,10 @@ public class ItemPickupUIManager : MonoBehaviour
     [Tooltip("Viewport margins (pixels)")] public Rect margins = new Rect(8, 8, 8, 8);
     [Tooltip("Hide entries when off-screen or behind camera")] public bool cullOffscreen = true;
 
+    [Header("Sizing")]
+    [Tooltip("Padding around text for the background (pixels)")] public Vector2 backgroundPadding = new Vector2(16f, 8f);
+    [Tooltip("Automatically size background to text preferred size")] public bool autoSizeToText = true;
+
     private readonly Dictionary<ItemPickup, Entry> _entries = new Dictionary<ItemPickup, Entry>();
     private Camera _cam;
 
@@ -59,8 +63,9 @@ public class ItemPickupUIManager : MonoBehaviour
             UpdateEntryTransform(e, item);
             UpdateEntryText(e, item);
             UpdateEntryStyle(e, item);
+            UpdateEntrySize(e);
         }
-        ResolveOverlaps();
+        // Overlap resolution removed to avoid flashing/jitter
     }
 
     void UpdateEntryTransform(Entry e, ItemPickup item)
@@ -68,27 +73,48 @@ public class ItemPickupUIManager : MonoBehaviour
         var worldPos = item.transform.position + Vector3.up * item.nameHeight;
         if (_cam == null)
         {
-            e.root.gameObject.SetActive(false);
+            SetEntryVisible(e, false);
             return;
         }
-        // Use WorldToScreenPoint to get z as well
-        var sp = _cam.WorldToScreenPoint(worldPos); // Vector3
+        // Screen point with depth; ignore when behind camera to avoid wild screen coords
+        var sp = _cam.WorldToScreenPoint(worldPos);
+        if (sp.z <= 0f)
+        {
+            SetEntryVisible(e, false);
+            return;
+        }
+
+        // Visibility check before positioning
+        bool onScreen = sp.x >= 0 && sp.y >= 0 && sp.x <= Screen.width && sp.y <= Screen.height;
+        if (cullOffscreen && !onScreen)
+        {
+            SetEntryVisible(e, false);
+            return; // keep last good position while hidden
+        }
+
+        // Convert to local position relative to the overlay canvas rect to avoid scaler jitter
+        var canvasRt = overlayCanvas != null ? overlayCanvas.transform as RectTransform : null;
         var rt = e.root;
-        var screenPos = sp;
-        screenPos.x += screenOffset.x;
-        screenPos.y += screenOffset.y;
-        screenPos.z = 0f;
-        rt.position = screenPos;
-        // cull offscreen
-        if (cullOffscreen)
+        Vector2 screenPt = new Vector2(sp.x + screenOffset.x, sp.y + screenOffset.y);
+        if (canvasRt != null)
         {
-            bool visible = sp.z > 0 && sp.x >= 0 && sp.y >= 0 && sp.x <= Screen.width && sp.y <= Screen.height;
-            if (e.root.gameObject.activeSelf != visible) e.root.gameObject.SetActive(visible);
+            Vector2 localPoint;
+            Camera camForCanvas = null;
+            if (overlayCanvas.renderMode == RenderMode.ScreenSpaceCamera || overlayCanvas.renderMode == RenderMode.WorldSpace)
+            {
+                camForCanvas = overlayCanvas.worldCamera != null ? overlayCanvas.worldCamera : _cam;
+            }
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRt, screenPt, camForCanvas, out localPoint);
+            rt.anchoredPosition = localPoint;
         }
-        else if (!e.root.gameObject.activeSelf)
+        else
         {
-            e.root.gameObject.SetActive(true);
+            // Fallback: set world position (should not happen since we create the canvas)
+            rt.position = new Vector3(screenPt.x, screenPt.y, 0f);
         }
+
+        // Show once we have a valid on-screen position
+        SetEntryVisible(e, true);
     }
 
     void UpdateEntryText(Entry e, ItemPickup item)
@@ -116,50 +142,7 @@ public class ItemPickupUIManager : MonoBehaviour
         }
     }
 
-    void ResolveOverlaps()
-    {
-        // Simple pass: nudge overlapping rects downward until separated and inside screen margins
-        var list = new List<Entry>(_entries.Values);
-        for (int i = 0; i < list.Count; i++)
-        {
-            var a = list[i];
-            if (a == null || a.root == null || !a.root.gameObject.activeInHierarchy) continue;
-            var art = a.root;
-            for (int j = i + 1; j < list.Count; j++)
-            {
-                var b = list[j];
-                if (b == null || b.root == null || !b.root.gameObject.activeInHierarchy) continue;
-                var brt = b.root;
-                if (RectOverlaps(art, brt))
-                {
-                    // Nudge b downward
-                    var p = brt.position;
-                    p.y -= Mathf.Max(minSeparation.y, brt.rect.height * 0.2f);
-                    brt.position = p;
-                }
-            }
-            // Clamp inside screen margins
-            var pos = art.position;
-            pos.x = Mathf.Clamp(pos.x, margins.xMin, Screen.width - margins.xMax);
-            pos.y = Mathf.Clamp(pos.y, margins.yMin, Screen.height - margins.yMax);
-            art.position = pos;
-        }
-    }
-
-    bool RectOverlaps(RectTransform a, RectTransform b)
-    {
-        var ar = GetScreenRect(a);
-        var br = GetScreenRect(b);
-        return ar.Overlaps(br);
-    }
-
-    Rect GetScreenRect(RectTransform rt)
-    {
-        var p = rt.position;
-        var size = rt.rect.size;
-        // Anchor pivot assumed center; adjust rect
-        return new Rect(p.x - size.x * 0.5f, p.y - size.y * 0.5f, size.x, size.y);
-    }
+    // Overlap fixing logic removed by request
 
     public void Register(ItemPickup item)
     {
@@ -173,6 +156,19 @@ public class ItemPickupUIManager : MonoBehaviour
         var rt = go.GetComponent<RectTransform>();
         var btn = go.GetComponentInChildren<Button>();
         var txt = go.GetComponentInChildren<TMP_Text>();
+        // Ensure non-stretch anchors so width won't follow screen width
+        if (rt != null)
+        {
+            rt.anchorMin = new Vector2(0.5f, 0.5f);
+            rt.anchorMax = new Vector2(0.5f, 0.5f);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.anchoredPosition = Vector2.zero; // initialize deterministically
+        }
+        // Ensure a CanvasGroup to control visibility without flashing
+        var cg = go.GetComponent<CanvasGroup>();
+        if (cg == null) cg = go.AddComponent<CanvasGroup>();
+        cg.alpha = 0f;
+        cg.blocksRaycasts = false;
         if (btn != null)
         {
             btn.onClick.AddListener(() =>
@@ -183,7 +179,19 @@ public class ItemPickupUIManager : MonoBehaviour
                 item.TryPickup(player, float.PositiveInfinity);
             });
         }
-        _entries[item] = new Entry { root = rt, label = txt, buttonImage = go.GetComponent<Image>() };
+        _entries[item] = new Entry { root = rt, label = txt, buttonImage = go.GetComponent<Image>(), canvasGroup = cg };
+        // If background image exists, ensure its RectTransform is also non-stretch
+        if (_entries[item].buttonImage != null)
+        {
+            var bgRt = _entries[item].buttonImage.rectTransform;
+            bgRt.anchorMin = new Vector2(0.5f, 0.5f);
+            bgRt.anchorMax = new Vector2(0.5f, 0.5f);
+            bgRt.pivot = new Vector2(0.5f, 0.5f);
+        }
+        // Place immediately so first frame doesn't jump
+        UpdateEntryText(_entries[item], item);
+        UpdateEntryTransform(_entries[item], item);
+        UpdateEntryStyle(_entries[item], item);
     }
 
     public void Unregister(ItemPickup item)
@@ -201,7 +209,39 @@ public class ItemPickupUIManager : MonoBehaviour
         public RectTransform root;
         public TMP_Text label;
         public Image buttonImage;
+        public CanvasGroup canvasGroup;
+    }
+
+    void UpdateEntrySize(Entry e)
+    {
+        if (!autoSizeToText || e == null) return;
+        var targetRt = e.buttonImage != null ? e.buttonImage.rectTransform : e.root;
+        if (targetRt == null || e.label == null) return;
+        // Calculate preferred size for current text
+        e.label.ForceMeshUpdate();
+        float w = e.label.preferredWidth;
+        float h = e.label.preferredHeight;
+        var size = new Vector2(w + backgroundPadding.x * 2f, h + backgroundPadding.y * 2f);
+        targetRt.sizeDelta = size;
+    }
+
+    void SetEntryVisible(Entry e, bool visible)
+    {
+        if (e == null) return;
+        var cg = e.canvasGroup;
+        if (cg == null)
+        {
+            cg = e.root != null ? e.root.GetComponent<CanvasGroup>() : null;
+            if (cg == null && e.root != null) cg = e.root.gameObject.AddComponent<CanvasGroup>();
+            e.canvasGroup = cg;
+        }
+        if (cg != null)
+        {
+            cg.alpha = visible ? 1f : 0f;
+            cg.blocksRaycasts = visible;
+        }
     }
 }
+
 
 

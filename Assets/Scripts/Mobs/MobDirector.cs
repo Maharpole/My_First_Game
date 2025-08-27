@@ -7,6 +7,10 @@ public class MobDirector : MonoBehaviour
     public SpawnTable spawnTable;
     public GameObject packSpawnerPrefab; // empty with PackSpawner component
 
+    [Header("Hierarchy Organization")]
+    [Tooltip("All spawned mobs will be nested under this parent for cleanliness. If null, a __Mobs container will be created under this director.")]
+    public Transform mobsParent;
+
     [Header("NavMesh (optional)")]
     public bool projectToGround = true;
     public LayerMask groundMask;
@@ -39,11 +43,26 @@ public class MobDirector : MonoBehaviour
                 }
             }
 
-            var go = Instantiate(packSpawnerPrefab, pos, Quaternion.identity);
+            var parent = EnsureMobsParent();
+            var go = Instantiate(packSpawnerPrefab, pos, Quaternion.identity, parent);
             var spawner = go.GetComponent<PackSpawner>();
             spawner.Initialize(mobType, modifiers);
             spawner.Spawn();
         }
+    }
+
+    Transform EnsureMobsParent()
+    {
+        if (mobsParent != null) return mobsParent;
+        var t = transform.Find("__Mobs");
+        if (t == null)
+        {
+            var go = new GameObject("__Mobs");
+            go.transform.SetParent(transform, false);
+            mobsParent = go.transform;
+        }
+        else mobsParent = t;
+        return mobsParent;
     }
 
     List<Vector3> SamplePoints(Bounds b, int targetCount, float minSpacing)

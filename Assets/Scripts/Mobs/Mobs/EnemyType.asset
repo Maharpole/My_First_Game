@@ -12,5 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 85d1b37ce54dff44984d48c2c763fd2c, type: 3}
   m_Name: EnemyType
   m_EditorClassIdentifier: 
-  enemyName: Goblin
+  enemyName: Frog
   prefab: {fileID: 1281458906737136496, guid: 5864c81afa99ee1458cce217081984d3, type: 3}

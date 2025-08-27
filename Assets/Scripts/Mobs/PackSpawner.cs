@@ -31,6 +31,8 @@ public class PackSpawner : MonoBehaviour
         }
 
         aggroGroup = gameObject.AddComponent<AggroGroup>();
+        // Parent this spawner under MobManager for organization
+        MobManager.ParentSpawner(transform);
 
         int count = Random.Range(mobType.minCount, mobType.maxCount + 1);
         for (int i = 0; i < count; i++)
@@ -61,6 +63,8 @@ public class PackSpawner : MonoBehaviour
             }
 
             var enemy = Object.Instantiate(entry.enemyType.prefab, pos, Quaternion.identity);
+            // Parent spawned mob under MobManager
+            MobManager.ParentMob(enemy.transform);
 
             var stats = enemy.GetComponent<EnemyHealth>();
 

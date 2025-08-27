@@ -11,6 +11,9 @@ public class AutoShooter : MonoBehaviour
     public int bulletCount = 1;
     public float spreadAngle = 0f;
     public float detectionRange = 20f;
+    [Tooltip("Vertical aim offset if target has no collider")] public float targetHeightOffset = 1.0f;
+    [Tooltip("Optional mask for LOS checks (not required)")] public LayerMask lineOfSightMask = ~0;
+    [Tooltip("Predict target movement based on this lead factor (0 = none)")] public float leadFactor = 0.5f;
     
     [Header("References")]
     public GameObject bulletPrefab;
@@ -88,8 +91,8 @@ public class AutoShooter : MonoBehaviour
         GameObject nearestEnemy = FindNearestEnemy();
         if (nearestEnemy != null)
         {
-            Vector3 direction = (nearestEnemy.transform.position - transform.position);
-            direction.y = 0f;
+            Vector3 origin = (muzzlePoint != null ? muzzlePoint.position : transform.position);
+            Vector3 direction = (GetTargetPoint(nearestEnemy) - origin);
             if (direction.sqrMagnitude > 0.0001f)
             {
                 direction.Normalize();
@@ -104,8 +107,9 @@ public class AutoShooter : MonoBehaviour
         // Fire only when interval elapsed and a target exists
         if (nearestEnemy != null && Time.time >= nextFireTime)
         {
-            Vector3 fireDir = (nearestEnemy.transform.position - transform.position);
-            fireDir.y = 0f;
+            Vector3 origin = (muzzlePoint != null ? muzzlePoint.position : transform.position);
+            Vector3 aimPoint = GetPredictedAimPoint(nearestEnemy, origin);
+            Vector3 fireDir = (aimPoint - origin);
             if (fireDir.sqrMagnitude > 0.0001f)
             {
                 fireDir.Normalize();
@@ -182,6 +186,9 @@ public class AutoShooter : MonoBehaviour
             {
                 bulletRb = bullet.AddComponent<Rigidbody>();
             }
+            bulletRb.useGravity = false;
+            bulletRb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+            bulletRb.interpolation = RigidbodyInterpolation.Interpolate;
             
             // Set bullet's velocity
             bulletRb.linearVelocity = direction * bulletSpeed;
@@ -225,6 +232,35 @@ public class AutoShooter : MonoBehaviour
             if (r != null) return r;
         }
         return null;
+    }
+
+    Vector3 GetTargetPoint(GameObject enemy)
+    {
+        if (enemy == null) return enemy.transform.position;
+        var col = enemy.GetComponentInChildren<Collider>();
+        if (col != null)
+        {
+            return col.bounds.center;
+        }
+        return enemy.transform.position + Vector3.up * targetHeightOffset;
+    }
+
+    Vector3 GetPredictedAimPoint(GameObject enemy, Vector3 origin)
+    {
+        Vector3 targetPos = GetTargetPoint(enemy);
+        if (leadFactor <= 0f) return targetPos;
+        var rb = enemy.GetComponentInChildren<Rigidbody>();
+        Vector3 velocity = Vector3.zero;
+        if (rb != null) velocity = rb.linearVelocity;
+        else
+        {
+            // Try NavMeshAgent velocity if present
+            var agent = enemy.GetComponentInChildren<UnityEngine.AI.NavMeshAgent>();
+            if (agent != null) velocity = agent.velocity;
+        }
+        float distance = Vector3.Distance(origin, targetPos);
+        float timeToTarget = distance / Mathf.Max(0.01f, bulletSpeed);
+        return targetPos + velocity * (timeToTarget * Mathf.Clamp01(leadFactor));
     }
 
     // Called by weapon attach or player stat system to set the unmodified baseline values

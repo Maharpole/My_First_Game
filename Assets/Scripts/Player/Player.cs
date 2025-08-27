@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.SceneManagement;
 using System.Collections.Generic;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
@@ -57,6 +58,7 @@ public class Player : MonoBehaviour
     public UnityEvent onPlayerDeath;
     public UnityEvent onEquipmentChanged;
     public UnityEvent<int> onDamaged;
+    public UnityEvent<int, int> onDashChargesChanged;
     
     // Private fields
     private bool isDashing = false;
@@ -72,7 +74,14 @@ public class Player : MonoBehaviour
     private CharacterEquipment characterEquipment;
     private PlayerAnimatorBridge _animBridge;
 #if ENABLE_INPUT_SYSTEM
-    [SerializeField] private PlayerInputs _inputs;
+    [Header("== INPUT (New Input System) ==")]
+    public InputActionReference MoveAction;
+    public InputActionReference DashAction;
+    [Header("Optional: Directional Actions (use if not using 2D Vector)")]
+    public InputActionReference MoveUp;
+    public InputActionReference MoveDown;
+    public InputActionReference MoveLeft;
+    public InputActionReference MoveRight;
 #endif
         private float baseMoveSpeed;
         private int baseMaxHealth;
@@ -117,6 +126,16 @@ public class Player : MonoBehaviour
     public int CurrentHealth => currentHealth;
     public int MaxHealth => maxHealth;
     public int Coins => coins;
+    public int CurrentDashCharges => currentDashCharges;
+    public float DashRechargeProgress01
+    {
+        get
+        {
+            if (currentDashCharges >= maxDashCharges) return 1f;
+            float denom = Mathf.Max(0.0001f, dashRechargeTime);
+            return Mathf.Clamp01(rechargeTimer / denom);
+        }
+    }
     public bool IsAlive => currentHealth > 0;
     
     void Awake()
@@ -148,6 +167,7 @@ public class Player : MonoBehaviour
         currentDashCharges = maxDashCharges;
         if (moveSpeed <= 0f) moveSpeed = 5f; // guard against zeroed prefab values
         baseMoveSpeed = moveSpeed; // remember unmodified baseline for stat calculations
+        onDashChargesChanged?.Invoke(currentDashCharges, maxDashCharges);
         
         // Initialize health
         if (maxHealth <= 0) maxHealth = 100; // guard against zeroed prefab values
@@ -203,23 +223,45 @@ public class Player : MonoBehaviour
     #if ENABLE_INPUT_SYSTEM
     void OnEnable()
     {
-        if (_inputs != null)
-        {
-            _inputs.Dash.performed += OnDashAction;
-        }
+        EnsureInputEnabled();
+        SceneManager.sceneLoaded += OnSceneLoaded_ReenableInput;
     }
 
     void OnDisable()
     {
-        if (_inputs != null)
-        {
-            _inputs.Dash.performed -= OnDashAction;
-        }
+        if (DashAction != null) DashAction.action.performed -= OnDashPerformed;
+        if (DashAction != null && DashAction.action != null) DashAction.action.Disable();
+        if (MoveRight != null && MoveRight.action != null) MoveRight.action.Disable();
+        if (MoveLeft != null && MoveLeft.action != null) MoveLeft.action.Disable();
+        if (MoveDown != null && MoveDown.action != null) MoveDown.action.Disable();
+        if (MoveUp != null && MoveUp.action != null) MoveUp.action.Disable();
+        if (MoveAction != null && MoveAction.action != null) MoveAction.action.Disable();
+        SceneManager.sceneLoaded -= OnSceneLoaded_ReenableInput;
     }
 
-    void OnDashAction(InputAction.CallbackContext _)
+    void OnDashPerformed(InputAction.CallbackContext _)
     {
         TryDash();
+    }
+
+    void OnSceneLoaded_ReenableInput(Scene _, LoadSceneMode __)
+    {
+        EnsureInputEnabled();
+    }
+
+    void EnsureInputEnabled()
+    {
+        if (MoveAction != null && MoveAction.action != null && !MoveAction.action.enabled) MoveAction.action.Enable();
+        if (MoveUp != null && MoveUp.action != null && !MoveUp.action.enabled) MoveUp.action.Enable();
+        if (MoveDown != null && MoveDown.action != null && !MoveDown.action.enabled) MoveDown.action.Enable();
+        if (MoveLeft != null && MoveLeft.action != null && !MoveLeft.action.enabled) MoveLeft.action.Enable();
+        if (MoveRight != null && MoveRight.action != null && !MoveRight.action.enabled) MoveRight.action.Enable();
+        if (DashAction != null && DashAction.action != null)
+        {
+            DashAction.action.performed -= OnDashPerformed;
+            if (!DashAction.action.enabled) DashAction.action.Enable();
+            DashAction.action.performed += OnDashPerformed;
+        }
     }
     #endif
 
@@ -306,7 +348,23 @@ public class Player : MonoBehaviour
     Vector3 GetMoveVector()
     {
 #if ENABLE_INPUT_SYSTEM
-        Vector2 move = _inputs != null ? _inputs.Move.ReadValue<Vector2>() : Vector2.zero;
+        Vector2 move = Vector2.zero;
+        bool usedComposite = false;
+        if (MoveAction != null && MoveAction.action != null)
+        {
+            // Try to read as Vector2; if binding is a single key, this will throw
+            try { move = MoveAction.action.ReadValue<Vector2>(); usedComposite = true; }
+            catch (System.InvalidOperationException) { usedComposite = false; }
+        }
+        if (!usedComposite)
+        {
+            float x = 0f, y = 0f;
+            if (MoveLeft  != null && MoveLeft.action  != null && MoveLeft.action.IsPressed())   x -= 1f;
+            if (MoveRight != null && MoveRight.action != null && MoveRight.action.IsPressed())  x += 1f;
+            if (MoveDown  != null && MoveDown.action  != null && MoveDown.action.IsPressed())   y -= 1f;
+            if (MoveUp    != null && MoveUp.action    != null && MoveUp.action.IsPressed())     y += 1f;
+            move = new Vector2(x, y);
+        }
 #else
         Vector2 move = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
 #endif
@@ -320,6 +378,7 @@ public class Player : MonoBehaviour
         isDashing = true;
         dashTime = 0f;
         currentDashCharges--;
+        onDashChargesChanged?.Invoke(currentDashCharges, maxDashCharges);
         dashDirection = direction.normalized;
         Debug.Log($"Dash START (charges left: {currentDashCharges})");
 
@@ -401,6 +460,7 @@ public class Player : MonoBehaviour
             {
                 currentDashCharges++;
                 rechargeTimer = 0f;
+                onDashChargesChanged?.Invoke(currentDashCharges, maxDashCharges);
             }
         }
     }

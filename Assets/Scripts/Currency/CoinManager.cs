@@ -94,7 +94,7 @@ public class CoinManager : MonoBehaviour
     {
         if (coinText != null)
         {
-            coinText.text = $"Coins: {currentCoins}";
+            coinText.text = $"<color=yellow>{currentCoins}</color>";
         }
     }
 

@@ -42,6 +42,9 @@ public class ItemPickup : MonoBehaviour
         // Register with overlay UI if available
         var ui = ItemPickupUIManager.Instance;
         if (ui != null) ui.Register(this);
+
+        // Ensure any weapon behaviours are disabled on the pickup itself
+        DisableWeaponBehavioursOnSelfAndChildren(gameObject);
     }
 
     void Start()
@@ -130,6 +133,9 @@ public class ItemPickup : MonoBehaviour
 
         // Ensure root collider covers the visual so clicks on the model are captured
         EnsureRootColliderFitsVisual();
+
+        // Make sure any weapon behaviour scripts on the visual are disabled so drops don't auto-fire
+        DisableWeaponBehavioursOnSelfAndChildren(vis);
     }
 
     GameObject CreateFallbackVisual(EquipmentData baseItem)
@@ -185,6 +191,16 @@ public class ItemPickup : MonoBehaviour
         float factor = targetVisualSize / maxDim;
         factor = Mathf.Clamp(factor, minScaleMultiplier, maxScaleMultiplier);
         vis.transform.localScale = vis.transform.localScale * factor;
+    }
+
+    // Disable components that would cause dropped items to act like equipped weapons
+    void DisableWeaponBehavioursOnSelfAndChildren(GameObject vis)
+    {
+        if (vis == null) return;
+        var autoShooters = vis.GetComponentsInChildren<AutoShooter>(true);
+        if (autoShooters != null) for (int i = 0; i < autoShooters.Length; i++) if (autoShooters[i] != null) autoShooters[i].enabled = false;
+        var clickShooters = vis.GetComponentsInChildren<ClickShooter>(true);
+        if (clickShooters != null) for (int i = 0; i < clickShooters.Length; i++) if (clickShooters[i] != null) clickShooters[i].enabled = false;
     }
 
     void LateUpdate()
