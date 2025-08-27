@@ -18,6 +18,7 @@ public class Player : MonoBehaviour
     [Header("== MOVEMENT ==")]
     public float moveSpeed = 5f;
     [Tooltip("Degrees per second to rotate towards movement direction")] public float rotationSpeed = 720f;
+    [Tooltip("Rotate to face the mouse cursor projected onto ground")] public bool faceMouseDirection = true;
     [Tooltip("Rotate to face the direction the player is moving")] public bool faceMoveDirection = true;
     public float dashSpeed = 20f;
     public float dashDuration = 0.2f;
@@ -268,12 +269,10 @@ public class Player : MonoBehaviour
     void TryDash()
     {
         if (isDashing || currentDashCharges <= 0) return;
-        Vector3 dir = GetMoveVector();
-        if (dir.sqrMagnitude < 0.01f) dir = new Vector3(transform.forward.x, 0f, transform.forward.z);
-        if (dir.sqrMagnitude > 0.0001f)
-        {
-            PerformDash(dir);
-        }
+        // Dash in facing direction (player's current forward on XZ plane)
+        Vector3 dir = new Vector3(transform.forward.x, 0f, transform.forward.z);
+        if (dir.sqrMagnitude < 0.0001f) dir = Vector3.forward; // fallback
+        PerformDash(dir);
     }
     
     void Update()
@@ -329,17 +328,18 @@ public class Player : MonoBehaviour
         if (movement.magnitude > 0.1f)
         {
             transform.Translate(movement * moveSpeed * Time.deltaTime, Space.World);
+        }
 
-            // Face movement direction
-            if (faceMoveDirection)
-            {
-                Vector3 look = new Vector3(movement.x, 0f, movement.z);
-                if (look.sqrMagnitude > 0.0001f)
-                {
-                    Quaternion target = Quaternion.LookRotation(look, Vector3.up);
-                    transform.rotation = Quaternion.RotateTowards(transform.rotation, target, rotationSpeed * Time.deltaTime);
-                }
-            }
+        // Face mouse, else movement
+        if (faceMouseDirection)
+        {
+            FaceTowardMouse();
+        }
+        else if (faceMoveDirection && movement.sqrMagnitude > 0.0001f)
+        {
+            Vector3 look = new Vector3(movement.x, 0f, movement.z);
+            Quaternion target = Quaternion.LookRotation(look, Vector3.up);
+            transform.rotation = Quaternion.RotateTowards(transform.rotation, target, rotationSpeed * Time.deltaTime);
         }
         
         // Dash input is handled separately via TryDash
@@ -385,8 +385,12 @@ public class Player : MonoBehaviour
         // Signal dash start to animator
         if (_animBridge != null) _animBridge.FlagDashStarted();
 
-        // Face dash direction immediately
-        if (faceMoveDirection && dashDirection.sqrMagnitude > 0.0001f)
+        // Face aim or dash direction immediately
+        if (faceMouseDirection)
+        {
+            FaceTowardMouse();
+        }
+        else if (faceMoveDirection && dashDirection.sqrMagnitude > 0.0001f)
         {
             Quaternion target = Quaternion.LookRotation(new Vector3(dashDirection.x, 0f, dashDirection.z), Vector3.up);
             transform.rotation = target;
@@ -450,6 +454,72 @@ public class Player : MonoBehaviour
             }
         }
     }
+
+    // Rotate toward mouse cursor projected onto ground, with plane fallback
+    void FaceTowardMouse()
+    {
+#if ENABLE_INPUT_SYSTEM
+        Vector3 aimPoint;
+        if (!TryGetMousePoint(out aimPoint)) return;
+        aimPoint.y = transform.position.y;
+        Vector3 dir = aimPoint - transform.position;
+        dir.y = 0f;
+        if (dir.sqrMagnitude < 0.0001f) return;
+        Quaternion targetRot = Quaternion.LookRotation(dir.normalized, Vector3.up);
+        transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRot, rotationSpeed * Time.deltaTime);
+#else
+        // Legacy input fallback
+        Camera cam = Camera.main;
+        if (cam == null) return;
+        Ray ray = cam.ScreenPointToRay(Input.mousePosition);
+        Plane plane = new Plane(Vector3.up, new Vector3(0f, transform.position.y, 0f));
+        if (plane.Raycast(ray, out float enter))
+        {
+            Vector3 p = ray.origin + ray.direction * enter;
+            p.y = transform.position.y;
+            Vector3 d = p - transform.position; d.y = 0f;
+            if (d.sqrMagnitude < 0.0001f) return;
+            Quaternion q = Quaternion.LookRotation(d.normalized, Vector3.up);
+            transform.rotation = Quaternion.RotateTowards(transform.rotation, q, rotationSpeed * Time.deltaTime);
+        }
+#endif
+    }
+
+#if ENABLE_INPUT_SYSTEM
+    bool TryGetMousePoint(out Vector3 worldPoint)
+    {
+        worldPoint = Vector3.zero;
+        Camera cam = Camera.main;
+        if (cam == null) return false;
+        Ray ray = cam.ScreenPointToRay(Mouse.current != null ? Mouse.current.position.ReadValue() : (Vector2)Input.mousePosition);
+        // Prefer groundMask if set; else raycast everything
+        int mask = groundMask.value != 0 ? groundMask : ~0;
+        var hits = Physics.RaycastAll(ray, 1000f, mask, QueryTriggerInteraction.Ignore);
+        if (hits != null && hits.Length > 0)
+        {
+            float best = float.MaxValue; bool found = false; Vector3 bestP = Vector3.zero;
+            for (int i = 0; i < hits.Length; i++)
+            {
+                var h = hits[i];
+                // Skip self/children
+                if (h.collider != null && (h.collider.transform == transform || h.collider.transform.IsChildOf(transform))) continue;
+                if (h.distance < best)
+                {
+                    best = h.distance; bestP = h.point; found = true;
+                }
+            }
+            if (found) { worldPoint = bestP; return true; }
+        }
+        // Fallback to plane at player height
+        Plane plane = new Plane(Vector3.up, new Vector3(0f, transform.position.y, 0f));
+        if (plane.Raycast(ray, out float t))
+        {
+            worldPoint = ray.origin + ray.direction * t;
+            return true;
+        }
+        return false;
+    }
+#endif
     
     void UpdateDashCharges()
     {

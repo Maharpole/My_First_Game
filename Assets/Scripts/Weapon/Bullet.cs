@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class Bullet : MonoBehaviour
+public partial class Bullet : MonoBehaviour
 {
     [Header("Bullet Settings")]
     [Tooltip("How long the bullet lives before being destroyed")]
@@ -42,7 +42,7 @@ public class Bullet : MonoBehaviour
     protected virtual void Start()
     {
         // Destroy bullet after lifetime
-        Destroy(gameObject, lifetime);
+        Invoke(nameof(DestroySelf), lifetime);
         
         // Add a collider if one doesn't exist
         if (GetComponent<Collider>() == null)
@@ -77,7 +77,7 @@ public class Bullet : MonoBehaviour
         if (dist > 0.0001f)
         {
             Ray ray = new Ray(_lastPos, delta.normalized);
-            if (Physics.SphereCast(ray, Mathf.Max(0f, sweepRadius), out var sweepHit, dist, hitMask, QueryTriggerInteraction.Ignore))
+            if (Physics.SphereCast(ray, Mathf.Max(0f, sweepRadius), out var sweepHit, dist, hitMask, QueryTriggerInteraction.Collide))
             {
                 // Manually trigger hit
                 OnTriggerEnter(sweepHit.collider);
@@ -114,17 +114,24 @@ public class Bullet : MonoBehaviour
         // Skip if the collider is the player
         if (other.CompareTag("Player")) return;
 
-        // Check if we hit an enemy
+        // Check if we hit an enemy or its proxy hitbox
+        EnemyHealth enemyHealth = null;
         if (other.CompareTag("Enemy"))
         {
-            // Get the enemy's health component
-            EnemyHealth enemyHealth = other.GetComponent<EnemyHealth>();
-            
-            if (enemyHealth != null)
-            {
-                // Deal damage to the enemy
-                enemyHealth.TakeDamage(Mathf.RoundToInt(damage));
-            }
+            enemyHealth = other.GetComponent<EnemyHealth>();
+            if (enemyHealth == null) enemyHealth = other.GetComponentInParent<EnemyHealth>();
+        }
+        else
+        {
+            var proxy = other.GetComponent<EnemyHitboxProxy>();
+            if (proxy != null) enemyHealth = proxy.Resolve();
+            if (enemyHealth == null) enemyHealth = other.GetComponentInParent<EnemyHealth>();
+        }
+
+        if (enemyHealth != null)
+        {
+            // Deal damage to the enemy
+            enemyHealth.TakeDamage(Mathf.RoundToInt(damage));
 
             // Apply knockback if configured
             if (knockbackForce > 0f || agentKnockbackDistance > 0f)
@@ -152,7 +159,7 @@ public class Bullet : MonoBehaviour
             // Destroy the bullet if configured to do so
             if (destroyOnImpact)
             {
-                Destroy(gameObject);
+                DestroySelf();
             }
         }
     }
@@ -178,3 +185,13 @@ public class Bullet : MonoBehaviour
         }
     }
 } 
+
+public partial class Bullet : MonoBehaviour
+{
+    void DestroySelf()
+    {
+        var trail = GetComponent<BulletTrailHandler>();
+        if (trail != null) trail.DetachTrailNow();
+        Destroy(gameObject);
+    }
+}

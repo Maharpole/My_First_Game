@@ -15,8 +15,14 @@ public class ClickShooter : MonoBehaviour
     [Tooltip("Transform that should rotate to face the aim. If null, will try Player.Instance, else this transform.")] public Transform faceTarget;
     [Tooltip("How fast to rotate toward aim direction (degrees/second). Set very high to snap.")] public float faceTurnSpeed = 360f;
 
-    [Header("Indicator")] public Transform aimIndicator; // optional ring/arrow visual (use CrescentAimIndicator)
-    public float indicatorRadius = 1.2f;
+    [Header("VFX")] public ParticleSystem muzzleFlash;
+    [Tooltip("If no ParticleSystem is assigned, search under the muzzle for a child named this")] public string muzzleFlashChildName = "MuzzleFlash";
+    public bool autoFindMuzzleFlash = true;
+
+    [Header("Audio")] public AudioSource audioSource;
+    [Tooltip("Clips randomly chosen when firing")] public AudioClip[] fireClips;
+    [Range(0f,1f)] public float fireVolume = 1f;
+    [Tooltip("Random pitch range for variation (x=min, y=max)")] public Vector2 firePitchRange = new Vector2(1f, 1f);
 
     float _nextFireTime;
 
@@ -27,6 +33,23 @@ public class ClickShooter : MonoBehaviour
         {
             var p = Player.Instance ?? Object.FindFirstObjectByType<Player>();
             faceTarget = p != null ? p.transform : transform;
+        }
+        if (muzzleFlash == null && autoFindMuzzleFlash)
+        {
+            if (muzzle != null)
+            {
+                // Try exact name match first
+                var t = muzzle.Find(muzzleFlashChildName);
+                if (t != null) muzzleFlash = t.GetComponent<ParticleSystem>();
+                // Fallback: any ParticleSystem under muzzle
+                if (muzzleFlash == null) muzzleFlash = muzzle.GetComponentInChildren<ParticleSystem>(true);
+            }
+        }
+        if (audioSource == null)
+        {
+            audioSource = GetComponent<AudioSource>();
+            if (audioSource == null) audioSource = gameObject.AddComponent<AudioSource>();
+            audioSource.playOnAwake = false;
         }
     }
 
@@ -46,10 +69,9 @@ public class ClickShooter : MonoBehaviour
                     if (faceTurnSpeed <= 0f) faceTarget.rotation = targetRot;
                     else faceTarget.rotation = Quaternion.RotateTowards(faceTarget.rotation, targetRot, faceTurnSpeed * Time.deltaTime);
                 }
-                UpdateIndicator(dir);
             }
 
-            if (IsFirePressed() && Time.time >= _nextFireTime)
+            if (!UIInputBlocker.IsPointerBlocking && IsFirePressed() && Time.time >= _nextFireTime)
             {
                 Fire(dir);
                 _nextFireTime = Time.time + (fireRate > 0f ? 1f / fireRate : 0.2f);
@@ -68,22 +90,11 @@ public class ClickShooter : MonoBehaviour
         rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
         rb.interpolation = RigidbodyInterpolation.Interpolate;
         rb.linearVelocity = dir * bulletSpeed;
+
+        TriggerMuzzleFlash(dir);
+        PlayFireSound();
     }
 
-    void UpdateIndicator(Vector3 dir)
-    {
-        if (aimIndicator == null) return;
-        var crescent = aimIndicator.GetComponent<CrescentAimIndicator>();
-        if (crescent != null)
-        {
-            crescent.SetDirection(transform.position, dir, indicatorRadius);
-        }
-        else
-        {
-            aimIndicator.position = transform.position + new Vector3(dir.x, 0f, dir.z) * indicatorRadius;
-            aimIndicator.rotation = Quaternion.LookRotation(dir, Vector3.up);
-        }
-    }
 
     bool TryGetMouseAimPoint(out Vector3 point)
     {
@@ -128,6 +139,33 @@ public class ClickShooter : MonoBehaviour
 #else
         return Input.GetMouseButton(0);
 #endif
+    }
+
+    void TriggerMuzzleFlash(Vector3 dir)
+    {
+        if (muzzleFlash == null) return;
+        Transform t = muzzleFlash.transform;
+        if (muzzle != null)
+        {
+            t.position = muzzle.position;
+            t.rotation = Quaternion.LookRotation(dir, Vector3.up);
+        }
+        var main = muzzleFlash.main;
+        main.playOnAwake = false;
+        muzzleFlash.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        muzzleFlash.Play(true);
+    }
+
+    void PlayFireSound()
+    {
+        if (audioSource == null) return;
+        if (fireClips == null || fireClips.Length == 0) return;
+        var clip = fireClips[Random.Range(0, fireClips.Length)];
+        if (clip == null) return;
+        float minP = Mathf.Min(firePitchRange.x, firePitchRange.y);
+        float maxP = Mathf.Max(firePitchRange.x, firePitchRange.y);
+        audioSource.pitch = Random.Range(minP, maxP);
+        audioSource.PlayOneShot(clip, Mathf.Clamp01(fireVolume));
     }
 }
 

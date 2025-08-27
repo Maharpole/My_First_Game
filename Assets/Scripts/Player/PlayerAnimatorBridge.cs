@@ -43,10 +43,16 @@ public class PlayerAnimatorBridge : MonoBehaviour
     public int upperBodyLayerIndex = 1;
     [Tooltip("How quickly the upper body layer weight blends.")]
     public float upperBodyWeightLerp = 12f;
+    [Tooltip("If true, this component sets the upper body layer weight based on firing state. Turn OFF to keep a constant layer weight.")]
+    public bool controlUpperBodyLayerWeight = false;
 
     [Header("Aim Hold")]
     [Tooltip("How long after firing we keep facing the aim direction (seconds)")]
     public float aimHoldSeconds = 0.25f;
+
+    [Header("Aim Visual Offset")]
+    [Tooltip("Yaw offset in degrees applied to animation aim/facing (does not affect bullet direction)")]
+    public float aimYawOffsetDegrees = 0f;
 
 #if ENABLE_INPUT_SYSTEM
     [Header("Input (New Input System)")]
@@ -179,14 +185,17 @@ public class PlayerAnimatorBridge : MonoBehaviour
             }
         }
 
-        // Blend upper body layer weight while firing
-        int layerIndex = ResolveUpperBodyLayerIndex();
-        if (layerIndex >= 0 && layerIndex < _anim.layerCount)
+        // Blend upper body layer weight while firing (optional)
+        if (controlUpperBodyLayerWeight)
         {
-            float current = _anim.GetLayerWeight(layerIndex);
-            float target = isFiringNow ? 1f : 0f;
-            float blended = Mathf.Lerp(current, target, 1f - Mathf.Exp(-upperBodyWeightLerp * Time.deltaTime));
-            _anim.SetLayerWeight(layerIndex, blended);
+            int layerIndex = ResolveUpperBodyLayerIndex();
+            if (layerIndex >= 0 && layerIndex < _anim.layerCount)
+            {
+                float current = _anim.GetLayerWeight(layerIndex);
+                float target = isFiringNow ? 1f : 0f;
+                float blended = Mathf.Lerp(current, target, 1f - Mathf.Exp(-upperBodyWeightLerp * Time.deltaTime));
+                _anim.SetLayerWeight(layerIndex, blended);
+            }
         }
 
         if (usePlayerMoveSpeed && _hasPlayerSpeedParam)
@@ -277,7 +286,12 @@ public class PlayerAnimatorBridge : MonoBehaviour
         worldDirection.y = 0f;
         if (worldDirection.sqrMagnitude > 0.0001f)
         {
-            _lastReportedAim = worldDirection.normalized;
+            Vector3 dir = worldDirection.normalized;
+            if (Mathf.Abs(aimYawOffsetDegrees) > 0.001f)
+            {
+                dir = Quaternion.AngleAxis(aimYawOffsetDegrees, Vector3.up) * dir;
+            }
+            _lastReportedAim = dir;
         }
     }
 
