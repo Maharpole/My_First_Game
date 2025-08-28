@@ -9,7 +9,12 @@ public class EnemyLevel : MonoBehaviour
     [Tooltip("Multiplier per level (applied after flat)")] public float healthLevelMultiplier = 1.0f;
 
     [Header("Experience Reward")] public int baseXP = 5;
-    [Tooltip("XP gained per level above 1")] public int xpPerLevel = 2;
+    [Tooltip("XP gained per level above 1 (linear); used when quadratic is disabled")] public int xpPerLevel = 2;
+    [Tooltip("Use quadratic XP formula: max(round(a*l^2 + b*l + c), floor)")] public bool useQuadraticXP = false;
+    public float xpA = 0f;
+    public float xpB = 0f;
+    public float xpC = 0f;
+    public int xpFloor = 0;
 
     private EnemyHealth _health;
 
@@ -35,6 +40,13 @@ public class EnemyLevel : MonoBehaviour
     public int GetXPReward()
     {
         int clampedLevel = Mathf.Max(1, level);
+        if (useQuadraticXP)
+        {
+            float f = xpA * clampedLevel * clampedLevel + xpB * clampedLevel + xpC;
+            int q = Mathf.RoundToInt(f);
+            int reward = Mathf.Max(xpFloor, q);
+            return Mathf.Max(0, reward);
+        }
         return Mathf.Max(0, baseXP + (clampedLevel - 1) * xpPerLevel);
     }
 }

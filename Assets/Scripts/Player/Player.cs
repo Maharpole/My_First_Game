@@ -46,10 +46,13 @@ public class Player : MonoBehaviour
     public float flashDuration = 0.2f;
     public int flashCount = 3;
     public ParticleSystem dashParticles;
+    [Tooltip("Particle played when the player takes damage (spawns at player and auto-destroys)")] public ParticleSystem damageHitParticles;
     
     [Header("== AUDIO ==")]
     public AudioClip[] dashSounds;
-    public AudioClip damageSound;
+    [Tooltip("Damage hit sounds; one will be chosen at random on damage")] public AudioClip[] damageHitClips;
+    [Range(0f, 1f)] public float damageHitVolume = 1f;
+    [Tooltip("Random pitch range for damage sounds")] public Vector2 damageHitPitchRange = new Vector2(1f, 1f);
     public AudioClip deathSound;
     [Range(0f, 1f)] public float dashVolume = 1f;
     
@@ -554,10 +557,18 @@ public class Player : MonoBehaviour
         damageCooldowns[source] = Time.time + damageCooldown;
         onDamaged?.Invoke(damage);
         
-        // Play effects
-        if (damageSound != null)
+        // Play damage SFX (randomized)
+        PlayRandomDamageSound();
+        // Damage hit particles (trigger existing child system; do not destroy/create)
+        if (damageHitParticles != null)
         {
-            audioSource.PlayOneShot(damageSound);
+            var ps = damageHitParticles;
+            var main = ps.main;
+            main.playOnAwake = false;
+            main.simulationSpace = ParticleSystemSimulationSpace.Local; // follow player
+            main.scalingMode = ParticleSystemScalingMode.Local;
+            ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            ps.Play(true);
         }
         
         if (!isFlashing)
@@ -621,6 +632,18 @@ public class Player : MonoBehaviour
         
         onPlayerDeath?.Invoke();
         Debug.Log("Player died!");
+    }
+
+    void PlayRandomDamageSound()
+    {
+        if (audioSource == null) return;
+        if (damageHitClips == null || damageHitClips.Length == 0) return;
+        var clip = damageHitClips[Random.Range(0, damageHitClips.Length)];
+        if (clip == null) return;
+        float minP = Mathf.Min(damageHitPitchRange.x, damageHitPitchRange.y);
+        float maxP = Mathf.Max(damageHitPitchRange.x, damageHitPitchRange.y);
+        audioSource.pitch = Random.Range(minP, maxP);
+        audioSource.PlayOneShot(clip, Mathf.Clamp01(damageHitVolume));
     }
     
     System.Collections.IEnumerator FlashEffect()
@@ -824,26 +847,7 @@ public class Player : MonoBehaviour
             agent.speed = moveSpeed;
         }
 
-        // Apply combat stats to AutoShooter(s)
-        var shooters = GetComponentsInChildren<AutoShooter>();
-        for (int i = 0; i < shooters.Length; i++)
-        {
-            var s = shooters[i];
-            if (s != null)
-            {
-                // Compute final crit values from base defaults (2% chance, 150% multiplier)
-                float baseCritChance = 2f;   // percentage points
-                float baseCritMult = 150f;   // percent multiplier
-
-                float finalCritChance = Mathf.Max(0f, baseCritChance + critChanceFlat);
-                finalCritChance *= (1f + Mathf.Max(0f, critChancePercent) * 0.01f);
-
-                float finalCritMult = Mathf.Max(0f, baseCritMult + critMultiFlat);
-                finalCritMult *= (1f + Mathf.Max(0f, critMultiPercent) * 0.01f);
-
-                s.ApplyStatModifiers(flatDamage, pctDamage, pctAttackSpeed, finalCritChance, finalCritMult);
-            }
-        }
+        // Apply combat stats: if using ClickShooter, you may relay stats there later if needed
 
         // Compute max health: percent applies only to increased pool (flatHealth), not base
         int bonusFromPercent = Mathf.RoundToInt(flatHealth * (pctHealth / 100f));

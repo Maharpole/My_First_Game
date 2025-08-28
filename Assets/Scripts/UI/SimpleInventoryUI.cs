@@ -15,6 +15,7 @@ public class SimpleInventoryUI : MonoBehaviour
 
     [Header("UI")] public RectTransform gridParent; // container with GridLayoutGroup
     public GameObject slotButtonPrefab; // Button with child Image for icon
+    [Tooltip("Pickup prefab to spawn when dropping items to world")] public GameObject itemPickupPrefab;
 
     [Header("Equipment")] public CharacterEquipment equipment; // optional (click-to-equip)
 
@@ -104,6 +105,59 @@ public class SimpleInventoryUI : MonoBehaviour
                 img.color = item != null ? Color.white : new Color(1, 1, 1, 0.15f);
             }
         }
+    }
+
+    // Called by UIDragSourceSlot when drag ends and it didn't land on any UI target
+    public void DropToWorldFromSlot(int slotIndex)
+    {
+        if (inventoryData == null) return;
+        var data = inventoryData.Get(slotIndex);
+        if (data == null) return;
+        // Spawn item pickup at player's feet and remove from inventory
+        var player = Player.Instance ?? Object.FindFirstObjectByType<Player>();
+        if (player == null) return;
+        Vector3 pos = player.transform.position;
+        // Raycast to ground for precise drop
+        if (Physics.Raycast(pos + Vector3.up * 2f, Vector3.down, out var hit, 10f, ~0, QueryTriggerInteraction.Ignore))
+        {
+            pos = hit.point + Vector3.up * 0.02f;
+        }
+        // Instantiate a proper pickup prefab with RuntimeEquipmentItem
+        if (itemPickupPrefab == null)
+        {
+            Debug.LogWarning("[Inventory] itemPickupPrefab not assigned; cannot drop to world.");
+            return;
+        }
+        var go = Object.Instantiate(itemPickupPrefab, pos, Quaternion.identity);
+        var runtime = go.GetComponent<RuntimeEquipmentItem>();
+        if (runtime == null)
+        {
+            Debug.LogWarning("[Inventory] itemPickupPrefab missing RuntimeEquipmentItem; cannot assign dropped item.");
+        }
+        else
+        {
+            // Build a minimal GeneratedItem from the EquipmentData
+            var genField = typeof(RuntimeEquipmentItem).GetField("generated");
+            if (genField != null)
+            {
+                var gen = genField.GetValue(runtime);
+                if (gen == null)
+                {
+                    // Create a new instance if necessary via reflection
+                    var genType = genField.FieldType;
+                    gen = System.Activator.CreateInstance(genType);
+                    genField.SetValue(runtime, gen);
+                }
+                var baseEqField = genField.FieldType.GetField("baseEquipment");
+                var ilvlField = genField.FieldType.GetField("itemLevel");
+                var rarityField = genField.FieldType.GetField("rarity");
+                if (baseEqField != null) baseEqField.SetValue(gen, data);
+                if (ilvlField != null) ilvlField.SetValue(gen, data.itemLevel);
+                if (rarityField != null) rarityField.SetValue(gen, (int)data.rarity);
+            }
+        }
+        inventoryData.Set(slotIndex, null);
+        Refresh();
     }
 
     void OnSlotClicked(int index)
@@ -295,6 +349,12 @@ public class UIDragSourceSlot : MonoBehaviour, IBeginDragHandler, IDragHandler, 
 
         CleanupGhostAndRestore();
         if (placed) onSuccessfulDrop?.Invoke();
+        else
+        {
+            // Drop to world at player feet if released over empty world (no UI hits handled)
+            var ui = GetComponentInParent<SimpleInventoryUI>();
+            if (ui != null) ui.DropToWorldFromSlot(slotIndex);
+        }
         if (InventoryUILogging.Enabled) Debug.Log($"[Drag] Complete slot {slotIndex}. placed={placed}");
     }
 

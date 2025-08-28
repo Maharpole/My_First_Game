@@ -6,6 +6,7 @@ public class EnemyAnimatorBridge : MonoBehaviour
 {
 	public string speedParameter = "Speed";
 	public string isMovingParameter = "IsMoving";
+	public string isAttackingParameter = "IsAttacking";
 	[Tooltip("Seconds to smooth speed changes")]
 	public float smoothingSeconds = 0.1f;
 	[Tooltip("Speed below this is considered idle")]
@@ -20,8 +21,10 @@ public class EnemyAnimatorBridge : MonoBehaviour
 
 	private int speedHash;
 	private int isMovingHash;
+	private int isAttackingHash;
 	private bool hasSpeedParam;
 	private bool hasIsMovingParam;
+	private bool hasIsAttackingParam;
 
 	void Awake()
 	{
@@ -36,8 +39,10 @@ public class EnemyAnimatorBridge : MonoBehaviour
 
 		speedHash = Animator.StringToHash(speedParameter);
 		isMovingHash = Animator.StringToHash(isMovingParameter);
+		isAttackingHash = Animator.StringToHash(isAttackingParameter);
 		hasSpeedParam = AnimatorHasParameter(animator, speedHash);
 		hasIsMovingParam = AnimatorHasParameter(animator, isMovingHash);
+		hasIsAttackingParam = AnimatorHasParameter(animator, isAttackingHash);
 	}
 
 	void Update()
@@ -70,6 +75,11 @@ public class EnemyAnimatorBridge : MonoBehaviour
 
 		if (hasSpeedParam) animator.SetFloat(speedHash, smoothedSpeed);
 		if (hasIsMovingParam) animator.SetBool(isMovingHash, moving);
+	}
+
+	public void SetIsAttacking(bool value)
+	{
+		if (hasIsAttackingParam) animator.SetBool(isAttackingHash, value);
 	}
 
 	private static bool AnimatorHasParameter(Animator a, int nameHash)

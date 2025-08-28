@@ -197,22 +197,15 @@ public class WeaponAttachController : MonoBehaviour
                     }
                 }
 
-                var shooter = currentWeaponGO.GetComponent<AutoShooter>();
-                if (shooter == null)
+                // Route weapon muzzle to ClickShooter if present
+                var clickShooter = GetComponentInParent<ClickShooter>() ?? GetComponent<ClickShooter>();
+                if (clickShooter != null)
                 {
-                    shooter = currentWeaponGO.AddComponent<AutoShooter>();
-                }
-                // Treat AutoShooter component on the prefab as the single source of weapon stats
-                shooter.SetBaselines(shooter.damage, shooter.fireRate);
-                // Set muzzle to weapon's muzzle child if present, else use the hand
-                var muzzle = WeaponAttachUtil.FindChildByName(currentWeaponGO.transform, muzzleChildName);
-                Transform muzzleFallback = ResolveAttachForMain();
-                shooter.muzzlePoint = muzzle != null ? muzzle : muzzleFallback;
-                // Apply player stat modifiers immediately after attaching
-                var player = GetComponent<Player>();
-                if (player != null)
-                {
-                    player.RecomputeAndApplyStats();
+                    var muzzle = WeaponAttachUtil.FindChildByName(currentWeaponGO.transform, muzzleChildName);
+                    if (muzzle == null) muzzle = WeaponAttachUtil.FindChildByName(currentWeaponGO.transform, "MuzzlePoint")
+                                           ?? WeaponAttachUtil.FindChildByName(currentWeaponGO.transform, "BarrelEnd")
+                                           ?? WeaponAttachUtil.FindChildByName(currentWeaponGO.transform, "Tip");
+                    if (muzzle != null) clickShooter.muzzle = muzzle;
                 }
 
                 // Decide stance and handle offhand for dual wield
@@ -254,14 +247,15 @@ public class WeaponAttachController : MonoBehaviour
                                 }
                             }
                             stance = WeaponStance.DualWield;
+                            // If dual wield, prefer right-hand muzzle for ClickShooter; leave offhand cosmetic
                         }
                     }
                 }
 
-                // Drive animator stance
+                // Drive animator stance if parameter exists
                 if (animator != null && !string.IsNullOrEmpty(stanceParam))
                 {
-                    animator.SetInteger(stanceParam, (int)stance);
+                    try { animator.SetInteger(stanceParam, (int)stance); } catch { }
                 }
             }
             else

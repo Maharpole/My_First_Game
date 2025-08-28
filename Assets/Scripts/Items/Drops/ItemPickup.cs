@@ -197,8 +197,7 @@ public class ItemPickup : MonoBehaviour
     void DisableWeaponBehavioursOnSelfAndChildren(GameObject vis)
     {
         if (vis == null) return;
-        var autoShooters = vis.GetComponentsInChildren<AutoShooter>(true);
-        if (autoShooters != null) for (int i = 0; i < autoShooters.Length; i++) if (autoShooters[i] != null) autoShooters[i].enabled = false;
+        // AutoShooter removed from project
         var clickShooters = vis.GetComponentsInChildren<ClickShooter>(true);
         if (clickShooters != null) for (int i = 0; i < clickShooters.Length; i++) if (clickShooters[i] != null) clickShooters[i].enabled = false;
     }

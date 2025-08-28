@@ -249,8 +249,6 @@ MonoBehaviour:
   faceAimDirection: 1
   faceTarget: {fileID: 0}
   faceTurnSpeed: 360
-  aimIndicator: {fileID: 0}
-  indicatorRadius: 1.2
   muzzleFlash: {fileID: 2655832655388934359}
   muzzleFlashChildName: MuzzleFlash
   autoFindMuzzleFlash: 1
@@ -347,6 +345,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 7803215753135609098}
     m_Modifications:
+    - target: {fileID: 3658033382009112277, guid: 7db41e97c7bdc3245b42bf47eed6c01d, type: 3}
+      propertyPath: playOnAwake
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4406103285529815947, guid: 7db41e97c7bdc3245b42bf47eed6c01d, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -385,6 +387,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4406103285529815947, guid: 7db41e97c7bdc3245b42bf47eed6c01d, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4419333477373775381, guid: 7db41e97c7bdc3245b42bf47eed6c01d, type: 3}
+      propertyPath: playOnAwake
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4419333477373775381, guid: 7db41e97c7bdc3245b42bf47eed6c01d, type: 3}

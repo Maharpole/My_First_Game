@@ -355,7 +355,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &431181738
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -723,6 +723,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: cebfacc247a640945a2c30b442202fca, type: 3}
+--- !u!114 &712830939 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3744297934037133321, guid: 3b9c8f640a58705479311a04576e179d, type: 3}
+  m_PrefabInstance: {fileID: 1907641312}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!4 &764659035 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5202732821079344928, guid: cebfacc247a640945a2c30b442202fca, type: 3}
@@ -2367,6 +2378,18 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: -50
       objectReference: {fileID: 0}
+    - target: {fileID: 8051876888305025333, guid: 3b9c8f640a58705479311a04576e179d, type: 3}
+      propertyPath: m_Color.b
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8051876888305025333, guid: 3b9c8f640a58705479311a04576e179d, type: 3}
+      propertyPath: m_Color.g
+      value: 0.89767885
+      objectReference: {fileID: 0}
+    - target: {fileID: 8051876888305025333, guid: 3b9c8f640a58705479311a04576e179d, type: 3}
+      propertyPath: m_Color.r
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 8455824835395507458, guid: 3b9c8f640a58705479311a04576e179d, type: 3}
       propertyPath: m_AnchorMax.y
       value: 1
@@ -2690,6 +2713,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: MobDirector
       objectReference: {fileID: 0}
+    - target: {fileID: 6572058442915761380, guid: f4d1dbfd055d28a4ab7f885d3065ef4b, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 8639987375762766409, guid: f4d1dbfd055d28a4ab7f885d3065ef4b, type: 3}
       propertyPath: mobsParent
       value: 
@@ -3009,7 +3036,7 @@ PrefabInstance:
     - target: {fileID: 9062272658041063284, guid: 6638c86d4afb11b488f4808428ccb929, type: 3}
       propertyPath: coinText
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 712830939}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
