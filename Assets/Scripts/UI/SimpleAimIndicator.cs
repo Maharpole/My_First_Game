@@ -8,11 +8,12 @@ using UnityEngine.InputSystem;
 public class SimpleAimIndicator : MonoBehaviour
 {
     [Header("Target")] public Transform player; // if null, will try Player.Instance
+    [Header("Aim Source")] public AimProvider aim; public bool useAimProvider = true;
     [Header("Circle")] public float radius = 1.2f; public float heightOffset = 0.05f;
     [Header("Orientation")] public Vector3 rotationOffsetEuler = new Vector3(90f, 0f, 0f); // tilt flat on ground by default
     [Header("Size")] public float scale = 1f; // overall scale of the indicator visual
     [Header("Raycast")] public LayerMask groundMask = ~0; // ground layers only
-    [Header("Stability")] public float slerpSpeed = 20f; public bool useStablePlaneAim = true;
+    [Header("Stability")] public float slerpSpeed = 0f; public bool useStablePlaneAim = true;
 
     void Awake()
     {
@@ -21,6 +22,10 @@ public class SimpleAimIndicator : MonoBehaviour
             var p = Player.Instance ?? Object.FindFirstObjectByType<Player>();
             player = p != null ? p.transform : null;
         }
+        if (aim == null)
+        {
+            aim = (player != null ? player.GetComponent<AimProvider>() : null) ?? GetComponentInParent<AimProvider>();
+        }
         ApplyScale();
     }
 
@@ -28,23 +33,37 @@ public class SimpleAimIndicator : MonoBehaviour
     {
         if (player == null) return;
 
+        Vector3 dir;
         Vector3 aimPoint;
-        if (!TryGetMousePoint(player.position.y, out aimPoint)) return;
-
-        Vector3 dir = aimPoint - player.position; dir.y = 0f;
-        if (dir.sqrMagnitude < 0.0001f) return;
-        dir.Normalize();
-        if (slerpSpeed > 0f)
+        if (useAimProvider && aim != null)
         {
-            Vector3 flatForward = transform.forward; flatForward.y = 0f;
-            if (flatForward.sqrMagnitude > 0.0001f)
+            aimPoint = aim.AimPoint;
+            dir = aim.AimDirectionFlat;
+            if (dir.sqrMagnitude < 0.0001f)
             {
-                flatForward.Normalize();
-                dir = Vector3.Slerp(flatForward, dir, 1f - Mathf.Exp(-slerpSpeed * Time.unscaledDeltaTime));
+                // Fallback to local ray if aim not ready
+                if (!TryGetMousePoint(player.position.y, out aimPoint)) return;
+                dir = aimPoint - player.position; dir.y = 0f;
+                if (dir.sqrMagnitude < 0.0001f) return; dir.Normalize();
             }
         }
+        else
+        {
+            if (!TryGetMousePoint(player.position.y, out aimPoint)) return;
+            dir = aimPoint - player.position; dir.y = 0f;
+            if (dir.sqrMagnitude < 0.0001f) return; dir.Normalize();
+        }
+        // No smoothing: snap instantly for snappy twin-stick feel
 
-        transform.position = player.position + dir * radius + Vector3.up * heightOffset;
+        // Place indicator centered on muzzle-projected circle if a shooter+muzzle exist
+        Vector3 center = player.position;
+        var shooter = player != null ? player.GetComponentInChildren<ClickShooter>() : null;
+        if (shooter != null && shooter.muzzle != null)
+        {
+            center = shooter.muzzle.position;
+            center.y = player.position.y; // keep on player height plane for consistent visual
+        }
+        transform.position = center + dir * radius + Vector3.up * heightOffset;
         transform.rotation = Quaternion.LookRotation(dir, Vector3.up) * Quaternion.Euler(rotationOffsetEuler);
     }
 
@@ -92,5 +111,8 @@ public class SimpleAimIndicator : MonoBehaviour
         return false;
     }
 }
+
+
+
 
 

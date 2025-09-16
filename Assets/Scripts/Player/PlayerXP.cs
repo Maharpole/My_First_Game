@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.Events;
+using TMPro;
 
 public class PlayerXP : MonoBehaviour
 {
@@ -32,6 +33,9 @@ public class PlayerXP : MonoBehaviour
     [Header("Events")] public UnityEvent<int> onLevelChanged; // emits new level
     public UnityEvent<int, int> onXPChanged; // emits currentXP, xpToNextLevel
 
+    [Header("UI")] public TMP_Text levelText;
+    [Tooltip("Format string for level label; {0}=current level")] public string levelTextFormat = "Lv {0}";
+
     void Awake()
     {
         if (level < 1) level = 1;
@@ -39,6 +43,18 @@ public class PlayerXP : MonoBehaviour
         xpToNextLevel = GetXpToNextForLevel(level);
         // Load persisted skill points if any
         unspentSkillPoints = PlayerProfile.UnspentSkillPoints;
+        UpdateLevelLabel();
+    }
+
+    void OnEnable()
+    {
+        if (onLevelChanged != null) onLevelChanged.AddListener(HandleLevelChanged);
+        UpdateLevelLabel();
+    }
+
+    void OnDisable()
+    {
+        if (onLevelChanged != null) onLevelChanged.RemoveListener(HandleLevelChanged);
     }
 
     public void AddXP(int amount)
@@ -76,6 +92,19 @@ public class PlayerXP : MonoBehaviour
             var src = GetComponent<AudioSource>();
             if (src == null) src = gameObject.AddComponent<AudioSource>();
             src.PlayOneShot(levelUpSFX, levelUpSFXVolume);
+        }
+    }
+
+    void HandleLevelChanged(int newLevel)
+    {
+        UpdateLevelLabel();
+    }
+
+    public void UpdateLevelLabel()
+    {
+        if (levelText != null)
+        {
+            levelText.text = string.Format(levelTextFormat, level);
         }
     }
 }

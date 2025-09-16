@@ -762,7 +762,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyHealth
   maxHealth: 80
   currentHealth: 80
-  moveSpeed: 5
+  moveSpeed: 7
   attackSpeed: 1
   contactDamage: 10
   critChancePercent: 5
@@ -790,7 +790,7 @@ MonoBehaviour:
   level: 1
   healthPerLevel: 500
   healthLevelMultiplier: 1
-  baseXP: 5
+  baseXP: 300
   xpPerLevel: 2
   flashDuration: 0.1
   damageColor: {r: 1, g: 0, b: 0, a: 1}
@@ -821,12 +821,12 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 134670776ca4e774aa99ae76c7e1a827, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CoinDropper
+  m_EditorClassIdentifier: 
   minCoins: 1
   maxCoins: 3
-  dropChance: 1
+  dropChance: 0.5
   dropSpread: 1
-  coinPrefab: {fileID: 0}
+  coinPrefab: {fileID: 3639080991289470989, guid: 4dcf8a02a2a43024c9e6e3bfdccbbe79, type: 3}
 --- !u!114 &3196863912409629415
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -844,7 +844,7 @@ MonoBehaviour:
   enemySpecificPool: {fileID: 0}
   replaceGeneralWithSpecific: 0
   affixDatabase: {fileID: 11400000, guid: 587a9f723a7bc654a963569d9e61d0be, type: 2}
-  dropChance: 1
+  dropChance: 0.011
   minItemLevel: 1
   maxItemLevel: 20
   pickupPrefab: {fileID: 7460202890058008193, guid: 763cec4231a8d2241a76d9d07ec1a449, type: 3}

@@ -8,12 +8,35 @@ public class ClickShooter : MonoBehaviour
     [Header("References")] public Transform muzzle;
     public GameObject bulletPrefab;
     public LayerMask groundMask = ~0; // where the cursor ray can hit to aim
+    [Header("State")] public bool isArmed = false;
+    [Header("Profiles")] public WeaponFireProfile profile;
 
-    [Header("Shooting")] public float bulletSpeed = 30f;
+    public enum FireMode { Projectile, Hitscan }
+
+    [Header("Shooting")] public FireMode fireMode = FireMode.Projectile;
+    public float bulletSpeed = 30f;
     public float fireRate = 6f; // shots per second
-    [Tooltip("Rotate a target transform to face aim direction")] public bool faceAimDirection = true;
+    [Tooltip("Rotate a target transform to face aim direction")] public bool faceAimDirection = false;
     [Tooltip("Transform that should rotate to face the aim. If null, will try Player.Instance, else this transform.")] public Transform faceTarget;
     [Tooltip("How fast to rotate toward aim direction (degrees/second). Set very high to snap.")] public float faceTurnSpeed = 360f;
+    [Tooltip("Yaw offset in degrees applied when rotating the faceTarget toward aim (useful if model forward isn't +Z)")] public float aimYawOffsetDegrees = 0f;
+
+    [Header("Aim")] public AimProvider aim; public bool useAimProvider = true;
+    [Tooltip("Flatten aim to ground plane (top-down)")] public bool flattenAimToGroundPlane = true;
+
+    [Header("Hitscan")] public int hitscanDamage = 10;
+    public float hitscanMaxRange = 100f;
+    [Tooltip("Cone half-angle in degrees for random bloom around the aim direction")] public float hitscanBloomDegrees = 0f;
+    public LayerMask hitMask = ~0;
+    [Tooltip("If true, ray can pass through multiple targets up to Max Penetrations")] public bool hitscanPenetrate = false;
+    [Min(0)] public int hitscanMaxPenetrations = 0;
+    [Tooltip("Impulse applied to rigidbodies on hit")] public float hitscanKnockback = 0f;
+    public float hitscanKnockbackUp = 0f;
+
+    [Header("Hitscan VFX")] public GameObject tracerPrefab;
+    [Tooltip("If no prefab, no tracer will be shown. Prefab can contain a LineRenderer or Trail.")]
+    public float tracerLifetime = 0.06f;
+    [Tooltip("Impact effect spawned at hit point (optional)")] public ParticleSystem impactVFX;
 
     [Header("VFX")] public ParticleSystem muzzleFlash;
     [Tooltip("If no ParticleSystem is assigned, search under the muzzle for a child named this")] public string muzzleFlashChildName = "MuzzleFlash";
@@ -23,6 +46,13 @@ public class ClickShooter : MonoBehaviour
     [Tooltip("Clips randomly chosen when firing")] public AudioClip[] fireClips;
     [Range(0f,1f)] public float fireVolume = 1f;
     [Tooltip("Random pitch range for variation (x=min, y=max)")] public Vector2 firePitchRange = new Vector2(1f, 1f);
+
+    [Header("Debug Gizmos")] public bool drawGizmos = true;
+    [Tooltip("Draw even when not selected")] public bool gizmosAlways = false;
+    [Tooltip("Length of the muzzle forward ray")] public float gizmoRayLength = 1.5f;
+    public Color gizmoMuzzleColor = Color.cyan;
+    public Color gizmoAimColor = new Color(1f, 0.3f, 0.2f, 1f);
+    public Color gizmoFaceColor = Color.yellow;
 
     float _nextFireTime;
 
@@ -53,33 +83,89 @@ public class ClickShooter : MonoBehaviour
         }
     }
 
+    void OnDrawGizmos()
+    {
+        if (!drawGizmos || !gizmosAlways) return;
+        DrawDebugGizmos();
+    }
+
+    void OnDrawGizmosSelected()
+    {
+        if (!drawGizmos) return;
+        DrawDebugGizmos();
+    }
+
     void Update()
     {
+        if (!isArmed) return;
         Vector3 aimPoint;
-        if (TryGetMouseAimPoint(out aimPoint))
+        bool hasAim = false;
+        if (useAimProvider && (aim != null || TryFindAimProvider(out aim)))
         {
-            Vector3 dir = (aimPoint - muzzle.position);
-            dir.y = 0f;
+            aimPoint = aim.AimPoint;
+            hasAim = true;
+        }
+        else
+        {
+            hasAim = TryGetMouseAimPoint(out aimPoint);
+        }
+        if (hasAim)
+        {
+            Vector3 origin = (muzzle != null ? muzzle.position : transform.position);
+            Vector3 dir = (aimPoint - origin);
+            if (flattenAimToGroundPlane) dir.y = 0f;
             if (dir.sqrMagnitude > 0.0001f)
             {
                 dir.Normalize();
-                if (faceAimDirection && faceTarget != null)
+                if (faceAimDirection && faceTarget != null && faceTarget != transform)
                 {
                     Quaternion targetRot = Quaternion.LookRotation(dir, Vector3.up);
+                    if (Mathf.Abs(aimYawOffsetDegrees) > 0.001f)
+                    {
+                        targetRot = Quaternion.AngleAxis(aimYawOffsetDegrees, Vector3.up) * targetRot;
+                    }
                     if (faceTurnSpeed <= 0f) faceTarget.rotation = targetRot;
                     else faceTarget.rotation = Quaternion.RotateTowards(faceTarget.rotation, targetRot, faceTurnSpeed * Time.deltaTime);
                 }
             }
 
-            if (!UIInputBlocker.IsPointerBlocking && IsFirePressed() && Time.time >= _nextFireTime)
+            if (isArmed && muzzle != null && !UIInputBlocker.IsPointerBlocking && IsFirePressed() && Time.time >= _nextFireTime)
             {
-                Fire(dir);
-                _nextFireTime = Time.time + (fireRate > 0f ? 1f / fireRate : 0.2f);
+                // New unified path using profiles
+                if (profile != null && profile.bullet != null)
+                {
+                    Vector3 norm = dir.normalized;
+                    int pellets = Mathf.Max(1, profile.pellets);
+                    for (int i = 0; i < pellets; i++)
+                    {
+                        Vector3 shot = ApplySpread(norm, profile.extraPelletSpread);
+                        BulletSystem.FirePellet(transform.root, muzzle, shot, profile, profile.bullet);
+                    }
+                    TriggerMuzzleFlash(norm);
+                    PlayFireSound();
+                    float rate = profile.fireRate > 0f ? profile.fireRate : fireRate;
+                    _nextFireTime = Time.time + (rate > 0f ? 1f / rate : 0.2f);
+                }
+                else
+                {
+                    // Fallback to legacy modes for older weapons without profiles
+                    if (fireMode == FireMode.Projectile) FireProjectile(dir);
+                    else FireHitscan(dir);
+                    _nextFireTime = Time.time + (fireRate > 0f ? 1f / fireRate : 0.2f);
+                }
             }
         }
     }
+    bool TryFindAimProvider(out AimProvider provider)
+    {
+        provider = aim;
+        if (provider != null) return true;
+        provider = GetComponentInParent<AimProvider>();
+        if (provider != null) { aim = provider; return true; }
+        return false;
+    }
 
-    void Fire(Vector3 dir)
+    void FireProjectile(Vector3 dir)
     {
         if (bulletPrefab == null) return;
         Vector3 pos = muzzle != null ? muzzle.position : transform.position;
@@ -93,6 +179,156 @@ public class ClickShooter : MonoBehaviour
 
         TriggerMuzzleFlash(dir);
         PlayFireSound();
+    }
+
+    void FireHitscan(Vector3 dir)
+    {
+        // Apply bloom by rotating within a cone around dir
+        Vector3 shootDir = ApplyBloom(dir.normalized, hitscanBloomDegrees);
+        Vector3 origin = muzzle != null ? muzzle.position : transform.position;
+
+        Vector3 endPoint = origin + shootDir * Mathf.Max(0.01f, hitscanMaxRange);
+        if (!hitscanPenetrate)
+        {
+            if (Physics.Raycast(origin, shootDir, out var hit, Mathf.Max(0.01f, hitscanMaxRange), hitMask, QueryTriggerInteraction.Ignore))
+            {
+                ApplyHitEffects(hit, shootDir);
+                endPoint = hit.point;
+            }
+        }
+        else
+        {
+            var hits = Physics.RaycastAll(origin, shootDir, Mathf.Max(0.01f, hitscanMaxRange), hitMask, QueryTriggerInteraction.Ignore);
+            if (hits != null && hits.Length > 0)
+            {
+                System.Array.Sort(hits, (a,b) => a.distance.CompareTo(b.distance));
+                int remaining = hitscanMaxPenetrations <= 0 ? hits.Length : Mathf.Min(hits.Length, hitscanMaxPenetrations + 1);
+                for (int i = 0; i < remaining; i++)
+                {
+                    ApplyHitEffects(hits[i], shootDir);
+                }
+                endPoint = hits[Mathf.Clamp(remaining - 1, 0, hits.Length - 1)].point;
+            }
+        }
+
+        SpawnTracer(origin, endPoint);
+        TriggerMuzzleFlash(shootDir);
+        PlayFireSound();
+    }
+
+    void DrawDebugGizmos()
+    {
+        Transform mz = muzzle != null ? muzzle : transform;
+        Gizmos.color = gizmoMuzzleColor;
+        Gizmos.DrawRay(mz.position, mz.forward * Mathf.Max(0.1f, gizmoRayLength));
+
+        Vector3 aimPoint;
+        if (TryGetMouseAimPoint(out aimPoint))
+        {
+            Gizmos.color = gizmoAimColor;
+            Gizmos.DrawSphere(aimPoint, 0.05f);
+            Gizmos.DrawLine(mz.position, aimPoint);
+        }
+
+        if (faceTarget != null)
+        {
+            Gizmos.color = gizmoFaceColor;
+            Gizmos.DrawRay(faceTarget.position, faceTarget.forward * 0.8f);
+        }
+    }
+
+    Vector3 ApplyBloom(Vector3 forward, float degrees)
+    {
+        if (degrees <= 0.001f) return forward;
+        // Sample a random rotation around an axis perpendicular to forward
+        // Use a random point on a unit disk and map to a small-angle rotation
+        float rad = degrees * Mathf.Deg2Rad;
+        // Cosine-weighted small angle sampling: approximate by uniform disk scaled by rad
+        Vector2 d = Random.insideUnitCircle * Mathf.Tan(rad);
+        // Build an orthonormal basis (right, up) around forward
+        Vector3 up = Vector3.up;
+        if (Mathf.Abs(Vector3.Dot(forward, up)) > 0.99f) up = Vector3.right;
+        Vector3 right = Vector3.Normalize(Vector3.Cross(up, forward));
+        up = Vector3.Normalize(Vector3.Cross(forward, right));
+        Vector3 deviated = Vector3.Normalize(forward + right * d.x + up * d.y);
+        return deviated;
+    }
+
+    Vector3 ApplySpread(Vector3 forward, float degrees)
+    {
+        if (degrees <= 0.001f) return forward;
+        float rad = degrees * Mathf.Deg2Rad;
+        Vector2 d = Random.insideUnitCircle * Mathf.Tan(rad);
+        Vector3 up = Vector3.up;
+        if (Mathf.Abs(Vector3.Dot(forward, up)) > 0.99f) up = Vector3.right;
+        Vector3 right = Vector3.Normalize(Vector3.Cross(up, forward));
+        up = Vector3.Normalize(Vector3.Cross(forward, right));
+        return Vector3.Normalize(forward + right * d.x + up * d.y);
+    }
+
+    void ApplyHitEffects(RaycastHit hit, Vector3 shootDir)
+    {
+        if (hit.collider == null) return;
+        // Find EnemyHealth via collider, proxy, or parent
+        EnemyHealth enemyHealth = null;
+        if (hit.collider.CompareTag("Enemy"))
+        {
+            enemyHealth = hit.collider.GetComponent<EnemyHealth>();
+            if (enemyHealth == null) enemyHealth = hit.collider.GetComponentInParent<EnemyHealth>();
+        }
+        else
+        {
+            var proxy = hit.collider.GetComponent<EnemyHitboxProxy>();
+            if (proxy != null) enemyHealth = proxy.Resolve();
+            if (enemyHealth == null) enemyHealth = hit.collider.GetComponentInParent<EnemyHealth>();
+        }
+
+        if (enemyHealth != null)
+        {
+            enemyHealth.TakeDamage(Mathf.Max(1, hitscanDamage));
+        }
+
+        // Knockback
+        if (hitscanKnockback > 0f)
+        {
+            var rb = hit.rigidbody ?? hit.collider.GetComponentInParent<Rigidbody>();
+            if (rb != null)
+            {
+                Vector3 impulse = shootDir * hitscanKnockback + Vector3.up * Mathf.Max(0f, hitscanKnockbackUp);
+                rb.AddForce(impulse, ForceMode.Impulse);
+            }
+        }
+
+        // Impact VFX
+        if (impactVFX != null)
+        {
+            var vfx = Instantiate(impactVFX, hit.point, Quaternion.LookRotation(hit.normal));
+            var main = vfx.main; main.playOnAwake = false; main.simulationSpace = ParticleSystemSimulationSpace.World;
+            vfx.Play(true);
+            Destroy(vfx.gameObject, vfx.main.duration + vfx.main.startLifetime.constantMax + 0.05f);
+        }
+    }
+
+    void SpawnTracer(Vector3 start, Vector3 end)
+    {
+        if (tracerPrefab == null) return;
+        var go = Instantiate(tracerPrefab, start, Quaternion.identity);
+        // If prefab uses LineRenderer, set positions
+        var lr = go.GetComponent<LineRenderer>();
+        if (lr != null)
+        {
+            lr.positionCount = 2;
+            lr.SetPosition(0, start);
+            lr.SetPosition(1, end);
+        }
+        // If it uses a TrailRenderer, position and orient forward toward end
+        var tr = go.GetComponent<TrailRenderer>();
+        if (tr != null)
+        {
+            go.transform.position = start;
+            go.transform.rotation = Quaternion.LookRotation((end - start).normalized, Vector3.up);
+        }
+        Destroy(go, Mathf.Max(0.01f, tracerLifetime));
     }
 
 

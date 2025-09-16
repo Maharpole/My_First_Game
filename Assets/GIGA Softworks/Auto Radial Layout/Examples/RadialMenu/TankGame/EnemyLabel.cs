@@ -14,7 +14,7 @@ namespace GIGA.AutoRadialLayout.Examples
 			if (enemy != null)
 			{
 				if (this.canvasRT == null)
-					this.canvasRT = GameObject.FindObjectOfType<Canvas>().GetComponent<RectTransform>();
+					this.canvasRT = Object.FindFirstObjectByType<Canvas>()?.GetComponent<RectTransform>();
 				// Placing on enemy
 				Vector2 ViewportPosition = Camera.main.WorldToViewportPoint(enemy.transform.position + Vector3.up * 3);
 				Vector2 WorldObject_ScreenPosition = new Vector2(

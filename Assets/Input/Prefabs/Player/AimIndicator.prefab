@@ -51,11 +51,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SimpleAimIndicator
   player: {fileID: 0}
-  radius: 1.2
+  aim: {fileID: 0}
+  useAimProvider: 1
+  radius: 1
   heightOffset: 0.05
+  rotationOffsetEuler: {x: 90, y: 0, z: 0}
+  scale: 1
   groundMask:
     serializedVersion: 2
     m_Bits: 512
+  slerpSpeed: 0
+  useStablePlaneAim: 1
 --- !u!222 &7465259939570043741
 CanvasRenderer:
   m_ObjectHideFlags: 0

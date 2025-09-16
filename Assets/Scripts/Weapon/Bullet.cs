@@ -28,6 +28,9 @@ public partial class Bullet : MonoBehaviour
     [Tooltip("Layers considered hittable by the bullet")] public LayerMask hitMask = ~0;
 
     private Vector3 _lastPos;
+    // Ensure a single enemy is damaged at most once per bullet
+    private bool _hasDamagedEnemy = false;
+    [Header("Debug")] public bool debugCollisions = false;
     [Tooltip("Impulse force applied to rigidbody enemies along bullet travel direction")] public float knockbackForce = 0f;
     [Tooltip("Upward impulse added to knockback")] public float knockbackUp = 0f;
     [Tooltip("If enemy uses NavMeshAgent (no rigidbody), push this distance")] public float agentKnockbackDistance = 0f;
@@ -70,6 +73,7 @@ public partial class Bullet : MonoBehaviour
 
     void FixedUpdate()
     {
+        if (_hasDamagedEnemy) { _lastPos = transform.position; return; }
         // Swept collision to prevent tunneling at high speed
         Vector3 current = transform.position;
         Vector3 delta = current - _lastPos;
@@ -77,8 +81,12 @@ public partial class Bullet : MonoBehaviour
         if (dist > 0.0001f)
         {
             Ray ray = new Ray(_lastPos, delta.normalized);
-            if (Physics.SphereCast(ray, Mathf.Max(0f, sweepRadius), out var sweepHit, dist, hitMask, QueryTriggerInteraction.Collide))
+            if (!_hasDamagedEnemy && Physics.SphereCast(ray, Mathf.Max(0f, sweepRadius), out var sweepHit, dist, hitMask, QueryTriggerInteraction.Collide))
             {
+                if (debugCollisions)
+                {
+                    Debug.Log($"[Bullet] Sweep hit {FormatCollider(sweepHit.collider)} at {sweepHit.point} (dist {sweepHit.distance:0.###})");
+                }
                 // Manually trigger hit
                 OnTriggerEnter(sweepHit.collider);
                 // Move to hit point to avoid skipping
@@ -111,8 +119,13 @@ public partial class Bullet : MonoBehaviour
     
     public virtual void OnTriggerEnter(Collider other)
     {
+        if (_hasDamagedEnemy) return;
         // Skip if the collider is the player
         if (other.CompareTag("Player")) return;
+        if (debugCollisions)
+        {
+            Debug.Log($"[Bullet] Trigger hit {FormatCollider(other)} at {transform.position}");
+        }
 
         // Check if we hit an enemy or its proxy hitbox
         EnemyHealth enemyHealth = null;
@@ -132,6 +145,7 @@ public partial class Bullet : MonoBehaviour
         {
             // Deal damage to the enemy
             enemyHealth.TakeDamage(Mathf.RoundToInt(damage));
+            _hasDamagedEnemy = true;
 
             // Apply knockback if configured
             if (knockbackForce > 0f || agentKnockbackDistance > 0f)
@@ -156,12 +170,24 @@ public partial class Bullet : MonoBehaviour
                 }
             }
             
-            // Destroy the bullet if configured to do so
-            if (destroyOnImpact)
+            // Destroy or disable collisions after first enemy hit
+            if (destroyOnImpact) { DestroySelf(); }
+            else
             {
-                DestroySelf();
+                var col = GetComponent<Collider>(); if (col != null) col.enabled = false;
+                var rb = GetComponent<Rigidbody>(); if (rb != null) rb.detectCollisions = false;
             }
         }
+    }
+
+    private string FormatCollider(Collider c)
+    {
+        if (c == null) return "<null>";
+        string path = c.transform.name;
+        Transform t = c.transform.parent;
+        int depth = 0;
+        while (t != null && depth < 6) { path = t.name + "/" + path; t = t.parent; depth++; }
+        return $"{path} [tag={c.tag}, layer={LayerMask.LayerToName(c.gameObject.layer)}]";
     }
 
     System.Collections.IEnumerator KnockbackAgent(Transform target, Vector3 dir, float distance, float time)

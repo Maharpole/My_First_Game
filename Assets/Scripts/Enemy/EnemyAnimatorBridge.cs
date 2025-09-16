@@ -7,6 +7,8 @@ public class EnemyAnimatorBridge : MonoBehaviour
 	public string speedParameter = "Speed";
 	public string isMovingParameter = "IsMoving";
 	public string isAttackingParameter = "IsAttacking";
+	public string hitTrigger = "Hit";
+	public string isDeadBool = "IsDead";
 	[Tooltip("Seconds to smooth speed changes")]
 	public float smoothingSeconds = 0.1f;
 	[Tooltip("Speed below this is considered idle")]
@@ -22,9 +24,13 @@ public class EnemyAnimatorBridge : MonoBehaviour
 	private int speedHash;
 	private int isMovingHash;
 	private int isAttackingHash;
+	private int hitHash;
+	private int isDeadHash;
 	private bool hasSpeedParam;
 	private bool hasIsMovingParam;
 	private bool hasIsAttackingParam;
+	private bool hasHitTrigger;
+	private bool hasIsDeadBool;
 
 	void Awake()
 	{
@@ -40,9 +46,13 @@ public class EnemyAnimatorBridge : MonoBehaviour
 		speedHash = Animator.StringToHash(speedParameter);
 		isMovingHash = Animator.StringToHash(isMovingParameter);
 		isAttackingHash = Animator.StringToHash(isAttackingParameter);
+		hitHash = Animator.StringToHash(hitTrigger);
+		isDeadHash = Animator.StringToHash(isDeadBool);
 		hasSpeedParam = AnimatorHasParameter(animator, speedHash);
 		hasIsMovingParam = AnimatorHasParameter(animator, isMovingHash);
 		hasIsAttackingParam = AnimatorHasParameter(animator, isAttackingHash);
+		hasHitTrigger = AnimatorHasParameter(animator, hitHash);
+		hasIsDeadBool = AnimatorHasParameter(animator, isDeadHash);
 	}
 
 	void Update()
@@ -80,6 +90,35 @@ public class EnemyAnimatorBridge : MonoBehaviour
 	public void SetIsAttacking(bool value)
 	{
 		if (hasIsAttackingParam) animator.SetBool(isAttackingHash, value);
+	}
+
+	public void FlagHit()
+	{
+		if (hasHitTrigger) animator.SetTrigger(hitTrigger);
+	}
+
+	public void SetIsDead(bool value)
+	{
+		if (hasIsDeadBool) animator.SetBool(isDeadBool, value);
+	}
+
+	// Animation Event proxies (place events on the Animator object)
+	public void AE_AttackStart()
+	{
+		var eh = GetComponentInParent<EnemyHealth>();
+		if (eh != null) eh.Animation_AttackStart();
+	}
+
+	public void AE_MeleeStrike()
+	{
+		var eh = GetComponentInParent<EnemyHealth>();
+		if (eh != null) eh.Animation_MeleeStrike();
+	}
+
+	public void AE_AttackEnd()
+	{
+		var eh = GetComponentInParent<EnemyHealth>();
+		if (eh != null) eh.Animation_AttackEnd();
 	}
 
 	private static bool AnimatorHasParameter(Animator a, int nameHash)

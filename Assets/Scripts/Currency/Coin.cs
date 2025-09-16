@@ -73,6 +73,13 @@ public class Coin : MonoBehaviour
 
     private void Start()
     {
+        // Ensure CoinManager exists so CoinManager.Instance isn't null
+        if (CoinManager.Instance == null)
+        {
+            var go = new GameObject("CoinManager");
+            go.AddComponent<CoinManager>();
+        }
+
         startPosition = transform.position;
         timeOffset = Random.Range(0f, 2f * Mathf.PI);
         
@@ -179,8 +186,18 @@ public class Coin : MonoBehaviour
             CreateFloatingText();
         }
         
-        // Add coins to the player
-        CoinManager.Instance.AddCoins(value);
+        // Add coins to the player (safeguard if manager missing)
+        if (CoinManager.Instance != null)
+        {
+            CoinManager.Instance.AddCoins(value);
+        }
+        else
+        {
+            Debug.LogWarning("CoinManager.Instance is null; creating a CoinManager and adding coins.");
+            var go = new GameObject("CoinManager");
+            var mgr = go.AddComponent<CoinManager>();
+            mgr.AddCoins(value);
+        }
 
         // Destroy the coin
         Destroy(gameObject);

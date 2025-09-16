@@ -17,9 +17,7 @@ public class Player : MonoBehaviour
     
     [Header("== MOVEMENT ==")]
     public float moveSpeed = 5f;
-    [Tooltip("Degrees per second to rotate towards movement direction")] public float rotationSpeed = 720f;
-    [Tooltip("Rotate to face the mouse cursor projected onto ground")] public bool faceMouseDirection = true;
-    [Tooltip("Rotate to face the direction the player is moving")] public bool faceMoveDirection = true;
+    public float rotationSpeed = 720f;
     public float dashSpeed = 20f;
     public float dashDuration = 0.2f;
     public int maxDashCharges = 3;
@@ -332,20 +330,9 @@ public class Player : MonoBehaviour
         {
             transform.Translate(movement * moveSpeed * Time.deltaTime, Space.World);
         }
-
-        // Face mouse, else movement
-        if (faceMouseDirection)
-        {
-            FaceTowardMouse();
-        }
-        else if (faceMoveDirection && movement.sqrMagnitude > 0.0001f)
-        {
-            Vector3 look = new Vector3(movement.x, 0f, movement.z);
-            Quaternion target = Quaternion.LookRotation(look, Vector3.up);
-            transform.rotation = Quaternion.RotateTowards(transform.rotation, target, rotationSpeed * Time.deltaTime);
-        }
         
-        // Dash input is handled separately via TryDash
+        // Root yaw is driven externally (anchor/rig). No facing here.
+        return;
     }
 
     Vector3 GetMoveVector()
@@ -387,17 +374,6 @@ public class Player : MonoBehaviour
 
         // Signal dash start to animator
         if (_animBridge != null) _animBridge.FlagDashStarted();
-
-        // Face aim or dash direction immediately
-        if (faceMouseDirection)
-        {
-            FaceTowardMouse();
-        }
-        else if (faceMoveDirection && dashDirection.sqrMagnitude > 0.0001f)
-        {
-            Quaternion target = Quaternion.LookRotation(new Vector3(dashDirection.x, 0f, dashDirection.z), Vector3.up);
-            transform.rotation = target;
-        }
         
         // Play sound
         if (dashSounds.Length > 0)
@@ -456,36 +432,6 @@ public class Player : MonoBehaviour
                 transform.position = new Vector3(transform.position.x, targetY, transform.position.z);
             }
         }
-    }
-
-    // Rotate toward mouse cursor projected onto ground, with plane fallback
-    void FaceTowardMouse()
-    {
-#if ENABLE_INPUT_SYSTEM
-        Vector3 aimPoint;
-        if (!TryGetMousePoint(out aimPoint)) return;
-        aimPoint.y = transform.position.y;
-        Vector3 dir = aimPoint - transform.position;
-        dir.y = 0f;
-        if (dir.sqrMagnitude < 0.0001f) return;
-        Quaternion targetRot = Quaternion.LookRotation(dir.normalized, Vector3.up);
-        transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRot, rotationSpeed * Time.deltaTime);
-#else
-        // Legacy input fallback
-        Camera cam = Camera.main;
-        if (cam == null) return;
-        Ray ray = cam.ScreenPointToRay(Input.mousePosition);
-        Plane plane = new Plane(Vector3.up, new Vector3(0f, transform.position.y, 0f));
-        if (plane.Raycast(ray, out float enter))
-        {
-            Vector3 p = ray.origin + ray.direction * enter;
-            p.y = transform.position.y;
-            Vector3 d = p - transform.position; d.y = 0f;
-            if (d.sqrMagnitude < 0.0001f) return;
-            Quaternion q = Quaternion.LookRotation(d.normalized, Vector3.up);
-            transform.rotation = Quaternion.RotateTowards(transform.rotation, q, rotationSpeed * Time.deltaTime);
-        }
-#endif
     }
 
 #if ENABLE_INPUT_SYSTEM
@@ -757,9 +703,9 @@ public class Player : MonoBehaviour
         float reflectPercent = 0f;
         float regenPerTick = 0f;   // amount per tick
         float regenTickSeconds = 1f; // default 1 second per tick
-        float critChanceFlat = 0f;        // percentage points added
+        // float critChanceFlat = 0f;        // percentage points added
         float critChancePercent = 0f;     // % increased chance
-        float critMultiFlat = 0f;         // percentage points added to multiplier
+        // float critMultiFlat = 0f;         // percentage points added to multiplier
         float critMultiPercent = 0f;      // % increased multiplier
 
         if (characterEquipment == null) characterEquipment = GetComponent<CharacterEquipment>();

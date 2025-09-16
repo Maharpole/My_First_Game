@@ -26,7 +26,7 @@ namespace GIGA.AutoRadialLayout.Examples
 		private void Start()
 		{
 			this.followPlayer = false;
-			gameManager = GameObject.FindObjectOfType<TankGameManager>();
+			gameManager = Object.FindFirstObjectByType<TankGameManager>();
 		}
 
 		private void Update()
@@ -78,7 +78,7 @@ namespace GIGA.AutoRadialLayout.Examples
 			if (other.gameObject.transform.CompareTag("Player"))
 			{
 				// Gameover
-				GameObject.FindObjectOfType<TankGameManager>().GameOver();
+				Object.FindFirstObjectByType<TankGameManager>().GameOver();
 			}
 		}
 	}

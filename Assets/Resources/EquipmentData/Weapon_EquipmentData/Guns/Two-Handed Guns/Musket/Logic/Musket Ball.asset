@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1f410d4e7e4e6ca4aad81f2acd1b779f, type: 3}
+  m_Name: Musket Ball
+  m_EditorClassIdentifier: Assembly-CSharp::BulletProfile
+  mode: 1
+  baseDamage: 10
+  damageFalloffByDistance:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.9791565
+      value: 0.96380615
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  maxRange: 60
+  penetrationCount: 0
+  ricochetCount: 0
+  hitMask:
+    serializedVersion: 2
+    m_Bits: 256
+  castRadius: 0
+  triggerInteraction: 1
+  bloomDegrees: 2
+  speed: 150
+  gravity: 0
+  projectilePrefab: {fileID: 5872955557811514956, guid: 36f4fa7a681e81f4b9e9d622fa48d94e, type: 3}
+  tracerPrefab: {fileID: 4810185530593952285, guid: 9155af65b0fad1448abe792f435e9435, type: 3}
+  tracerLifetime: 0.5
+  impactVFX: {fileID: 6884766968305594031, guid: f8bbf118b5a707c458a961bacc9013f7, type: 3}

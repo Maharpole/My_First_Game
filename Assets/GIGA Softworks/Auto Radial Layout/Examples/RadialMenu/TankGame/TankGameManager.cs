@@ -24,7 +24,7 @@ namespace GIGA.AutoRadialLayout.Examples
 		private void Start()
 		{
 			// Adding labels to enemies
-			foreach (var enemy in FindObjectsOfType<TankGameEnemy>())
+			foreach (var enemy in Object.FindObjectsByType<TankGameEnemy>(FindObjectsSortMode.None))
 			{
 				EnemyLabel label = GameObject.Instantiate(this.enemyLabelPrefab, this.labelsRoot);
 				label.GetComponent<Text>().text = enemy.Health.ToString();

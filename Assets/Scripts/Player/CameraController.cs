@@ -24,6 +24,9 @@ public class CameraController : MonoBehaviour
     [Tooltip("Use orthographic zoom (size) instead of moving the camera closer/farther")] 
     public bool useOrthographicZoom = true;
 
+    [Tooltip("Allow mouse wheel to change zoom")] 
+    public bool allowMouseZoom = true;
+
     [Tooltip("Mouse wheel zoom sensitivity")] 
     [Range(0.05f, 2f)] public float zoomSensitivity = 0.2f;
 
@@ -39,6 +42,7 @@ public class CameraController : MonoBehaviour
     private Camera unityCamera;
     private float currentZoom;
     private Vector3 currentVelocity;
+    private Coroutine blendRoutine;
 
     void Awake()
     {
@@ -143,6 +147,7 @@ public class CameraController : MonoBehaviour
 
     void HandleZoomInput()
     {
+        if (!allowMouseZoom) return;
         float scroll = Mouse.current != null ? Mouse.current.scroll.ReadValue().y : 0f;
         if (Mathf.Abs(scroll) < 0.0001f) return;
 
@@ -154,5 +159,48 @@ public class CameraController : MonoBehaviour
             // In orthographic, "zoom" increases size for farther view
             unityCamera.orthographicSize = Mathf.Max(0.01f, currentZoom * 8f); // 8 is a friendly baseline; tweak as needed
         }
+    }
+
+    public float CurrentZoom => currentZoom;
+
+    public void BlendTo(Vector3? targetOffset, float? targetZoom, float duration, AnimationCurve curve = null)
+    {
+        if (blendRoutine != null) StopCoroutine(blendRoutine);
+        blendRoutine = StartCoroutine(BlendRoutine(targetOffset, targetZoom, Mathf.Max(0.0001f, duration), curve));
+    }
+
+    System.Collections.IEnumerator BlendRoutine(Vector3? targetOffset, float? targetZoom, float duration, AnimationCurve curve)
+    {
+        Vector3 startOffset = baseOffset;
+        float startZoom = currentZoom;
+        float t = 0f;
+        while (t < duration)
+        {
+            t += Time.deltaTime;
+            float k = Mathf.Clamp01(t / duration);
+            if (curve != null) k = Mathf.Clamp01(curve.Evaluate(k));
+            if (targetOffset.HasValue) baseOffset = Vector3.LerpUnclamped(startOffset, targetOffset.Value, k);
+            if (targetZoom.HasValue)
+            {
+                currentZoom = Mathf.LerpUnclamped(startZoom, targetZoom.Value, k);
+                if (useOrthographicZoom && unityCamera != null)
+                {
+                    unityCamera.orthographic = true;
+                    unityCamera.orthographicSize = Mathf.Max(0.01f, currentZoom * 8f);
+                }
+            }
+            yield return null;
+        }
+        if (targetOffset.HasValue) baseOffset = targetOffset.Value;
+        if (targetZoom.HasValue)
+        {
+            currentZoom = targetZoom.Value;
+            if (useOrthographicZoom && unityCamera != null)
+            {
+                unityCamera.orthographic = true;
+                unityCamera.orthographicSize = Mathf.Max(0.01f, currentZoom * 8f);
+            }
+        }
+        blendRoutine = null;
     }
 }

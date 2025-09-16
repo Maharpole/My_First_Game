@@ -14,9 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mobName: Goblin
   minCount: 10
-  maxCount: 20
+  maxCount: 40
   composition:
   - enemyType: {fileID: 11400000, guid: 0b5b69b42e3de0140987309d12ebf50c, type: 2}
     weight: 10
-  - enemyType: {fileID: 11400000, guid: c54f68519c142b64fb85455699d63db5, type: 2}
-    weight: 5

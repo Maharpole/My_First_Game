@@ -83,7 +83,7 @@ namespace GIGA.AutoRadialLayout.Examples
 			Vector3 target = this.transform.position + movementDelta * amount;
 
 
-			TankGameManager gameManager = GameObject.FindObjectOfType<TankGameManager>();
+			TankGameManager gameManager = Object.FindFirstObjectByType<TankGameManager>();
 			gameManager.SetMarker(target);
 
 			Vector3 targetVec = (gameManager.Marker.transform.position - this.transform.position);

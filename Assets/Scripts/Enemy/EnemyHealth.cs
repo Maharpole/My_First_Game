@@ -5,6 +5,7 @@ using System.Collections;
 
 public class EnemyHealth : MonoBehaviour
 {
+    public enum AttackType { Melee, Ranged }
     [Header("Core Stats")]
     [Tooltip("Maximum health of the enemy")] public int maxHealth = 10;
     [Tooltip("Current health of the enemy")] public int currentHealth;
@@ -21,23 +22,27 @@ public class EnemyHealth : MonoBehaviour
     [Tooltip("Radius within which the enemy becomes aggro when the player enters")] public float aggroRange = 8f;
     [Tooltip("Prefer NavMeshAgent for pathfinding (auto-adds if missing)")] public bool preferNavMeshAgent = true;
 
-    [Header("Contact Damage (Legacy)")]
-    [Tooltip("Meters from enemy center to apply touch damage to the player")] public float contactRange = 0.8f;
-    [Tooltip("Seconds between consecutive contact damage ticks")] public float contactDamageInterval = 0.5f;
+    // Legacy contact damage / telegraphed melee settings removed
 
-    [Header("Telegraphed Melee Attack")]
-    public bool useTelegraphedAttack = true;
-    [Tooltip("Begin attack when within this distance to the player (planar)")] public float attackRange = 2.5f;
-    [Tooltip("Radius of the red warning circle and damage area")] public float attackRadius = 1.8f;
-    [Tooltip("Seconds to show warning before striking")] public float attackWindup = 0.5f;
-    [Tooltip("Cooldown after striking before next attempt")] public float attackCooldown = 1.2f;
-    [Tooltip("Optional prefab for the red warning (will be scaled to radius). If null, a simple cylinder is created.")]
-    public GameObject telegraphPrefab;
-    public Color telegraphColor = new Color(1f, 0f, 0f, 0.35f);
-    [Tooltip("Material for telegraph quad (transparent). If null, a basic URP Unlit material will be created at runtime.")]
-    public Material telegraphMaterial;
-    [Tooltip("Lift above ground to avoid clipping on uneven terrain")] public float telegraphGroundOffset = 0.05f;
-    [Tooltip("Layers considered ground for placing the hit indicator")] public LayerMask telegraphGroundMask = ~0;
+    [Header("Attack Logic")]
+    public AttackType attackMode = AttackType.Melee;
+    [Header("Ranged")]
+    [Tooltip("Max planar distance to start ranged attacks and stop moving")] public float rangedRange = 8f;
+    [Tooltip("Seconds between shots")] public float rangedCooldown = 1.0f;
+    [Tooltip("Optional muzzle for ranged; if null, uses this transform")] public Transform rangedMuzzle;
+    [Tooltip("Bullet profile to use for enemy ranged shots (Hitscan or Projectile)")] public BulletProfile rangedBullet;
+    [Header("Melee")] 
+    [Tooltip("Planar distance at which the enemy stops to perform a melee hit")] public float meleeStopRange = 2.5f;
+    [Tooltip("Damage dealt to the player per successful melee hit")] public int meleeDamage = 10;
+    [Tooltip("Seconds between melee hits")] public float meleeCooldown = 1.0f;
+    public enum MeleeHitShape { Sphere, Box }
+    [Tooltip("Collision shape used for the melee hit")] public MeleeHitShape meleeHitShape = MeleeHitShape.Sphere;
+    [Tooltip("Radius of the melee hit area (sphere)")] public float meleeHitRadius = 1.2f;
+    [Tooltip("Box half extents for the melee hit area (if Box shape)")] public Vector3 meleeHitBoxHalfExtents = new Vector3(0.8f, 0.8f, 0.8f);
+    [Tooltip("Optional transform used as the origin for the melee hit. If null, uses this transform.")] public Transform meleeHitOrigin;
+    [Tooltip("Local offset from the origin to center the melee hit (in local space of the enemy root)")] public Vector3 meleeHitLocalOffset = new Vector3(0f, 1f, 1f);
+    [Tooltip("Layers considered valid targets for melee hits")] public LayerMask meleeHitMask = ~0;
+    [Tooltip("Failsafe: if no Animation_AttackEnd event fires, auto-clear attack after this many seconds")] public float meleeAttackFailSafeSeconds = 1.0f;
 
     [Header("Leveling")]
     [Tooltip("Apply level-based max health at start unless overridden by spawner")] public bool useLevelScaling = true;
@@ -65,6 +70,21 @@ public class EnemyHealth : MonoBehaviour
     [Range(0f,1f)] public float damageHitSFXVolume = 1f;
     [Tooltip("Random pitch range for damage sounds")] public Vector2 damageHitPitchRange = new Vector2(1f,1f);
     
+    [Header("Death Settings")] 
+    [Tooltip("Seconds to let the death animation play before starting the fade")] public float deathAnimLeadSeconds = 0.4f;
+    [Tooltip("Seconds for alpha/scale fade out before destroying the enemy")] public float deathFadeSeconds = 1.2f;
+    [Tooltip("Scale the corpse down during fade")] public bool deathScaleDown = true;
+    [Tooltip("Target scale factor at end of fade (1 = unchanged, 0.5 = half size)")] public float deathEndScaleFactor = 0.5f;
+    
+    [Header("Debug Gizmos")] 
+    [Tooltip("Draw melee/ranged radii when selected in the editor")] public bool drawAttackGizmos = true;
+    public Color meleeHitRadiusColor = new Color(1f, 0.3f, 0.2f, 0.8f);
+    public Color meleeStopRangeColor = new Color(1f, 0.8f, 0.2f, 0.8f);
+    public Color rangedRangeColor = new Color(0.2f, 0.6f, 1f, 0.8f);
+    
+    [Header("Debug")]
+    [Tooltip("If true, logs when this enemy takes damage and remaining health.")] public bool debugHits = false;
+    
     private Material originalMaterial;
     private Renderer enemyRenderer;
     private Color originalColor;
@@ -82,11 +102,11 @@ public class EnemyHealth : MonoBehaviour
     
     [Header("Events")] public UnityEvent onDeath; public UnityEvent onDamage; public UnityEvent onHeal;
 
-    private float _lastContactDamageTime = -999f;
     private float _nextAttackTime = 0f;
-    private Coroutine _attackRoutine;
-    private GameObject _activeTelegraph;
     private bool _isAttacking = false;
+    private bool _isDead = false;
+    private bool _meleeSwingQueued = false;
+    private float _attackFailSafeUntil = 0f;
 
     void Start()
     {
@@ -189,13 +209,14 @@ public class EnemyHealth : MonoBehaviour
 
     void OnDisable()
     {
-        if (_activeTelegraph != null) { Destroy(_activeTelegraph); _activeTelegraph = null; }
-        if (_attackRoutine != null) { StopCoroutine(_attackRoutine); _attackRoutine = null; }
         _isAttacking = false;
     }
 
     void Update()
     {
+        // Halt all behavior when dead
+        if (_isDead) return;
+
         // If neither movement component exists, nothing to do
         if (rb == null && agent == null) return;
 
@@ -204,6 +225,12 @@ public class EnemyHealth : MonoBehaviour
         {
             var p = Object.FindFirstObjectByType<Player>();
             if (p != null) playerTransform = p.transform;
+        }
+
+        // Failsafe: if attack animation events were not wired, auto-exit attack after a short duration
+        if (_isAttacking && Time.time >= _attackFailSafeUntil)
+        {
+            Animation_AttackEnd();
         }
 
         // Auto-aggro when within range
@@ -245,9 +272,14 @@ public class EnemyHealth : MonoBehaviour
             {
                 ConfigureAgentMove();
             }
-            // Set destination toward the player; agent handles pathing
-            agent.isStopped = false;
-            agent.SetDestination(playerTransform.position);
+            // Ranged: stop when within rangedRange; Melee: keep chasing until melee range logic stops
+            Vector3 toP = playerTransform.position - transform.position; toP.y = 0f;
+            float planarDist = toP.magnitude;
+            bool holdForRanged = (attackMode == AttackType.Ranged) && (planarDist <= Mathf.Max(0.1f, rangedRange));
+            bool holdForMelee = (attackMode == AttackType.Melee) && (planarDist <= Mathf.Max(0.1f, meleeStopRange));
+            bool hold = holdForRanged || holdForMelee;
+            agent.isStopped = hold;
+            if (!hold) agent.SetDestination(playerTransform.position);
             // Manual facing toward desired direction
             if (dir != Vector3.zero)
             {
@@ -259,9 +291,20 @@ public class EnemyHealth : MonoBehaviour
             // RB-driven movement
             // Use linearVelocity if available; maintain Y component for gravity
             float dist = Vector3.Distance(transform.position, playerTransform.position);
-            bool hold = dist <= Mathf.Max(0.1f, attackRange * 0.9f) || _isAttacking;
-            Vector3 newVel = hold ? new Vector3(0f, rb.linearVelocity.y, 0f) : new Vector3(dir.x * moveSpeed, rb.linearVelocity.y, dir.z * moveSpeed);
-            rb.linearVelocity = newVel;
+            bool hold = ((attackMode == AttackType.Ranged) ? (dist <= Mathf.Max(0.1f, rangedRange)) : (attackMode == AttackType.Melee ? (dist <= Mathf.Max(0.1f, meleeStopRange)) : false)) || _isAttacking;
+            // Only drive velocity when non-kinematic; otherwise, move transform directly
+            if (!rb.isKinematic)
+            {
+                Vector3 newVel = hold ? new Vector3(0f, rb.linearVelocity.y, 0f) : new Vector3(dir.x * moveSpeed, rb.linearVelocity.y, dir.z * moveSpeed);
+                rb.linearVelocity = newVel;
+            }
+            else
+            {
+                if (!hold)
+                {
+                    transform.position += dir * moveSpeed * Time.deltaTime;
+                }
+            }
             // Face the player
             if (dir != Vector3.zero)
             {
@@ -269,14 +312,14 @@ public class EnemyHealth : MonoBehaviour
             }
         }
 
-        // Telegraphed attack logic replaces contact damage
-        if (useTelegraphedAttack)
+        // Attack logic
+        if (attackMode == AttackType.Melee)
         {
-            TryTelegraphedAttack();
+            TryMeleeAttack();
         }
-        else
+        else if (attackMode == AttackType.Ranged)
         {
-            TryApplyContactDamage();
+            TryRangedAttack();
         }
     }
 
@@ -293,8 +336,13 @@ public class EnemyHealth : MonoBehaviour
         // We handle rotation manually
         agent.updateRotation = false;
         agent.updatePosition = true;
-        // Stop near attack range so enemies don't overlap the player
-        agent.stoppingDistance = Mathf.Max(attackRange * 0.9f, 0.25f);
+        // Stop near desired range per mode
+        if (attackMode == AttackType.Ranged)
+            agent.stoppingDistance = Mathf.Max(rangedRange * 0.9f, 0.25f);
+        else if (attackMode == AttackType.Melee)
+            agent.stoppingDistance = Mathf.Max(meleeStopRange * 0.9f, 0.25f);
+        else
+            agent.stoppingDistance = 0.25f;
         // Ensure agent radius/height roughly match collider for better avoidance
         var col = GetComponent<Collider>() as CapsuleCollider;
         if (col != null)
@@ -332,6 +380,10 @@ public class EnemyHealth : MonoBehaviour
             }
         }
         
+        // Animator hit trigger
+        var __bridge = GetComponentInChildren<EnemyAnimatorBridge>();
+        if (__bridge != null) __bridge.FlagHit();
+
         // Flash red
         StartCoroutine(FlashColor(damageColor));
         // Damage particles
@@ -358,6 +410,10 @@ public class EnemyHealth : MonoBehaviour
         }
         
         // Debug logging for tuning
+        if (debugHits)
+        {
+            Debug.Log($"[EnemyHealth] {name} took {damage} dmg, HP: {Mathf.Max(0, currentHealth)}/{maxHealth}");
+        }
         CombatDebug.LogDamage(gameObject, damage, Mathf.Max(0, currentHealth), maxHealth);
 
         // Check if enemy is dead
@@ -367,22 +423,7 @@ public class EnemyHealth : MonoBehaviour
         }
     }
 
-    void OnCollisionStay(Collision collision)
-    {
-        if (!useTelegraphedAttack)
-        {
-            var player = collision.gameObject.GetComponentInParent<Player>();
-            if (player == null) return;
-            int dmg = Mathf.Max(0, contactDamage);
-            if (dmg <= 0) return;
-            // Simple crit roll
-            if (Random.value < Mathf.Clamp01(critChancePercent * 0.01f))
-            {
-                dmg = Mathf.RoundToInt(dmg * Mathf.Max(1f, critMultiplier));
-            }
-            player.TakeDamage(gameObject, dmg);
-        }
-    }
+    void OnCollisionStay(Collision collision) { }
 
     public void TakeReflectDamage(int damage)
     {
@@ -390,164 +431,135 @@ public class EnemyHealth : MonoBehaviour
         TakeDamage(damage);
     }
 
-    private void TryApplyContactDamage()
-    {
-        if (playerTransform == null) return;
-        if (contactDamage <= 0) return;
-        if (Time.time < _lastContactDamageTime + Mathf.Max(0.01f, contactDamageInterval)) return;
+    private void TryApplyContactDamage() { }
 
-        Vector3 a = transform.position;
-        Vector3 b = playerTransform.position;
-        a.y = 0f; b.y = 0f;
-        float dist = Vector3.Distance(a, b);
-        if (dist <= Mathf.Max(0.05f, contactRange))
-        {
-            var player = playerTransform.GetComponent<Player>();
-            if (player != null)
-            {
-                int dmg = Mathf.Max(0, contactDamage);
-                if (dmg > 0)
-                {
-                    // Simple crit roll to mirror OnCollisionStay behavior
-                    if (Random.value < Mathf.Clamp01(critChancePercent * 0.01f))
-                    {
-                        dmg = Mathf.RoundToInt(dmg * Mathf.Max(1f, critMultiplier));
-                    }
-                    player.TakeDamage(gameObject, dmg);
-                    _lastContactDamageTime = Time.time;
-                }
-            }
-        }
-    }
+    void TryTelegraphedAttack() { }
 
-    void TryTelegraphedAttack()
+    IEnumerator DoTelegraphedAttack() { yield break; }
+
+    void TryRangedAttack()
     {
         if (playerTransform == null) return;
         if (Time.time < _nextAttackTime) return;
-        // Distance on XZ plane
+        // Planar distance check
         Vector3 a = transform.position; a.y = 0f;
         Vector3 b = playerTransform.position; b.y = 0f;
         float dist = Vector3.Distance(a, b);
-        if (dist > Mathf.Max(0.1f, attackRange)) return;
-        if (_attackRoutine == null && !_isAttacking)
-        {
-            _attackRoutine = StartCoroutine(DoTelegraphedAttack());
-        }
-    }
+        if (dist > Mathf.Max(0.1f, rangedRange)) return;
+        if (rangedBullet == null) return;
 
-    IEnumerator DoTelegraphedAttack()
-    {
-        _isAttacking = true;
-        // Clean up any stale telegraph from prior cycles
-        if (_activeTelegraph != null) { Destroy(_activeTelegraph); _activeTelegraph = null; }
-        // Notify animator bridge
+        // Brief attack flag for animator
         var bridge = GetComponentInChildren<EnemyAnimatorBridge>();
         if (bridge != null) bridge.SetIsAttacking(true);
-        // Stop moving during windup/strike
-        if (usingAgent && agent != null && agent.enabled)
-        {
-            agent.ResetPath();
-            agent.isStopped = true;
-        }
-        else if (rb != null)
-        {
-            rb.linearVelocity = new Vector3(0f, rb.linearVelocity.y, 0f);
-        }
 
-        // Place telegraph at player's current ground position
-        Vector3 center = playerTransform.position;
-        Vector3 groundNormal = Vector3.up;
-        if (Physics.Raycast(center + Vector3.up * 50f, Vector3.down, out var gHit, 200f, telegraphGroundMask, QueryTriggerInteraction.Ignore))
-        {
-            center = gHit.point + telegraphGroundOffset * Vector3.up;
-            groundNormal = gHit.normal.sqrMagnitude > 0.0001f ? gHit.normal : Vector3.up;
-        }
-        Vector3 faceDir = playerTransform != null ? (playerTransform.position - transform.position) : transform.forward;
-        faceDir.y = 0f; if (faceDir.sqrMagnitude > 0.0001f) faceDir.Normalize(); else faceDir = transform.forward;
-        var tele = SpawnTelegraph(center, attackRadius, faceDir);
-        _activeTelegraph = tele;
-        var hi = tele != null ? tele.GetComponent<HitIndicator>() : null;
-        // Animate inner progress during windup
-        float t = 0f, dur = Mathf.Max(0.0001f, attackWindup);
-        while (t < dur)
-        {
-            t += Time.deltaTime;
-            if (hi != null) hi.SetProgress(Mathf.Clamp01(t / dur));
-            yield return null;
-        }
+        // Compute direction toward player (flattened)
+        Transform muzzle = rangedMuzzle != null ? rangedMuzzle : transform;
+        Vector3 dir = (playerTransform.position - muzzle.position); dir.y = 0f;
+        if (dir.sqrMagnitude < 0.0001f) dir = transform.forward;
+        dir.Normalize();
 
-        // Strike: damage if player currently inside radius
-        if (playerTransform != null)
-        {
-            Vector3 p = playerTransform.position; p.y = center.y;
-            if (Vector3.Distance(p, center) <= attackRadius + 0.01f)
-            {
-                var player = playerTransform.GetComponent<Player>();
-                if (player != null)
-                {
-                    int dmg = Mathf.Max(0, contactDamage);
-                    if (Random.value < Mathf.Clamp01(critChancePercent * 0.01f))
-                    {
-                        dmg = Mathf.RoundToInt(dmg * Mathf.Max(1f, critMultiplier));
-                    }
-                    player.TakeDamage(gameObject, dmg);
-                }
-            }
-        }
+        // Fire one pellet via BulletSystem (no WeaponFireProfile effects for now)
+        BulletSystem.FirePellet(transform, muzzle, dir, null, rangedBullet);
+        _nextAttackTime = Time.time + Mathf.Max(0.01f, rangedCooldown);
 
-        _nextAttackTime = Time.time + Mathf.Max(0.01f, attackCooldown);
-        if (_activeTelegraph != null) { Destroy(_activeTelegraph); _activeTelegraph = null; }
-        _attackRoutine = null;
-        _isAttacking = false;
+        // Reset attack flag next frame
         if (bridge != null) bridge.SetIsAttacking(false);
     }
 
-    GameObject SpawnTelegraph(Vector3 center, float radius, Vector3 faceDir)
+    void TryMeleeAttack()
     {
-        try
+        if (playerTransform == null) return;
+        if (Time.time < _nextAttackTime) return;
+        Vector3 a = transform.position; a.y = 0f;
+        Vector3 b = playerTransform.position; b.y = 0f;
+        if (Vector3.Distance(a, b) > Mathf.Max(0.1f, meleeStopRange)) return;
+
+        // Defer the actual damage to an Animation Event (Animation_MeleeStrike) at the impact frame
+        _isAttacking = true;
+        var bridge = GetComponentInChildren<EnemyAnimatorBridge>();
+        if (bridge != null) bridge.SetIsAttacking(true);
+        _nextAttackTime = Time.time + Mathf.Max(0.01f, meleeCooldown);
+        _attackFailSafeUntil = Time.time + Mathf.Max(0.1f, meleeAttackFailSafeSeconds);
+    }
+
+    // Animation Event: call at the start of the attack (optional)
+    public void Animation_AttackStart()
+    {
+        _isAttacking = true;
+        var bridge = GetComponentInChildren<EnemyAnimatorBridge>();
+        if (bridge != null) bridge.SetIsAttacking(true);
+        _attackFailSafeUntil = Time.time + Mathf.Max(0.1f, meleeAttackFailSafeSeconds);
+    }
+
+    // Animation Event: call exactly when the strike should apply damage
+    public void Animation_MeleeStrike()
+    {
+        if (_isDead) return;
+        Transform origin = meleeHitOrigin != null ? meleeHitOrigin : transform;
+        Vector3 center = origin.TransformPoint(meleeHitLocalOffset);
+
+        Collider[] hits = null;
+        if (meleeHitShape == MeleeHitShape.Sphere)
         {
-            GameObject go;
-            if (telegraphPrefab != null)
+            hits = Physics.OverlapSphere(center, Mathf.Max(0.01f, meleeHitRadius), meleeHitMask, QueryTriggerInteraction.Ignore);
+        }
+        else
+        {
+            Quaternion rot = origin.rotation;
+            hits = Physics.OverlapBox(center, Vector3.Max(meleeHitBoxHalfExtents, new Vector3(0.01f,0.01f,0.01f)), rot, meleeHitMask, QueryTriggerInteraction.Ignore);
+        }
+
+        if (hits != null && hits.Length > 0)
+        {
+            for (int i = 0; i < hits.Length; i++)
             {
-                go = Instantiate(telegraphPrefab, center, Quaternion.Euler(90f, 0f, 0f));
-            }
-            else
-            {
-                // Create a flat quad "projection" a little above ground
-                go = GameObject.CreatePrimitive(PrimitiveType.Quad);
-                var col = go.GetComponent<Collider>(); if (col != null) Destroy(col);
-                go.transform.position = center + telegraphGroundOffset * Vector3.up;
-                // Lay flat, rotate so +X points to enemy forward direction in XZ
-                float yaw = Mathf.Atan2(faceDir.z, faceDir.x) * Mathf.Rad2Deg; // align quad local +X to world forward
-                go.transform.rotation = Quaternion.Euler(90f, -yaw, 0f);
-                var mr = go.GetComponent<MeshRenderer>();
-                if (mr != null)
+                var h = hits[i]; if (h == null) continue;
+                var player = h.GetComponentInParent<Player>();
+                if (player != null)
                 {
-                    mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-                    mr.receiveShadows = false;
-                    if (telegraphMaterial != null)
-                    {
-                        mr.material = telegraphMaterial;
-                        if (mr.material.HasProperty("_Color")) mr.material.color = telegraphColor;
-                    }
-                    else
-                    {
-                        var mat = new Material(Shader.Find("Game/HitIndicatorSector"));
-                        if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", telegraphColor);
-                        mr.material = mat;
-                    }
-                    // Configure sector shader
-                    var hb = go.AddComponent<HitIndicator>();
-                    hb.meshRenderer = mr;
-                    hb.Configure(radius, /*angle*/ 120f, /*rotation*/ 0f, /*progress*/ 0f, telegraphColor, new Color(1f,0.3f,0.3f,0.6f));
+                    player.TakeDamage(gameObject, Mathf.Max(0, meleeDamage));
+                    break;
                 }
             }
-            // Quad default size is 1x1 in local XY; after rotation (90,0,0) XZ => scale evenly by diameter
-            go.transform.localScale = new Vector3(radius * 2f, radius * 2f, 1f);
-            return go;
         }
-        catch { return null; }
     }
+
+    // Animation Event: call at the end of the attack (optional)
+    public void Animation_AttackEnd()
+    {
+        _isAttacking = false;
+        var bridge = GetComponentInChildren<EnemyAnimatorBridge>();
+        if (bridge != null) bridge.SetIsAttacking(false);
+    }
+
+    System.Collections.IEnumerator ClearAttackFlagNextFrame()
+    {
+        yield return null;
+        var bridge = GetComponentInChildren<EnemyAnimatorBridge>();
+        if (bridge != null) bridge.SetIsAttacking(false);
+    }
+
+    void OnDrawGizmosSelected()
+    {
+        if (!drawAttackGizmos) return;
+        Transform origin = meleeHitOrigin != null ? meleeHitOrigin : transform;
+        Vector3 worldCenter = origin.TransformPoint(meleeHitLocalOffset);
+        if (attackMode == AttackType.Melee)
+        {
+            Gizmos.color = meleeStopRangeColor; Gizmos.DrawWireSphere(transform.position, Mathf.Max(0.01f, meleeStopRange));
+            Gizmos.color = meleeHitRadiusColor;
+            if (meleeHitShape == MeleeHitShape.Sphere)
+                Gizmos.DrawWireSphere(worldCenter, Mathf.Max(0.01f, meleeHitRadius));
+            else
+                Gizmos.DrawWireCube(worldCenter, Vector3.Max(meleeHitBoxHalfExtents * 2f, new Vector3(0.02f,0.02f,0.02f)));
+        }
+        else if (attackMode == AttackType.Ranged)
+        {
+            Gizmos.color = rangedRangeColor; Gizmos.DrawWireSphere(transform.position, Mathf.Max(0.01f, rangedRange));
+        }
+    }
+
+    // Attack indicator logic removed
 
     public void Heal(int amount)
     {
@@ -578,6 +590,36 @@ public class EnemyHealth : MonoBehaviour
     
     void Die()
     {
+        _isDead = true;
+        isAggro = false;
+        // 1) Destroy enemy UI (healthbars/nameplates)
+        var uiBars = GetComponentsInChildren<UIEnemyHealthBarWorld>(true);
+        for (int i = 0; i < uiBars.Length; i++) if (uiBars[i] != null) Destroy(uiBars[i].gameObject);
+
+        // 2) Signal death animation and freeze motion/collisions
+        var __bridge = GetComponentInChildren<EnemyAnimatorBridge>();
+        if (__bridge != null) __bridge.SetIsDead(true);
+        if (agent != null)
+        {
+            if (agent.enabled)
+            {
+                agent.ResetPath();
+                agent.isStopped = true;
+                agent.updatePosition = false;
+                agent.updateRotation = false;
+            }
+            agent.velocity = Vector3.zero;
+            agent.enabled = false;
+        }
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+            rb.isKinematic = true;
+        }
+        var __cols = GetComponentsInChildren<Collider>(true);
+        for (int i = 0; i < __cols.Length; i++) if (__cols[i] != null) __cols[i].enabled = false;
+
         // Trigger death event (drops, etc.)
         onDeath.Invoke();
         // Award XP based on level settings
@@ -639,7 +681,56 @@ public class EnemyHealth : MonoBehaviour
             Destroy(psInstance.gameObject, psInstance.main.duration);
         }
         
-        // Destroy the enemy next frame to let listeners complete without blocking this frame
+        // 4) Optional lead time for death anim, then fade out and destroy
+        StartCoroutine(FadeAndDespawn(deathAnimLeadSeconds, deathFadeSeconds));
+    }
+
+    System.Collections.IEnumerator FadeAndDespawn(float leadSeconds, float fadeSeconds)
+    {
+        if (leadSeconds > 0f) yield return new WaitForSeconds(leadSeconds);
+        float duration = Mathf.Max(0.01f, fadeSeconds);
+        float t = 0f;
+        // Cache renderers and material instances for alpha fade
+        var rends = GetComponentsInChildren<Renderer>(true);
+        var mats = new System.Collections.Generic.List<Material>();
+        for (int i = 0; i < rends.Length; i++)
+        {
+            var r = rends[i]; if (r == null) continue;
+            // Clone materials so we don't affect shared ones
+            var arr = r.materials;
+            for (int j = 0; j < arr.Length; j++)
+            {
+                var m = arr[j];
+                mats.Add(m);
+                if (m.HasProperty("_Surface")) m.SetFloat("_Surface", 1f); // URP Transparent
+                if (m.HasProperty("_ZWrite")) m.SetFloat("_ZWrite", 0f);
+                if (m.HasProperty("_AlphaClip")) m.SetFloat("_AlphaClip", 0f);
+            }
+        }
+        Vector3 startScale = transform.localScale;
+        while (t < duration)
+        {
+            t += Time.deltaTime;
+            float a = Mathf.Clamp01(1f - (t / duration));
+            for (int i = 0; i < mats.Count; i++)
+            {
+                var m = mats[i]; if (m == null) continue;
+                if (m.HasProperty("_BaseColor"))
+                {
+                    var c = m.GetColor("_BaseColor"); c.a = a; m.SetColor("_BaseColor", c);
+                }
+                else if (m.HasProperty("_Color"))
+                {
+                    var c = m.GetColor("_Color"); c.a = a; m.SetColor("_Color", c);
+                }
+            }
+            if (deathScaleDown)
+            {
+                float endFactor = Mathf.Clamp(deathEndScaleFactor, 0.01f, 1f);
+                transform.localScale = Vector3.Lerp(startScale, startScale * endFactor, 1f - a);
+            }
+            yield return null;
+        }
         Destroy(gameObject);
     }
     

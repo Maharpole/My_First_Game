@@ -71,6 +71,8 @@ public class PlayerAnimatorBridge : MonoBehaviour
     private bool _hasMoveX, _hasMoveZ;
     private bool _hasDashTrigger, _hasIsDashingBool;
     private Transform _facingRoot;
+    [Tooltip("Optional override for facing root; assign weaponAnchor to avoid rotating the player root.")]
+    public Transform externalFacingRoot;
     private Vector3 _lastReportedAim;
     private float _lastFiredTime;
     [System.NonSerialized] public bool IsAiming;
@@ -81,7 +83,7 @@ public class PlayerAnimatorBridge : MonoBehaviour
         _lastPos = transform.position;
         _player = Player.Instance ?? FindFirstObjectByType<Player>();
         _rb = (_player != null) ? _player.GetComponent<Rigidbody>() : GetComponentInParent<Rigidbody>();
-        _facingRoot = (_player != null) ? _player.transform : transform.root;
+        _facingRoot = externalFacingRoot != null ? externalFacingRoot : ((_player != null) ? _player.transform : transform.root);
         CacheAnimatorParams();
         // Debug: report parameter availability
         var ctrl = _anim != null ? _anim.runtimeAnimatorController : null;
