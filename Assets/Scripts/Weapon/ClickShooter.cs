@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.AI;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 #endif
@@ -285,17 +286,33 @@ public class ClickShooter : MonoBehaviour
 
         if (enemyHealth != null)
         {
-            enemyHealth.TakeDamage(Mathf.Max(1, hitscanDamage));
+            int dmg = Mathf.Max(1, hitscanDamage);
+            // MMFeedbacks: spawn floating text at hit point on channel 0
+            var channel = new MoreMountains.Feedbacks.MMChannelData(MoreMountains.Feedbacks.MMChannelModes.Int, 0, null);
+            MoreMountains.Feedbacks.MMFloatingTextSpawnEvent.Trigger(channel, hit.point, dmg.ToString(), Vector3.up, 1f);
+            enemyHealth.TakeDamage(dmg);
         }
 
         // Knockback
         if (hitscanKnockback > 0f)
         {
+            // Use planar direction for stability
+            Vector3 planar = new Vector3(shootDir.x, 0f, shootDir.z).normalized;
             var rb = hit.rigidbody ?? hit.collider.GetComponentInParent<Rigidbody>();
-            if (rb != null)
+            var agent = hit.collider.GetComponentInParent<NavMeshAgent>();
+            // enemy-specific resistance scaling
+            var eh = hit.collider.GetComponentInParent<EnemyHealth>();
+            float resist = eh != null ? eh.GetKnockbackMultiplier() : 1f;
+            if (rb != null && !rb.isKinematic)
             {
-                Vector3 impulse = shootDir * hitscanKnockback + Vector3.up * Mathf.Max(0f, hitscanKnockbackUp);
-                rb.AddForce(impulse, ForceMode.Impulse);
+                // VelocityChange ensures mass-independent, consistent knockback
+                if (planar.sqrMagnitude > 0.0001f) rb.AddForce(planar * (hitscanKnockback * resist), ForceMode.VelocityChange);
+                if (hitscanKnockbackUp > 0f) rb.AddForce(Vector3.up * (hitscanKnockbackUp * resist), ForceMode.VelocityChange);
+            }
+            else if (agent != null && agent.enabled)
+            {
+                // Apply agent knockback as a short displacement
+                StartCoroutine(KnockbackAgent(agent, planar, hitscanKnockback * resist, 0.12f));
             }
         }
 
@@ -306,6 +323,42 @@ public class ClickShooter : MonoBehaviour
             var main = vfx.main; main.playOnAwake = false; main.simulationSpace = ParticleSystemSimulationSpace.World;
             vfx.Play(true);
             Destroy(vfx.gameObject, vfx.main.duration + vfx.main.startLifetime.constantMax + 0.05f);
+        }
+    }
+
+    System.Collections.IEnumerator KnockbackAgent(NavMeshAgent agent, Vector3 dir, float distance, float time)
+    {
+        if (agent == null) yield break;
+        Transform target = agent.transform;
+        bool wasEnabled = agent.enabled;
+        if (wasEnabled)
+        {
+            agent.ResetPath();
+            agent.isStopped = true;
+            agent.updatePosition = false;
+            agent.updateRotation = false;
+            agent.enabled = false;
+        }
+        Vector3 start = target.position;
+        Vector3 end = start + (dir.sqrMagnitude > 0.0001f ? dir.normalized : Vector3.forward) * Mathf.Max(0f, distance);
+        float duration = Mathf.Max(0.01f, time);
+        float t = 0f;
+        while (t < duration && target != null)
+        {
+            t += Time.deltaTime;
+            float a = Mathf.Clamp01(t / duration);
+            target.position = Vector3.Lerp(start, end, Mathf.SmoothStep(0f, 1f, a));
+            yield return null;
+        }
+        if (target != null)
+        {
+            if (wasEnabled)
+            {
+                agent.enabled = true;
+                agent.isStopped = false;
+                agent.updatePosition = true;
+                agent.updateRotation = false;
+            }
         }
     }
 

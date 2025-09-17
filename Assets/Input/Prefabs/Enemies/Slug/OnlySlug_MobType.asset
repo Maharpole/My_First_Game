@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8c327b6f39e44204783a631f91b5b303, type: 3}
   m_Name: OnlySlug_MobType
   m_EditorClassIdentifier: Assembly-CSharp::MobType
-  mobName: 
+  mobName: '     '
   minCount: 3
   maxCount: 8
   composition:
-  - enemyType: {fileID: 0}
-    weight: 0
+  - enemyType: {fileID: 11400000, guid: abe3f22af02cbf54d94def098c2b3cea, type: 2}
+    weight: 1

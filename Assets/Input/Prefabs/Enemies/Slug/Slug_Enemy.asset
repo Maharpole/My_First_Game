@@ -12,5 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 85d1b37ce54dff44984d48c2c763fd2c, type: 3}
   m_Name: Slug_Enemy
   m_EditorClassIdentifier: Assembly-CSharp::EnemyType
-  enemyName: 
-  prefab: {fileID: 0}
+  enemyName: Slug
+  prefab: {fileID: 1281458906737136496, guid: 6681c7c3ccdfc0a4aa9fe5ad77de58e2, type: 3}

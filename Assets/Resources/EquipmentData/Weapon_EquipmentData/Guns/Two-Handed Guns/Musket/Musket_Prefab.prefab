@@ -73,17 +73,43 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8fc6013621834a5459c52cb6fbd5c800, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WeaponFireProfile
-  fireRate: 6
+  fireRate: 1
   pellets: 1
   extraPelletSpread: 0
   bullet: {fileID: 11400000, guid: 7794fa6b8a7622f4d9ad8b56c9cc77ec, type: 2}
   effects:
-  - {fileID: 11400000, guid: 5cf344a72328f9044aa723bd3163d1f1, type: 2}
-  - {fileID: 11400000, guid: a12f66eb785b3804080618fa41de36a9, type: 2}
+  - effect: {fileID: 11400000, guid: 5cf344a72328f9044aa723bd3163d1f1, type: 2}
+    parameters:
+      rid: 4830656318013964753
+  - effect: {fileID: 11400000, guid: a12f66eb785b3804080618fa41de36a9, type: 2}
+    parameters:
+      rid: 4830656318013964755
   fireClips:
   - {fileID: 8300000, guid: adb24518d159048ca9cb62d63113784f, type: 3}
   fireVolume: 1
   firePitchRange: {x: 0.9, y: 1}
+  references:
+    version: 2
+    RefIds:
+    - rid: 4830656318013964753
+      type: {class: DamageEffect/Params, ns: , asm: Assembly-CSharp}
+      data:
+        overrideDamage: -1
+        useDamageRange: 1
+        minDamage: 20
+        maxDamage: 36
+        critChancePercent: 6
+        critMultiplier: 1.5
+        normalScale: 1
+        critScale: 1.5
+    - rid: 4830656318013964755
+      type: {class: KnockbackEffect/Params, ns: , asm: Assembly-CSharp}
+      data:
+        force: 100
+        upForce: 0
+        mode: 5
+        scaleByDamage: 0
+        pushAlongSurfaceNormal: 0
 --- !u!1 &835899522930245524
 GameObject:
   m_ObjectHideFlags: 0

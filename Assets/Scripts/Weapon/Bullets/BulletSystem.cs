@@ -178,11 +178,17 @@ public static class BulletSystem
 
     public static void ResolveHit(ref HitContext ctx)
     {
-        var effects = ctx.weaponProfile != null ? ctx.weaponProfile.effects : null;
-        if (effects != null)
+        var list = ctx.weaponProfile != null ? ctx.weaponProfile.effects : null;
+        if (list != null)
         {
-            for (int i = 0; i < effects.Count; i++)
-                if (effects[i] != null) effects[i].Apply(ref ctx);
+            for (int i = 0; i < list.Count; i++)
+            {
+                var entry = list[i];
+                if (entry == null || entry.effect == null) continue;
+                // Inject per-weapon parameters if provided
+                if (entry.parameters != null) entry.effect.Configure(entry.parameters);
+                entry.effect.Apply(ref ctx);
+            }
         }
     }
 

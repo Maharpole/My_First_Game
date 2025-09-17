@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Events;
 using System.Collections;
+using MoreMountains.Feedbacks;
 
 public class EnemyHealth : MonoBehaviour
 {
@@ -15,6 +16,11 @@ public class EnemyHealth : MonoBehaviour
     [Range(0f,100f)] [Tooltip("Chance to critically hit the player (percent)")] public float critChancePercent = 5f;
     [Tooltip("Critical damage multiplier (e.g., 1.5 = 150%)")] public float critMultiplier = 1.5f;
     [Header("Projectile")] public int extraProjectiles = 0;
+
+    [Header("Resistances")]
+    [Range(0f,1f)]
+    [Tooltip("0 = full knockback, 1 = immune. Scales down knockback applied to this enemy.")]
+    public float knockbackResistance = 0f;
 
     [Header("Movement & Aggro")]
     [Tooltip("If true, the enemy starts aggroed")] public bool startAggro = false;
@@ -107,6 +113,11 @@ public class EnemyHealth : MonoBehaviour
     private bool _isDead = false;
     private bool _meleeSwingQueued = false;
     private float _attackFailSafeUntil = 0f;
+
+    public float GetKnockbackMultiplier()
+    {
+        return 1f - Mathf.Clamp01(knockbackResistance);
+    }
 
     void Start()
     {

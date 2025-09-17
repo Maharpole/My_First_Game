@@ -16,5 +16,5 @@ MonoBehaviour:
   minCount: 10
   maxCount: 40
   composition:
-  - enemyType: {fileID: 11400000, guid: 0b5b69b42e3de0140987309d12ebf50c, type: 2}
+  - enemyType: {fileID: 11400000, guid: abe3f22af02cbf54d94def098c2b3cea, type: 2}
     weight: 10

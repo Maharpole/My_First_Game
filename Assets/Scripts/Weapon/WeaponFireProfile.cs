@@ -14,7 +14,15 @@ public class WeaponFireProfile : MonoBehaviour
 
     [Header("Bullet")] public BulletProfile bullet;
 
-    [Header("Effects (ordered)")] public List<BulletEffect> effects = new List<BulletEffect>();
+    [System.Serializable]
+    public class EffectEntry
+    {
+        public BulletEffect effect;
+        [Tooltip("Per-weapon parameters for this specific effect. Leave null to use effect defaults.")]
+        [SerializeReference] public BulletEffect.EffectParams parameters;
+    }
+
+    [Header("Effects (ordered)")] public List<EffectEntry> effects = new List<EffectEntry>();
 
     [Header("Audio")] public AudioClip[] fireClips;
     [Range(0f,1f)] public float fireVolume = 1f;

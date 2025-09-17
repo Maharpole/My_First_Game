@@ -155,9 +155,11 @@ public partial class Bullet : MonoBehaviour
                     : (other.bounds.center - transform.position).normalized;
 
                 var hitRb = other.attachedRigidbody ?? other.GetComponentInParent<Rigidbody>();
+                var eh = other.GetComponentInParent<EnemyHealth>();
+                float resist = eh != null ? eh.GetKnockbackMultiplier() : 1f;
                 if (hitRb != null && knockbackForce > 0f)
                 {
-                    Vector3 impulse = dir * knockbackForce + Vector3.up * Mathf.Max(0f, knockbackUp);
+                    Vector3 impulse = dir * (knockbackForce * resist) + Vector3.up * Mathf.Max(0f, knockbackUp * resist);
                     hitRb.AddForce(impulse, ForceMode.Impulse);
                 }
                 else if (agentKnockbackDistance > 0f)
@@ -165,7 +167,7 @@ public partial class Bullet : MonoBehaviour
                     var agentGo = other.GetComponentInParent<UnityEngine.AI.NavMeshAgent>()?.gameObject;
                     if (agentGo != null)
                     {
-                        StartCoroutine(KnockbackAgent(agentGo.transform, dir, agentKnockbackDistance, agentKnockbackTime));
+                        StartCoroutine(KnockbackAgent(agentGo.transform, dir, agentKnockbackDistance * resist, agentKnockbackTime));
                     }
                 }
             }
